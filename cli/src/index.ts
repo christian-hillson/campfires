@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
+import { resolve } from 'node:path';
 import type { AwarenessState, ActivityEvent, Org, Team, Summary, User } from '@campfires/shared';
 import { loadToken, decodeTokenPayload, interactiveLogin } from './auth.js';
 import { ApiClient } from './api.js';
 import { CampfireConnection } from './connection.js';
+import { GitWatcher, FileWatcher } from './watchers.js';
 import { enterAltScreen, exitAltScreen, render, renderImmediate } from './renderer.js';
 import { CLI_CONFIG } from './types.js';
 import type { RenderState, MemberState, ActivityDisplayEvent, TokenPayload } from './types.js';
@@ -12,21 +14,25 @@ import type { RenderState, MemberState, ActivityDisplayEvent, TokenPayload } fro
 // Argument Parsing
 // ============================================
 
-function parseArgs(): { command: string; serverUrl: string } {
+function parseArgs(): { command: string; serverUrl: string; dir: string } {
   const args = process.argv.slice(2);
   let command = '';
   let serverUrl: string = CLI_CONFIG.DEFAULT_SERVER_URL;
+  let dir: string = process.cwd();
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--server-url' && args[i + 1]) {
       serverUrl = args[i + 1];
+      i++;
+    } else if (args[i] === '--dir' && args[i + 1]) {
+      dir = resolve(args[i + 1]);
       i++;
     } else if (!command) {
       command = args[i];
     }
   }
 
-  return { command, serverUrl };
+  return { command, serverUrl, dir };
 }
 
 // ============================================
@@ -138,10 +144,10 @@ function assembleRenderState(
 // ============================================
 
 async function main(): Promise<void> {
-  const { command, serverUrl } = parseArgs();
+  const { command, serverUrl, dir } = parseArgs();
 
   if (command !== 'watch') {
-    console.error('Usage: campfire watch [--server-url <url>]');
+    console.error('Usage: campfire watch [--server-url <url>] [--dir <path>]');
     process.exit(1);
   }
 
@@ -231,6 +237,37 @@ async function main(): Promise<void> {
 
   connection.connect();
 
+  // --- Watchers ---
+  const gitWatcher = new GitWatcher(dir, {
+    onCommit: (hash, message) => {
+      connection.pushActivityEvent('commit', { message, metadata: { hash } });
+    },
+    onBranchSwitch: (branch) => {
+      connection.setCurrentBranch(branch);
+      connection.pushActivityEvent('branch_switch', { branch });
+    },
+  });
+
+  const fileWatcher = new FileWatcher(dir, {
+    onFileSave: (relativePath) => {
+      connection.pushActivityEvent('file_save', { file: relativePath });
+    },
+  });
+
+  // Emit session_start once connected, then start watchers
+  let watchersStarted = false;
+  connection.onConnectionChange(async (state) => {
+    if (state.connected && !watchersStarted) {
+      watchersStarted = true;
+      connection.pushActivityEvent('session_start');
+      await gitWatcher.start();
+      // Set initial branch in awareness
+      const branch = gitWatcher.getCurrentBranch();
+      if (branch) connection.setCurrentBranch(branch);
+      fileWatcher.start();
+    }
+  });
+
   // --- Summary polling ---
   const summaryInterval = setInterval(async () => {
     try {
@@ -248,6 +285,8 @@ async function main(): Promise<void> {
 
   // --- Graceful shutdown ---
   function cleanup(): void {
+    gitWatcher.dispose();
+    fileWatcher.dispose();
     clearInterval(summaryInterval);
     connection.disconnect();
     exitAltScreen();

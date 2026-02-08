@@ -1,6 +1,7 @@
 import * as Y from 'yjs';
+import { randomUUID } from 'node:crypto';
 import { WebsocketProvider } from 'y-websocket';
-import type { AwarenessState, ActivityEvent } from '@campfires/shared';
+import type { AwarenessState, ActivityEvent, ActivityEventType } from '@campfires/shared';
 import { CLI_CONFIG } from './types.js';
 
 export interface ConnectionState {
@@ -21,6 +22,7 @@ export class CampfireConnection {
   private connectionCallbacks = new Set<ConnectionCallback>();
   private awarenessCallbacks = new Set<AwarenessCallback>();
   private activityCallbacks = new Set<ActivityCallback>();
+  private throttleMap = new Map<string, number>();
 
   constructor(
     private serverUrl: string,
@@ -89,6 +91,62 @@ export class CampfireConnection {
     });
   }
 
+  pushActivityEvent(
+    type: ActivityEventType,
+    options: { file?: string; branch?: string; message?: string; metadata?: Record<string, unknown> } = {},
+  ): void {
+    if (!this.shouldEmitEvent(type, options.file)) return;
+
+    const event: ActivityEvent = {
+      id: randomUUID(),
+      timestamp: new Date().toISOString(),
+      userId: this.userId,
+      userType: 'human',
+      teamId: this.teamId,
+      type,
+      file: options.file ?? null,
+      branch: options.branch ?? null,
+      message: options.message ?? null,
+      metadata: options.metadata ?? null,
+    };
+
+    this.activityFeed.push([event]);
+  }
+
+  private shouldEmitEvent(type: ActivityEventType, file?: string): boolean {
+    let throttle: number;
+    switch (type) {
+      case 'file_save':
+        throttle = CLI_CONFIG.THROTTLE_FILE_SAVE;
+        break;
+      case 'file_open':
+        throttle = CLI_CONFIG.THROTTLE_FILE_OPEN;
+        break;
+      default:
+        return true; // No throttle for commits, branch switches, session events
+    }
+
+    const key = `${type}:${file ?? ''}`;
+    const now = Date.now();
+    const last = this.throttleMap.get(key);
+    if (last && now - last < throttle) return false;
+    this.throttleMap.set(key, now);
+    return true;
+  }
+
+  setCurrentBranch(branch: string): void {
+    if (!this.provider) return;
+
+    const current = this.provider.awareness.getLocalState() as AwarenessState | null;
+    if (!current) return;
+
+    this.provider.awareness.setLocalState({
+      ...current,
+      currentBranch: branch,
+      lastActivity: new Date().toISOString(),
+    });
+  }
+
   disconnect(): void {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
@@ -96,6 +154,7 @@ export class CampfireConnection {
     }
 
     if (this.provider) {
+      this.pushActivityEvent('session_end');
       this.provider.awareness.setLocalState(null);
       this.provider.disconnect();
       this.provider = null;
