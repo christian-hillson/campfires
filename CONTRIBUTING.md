@@ -45,8 +45,13 @@ The server uses `tsx watch` for hot reload in dev mode.
 ## Branch Conventions
 
 - `main` — stable, reviewed code
-- `<initials>/<feature>` — personal feature branches (e.g., `jc/scaffolding`)
-- Open a PR against `main` when your work is ready for review
+- `feat/<name>` — new features (e.g., `feat/draft-mode`)
+- `fix/<name>` — bug fixes (e.g., `fix/ws-reconnect`)
+- `refactor/<name>` — restructuring without behavior change
+- `chore/<name>` — tooling, config, dependencies
+- `docs/<name>` — documentation only
+
+Personal prefixes like `jc/scaffolding` are also fine. Open a PR against `main` when your work is ready for review.
 
 ## Code Rules
 

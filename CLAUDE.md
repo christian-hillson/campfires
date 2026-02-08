@@ -1,5 +1,6 @@
 # Campfires
 
+Read CONTRIBUTING.md for repo conventions, branch prefixes, and development setup.
 Read campfires-build-spec-v3.md in the context folder for the full technical specification.
 
 ## Stack
