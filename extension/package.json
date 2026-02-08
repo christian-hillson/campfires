@@ -1,0 +1,75 @@
+{
+  "name": "campfires",
+  "displayName": "Campfires",
+  "description": "Real-time team awareness for developers",
+  "version": "0.1.0",
+  "publisher": "campfires",
+  "private": true,
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "campfires",
+          "title": "Campfires",
+          "icon": "$(flame)"
+        }
+      ]
+    },
+    "views": {
+      "campfires": [
+        {
+          "type": "webview",
+          "id": "campfires.panel",
+          "name": "Team Activity"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "campfires.toggleDraftMode",
+        "title": "Campfires: Toggle Draft Mode"
+      },
+      {
+        "command": "campfires.login",
+        "title": "Campfires: Sign In"
+      },
+      {
+        "command": "campfires.logout",
+        "title": "Campfires: Sign Out"
+      },
+      {
+        "command": "campfires.joinTeam",
+        "title": "Campfires: Join Team"
+      },
+      {
+        "command": "campfires.refresh",
+        "title": "Campfires: Refresh"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "@campfires/shared": "*",
+    "y-websocket": "^2.0.4",
+    "yjs": "^13.6.14"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.3.3"
+  }
+}

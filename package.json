@@ -1,0 +1,20 @@
+{
+  "name": "campfires",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "server",
+    "extension",
+    "reel"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "build:shared": "npm run build -w shared",
+    "build:server": "npm run build -w server",
+    "dev:server": "npm run dev -w server"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
