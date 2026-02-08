@@ -1,6 +1,7 @@
 # Campfires
 
 Read CONTRIBUTING.md for repo conventions, branch prefixes, and development setup.
+Read ROADMAP.md for current sprint status, feature ownership, and what's in progress.
 Read campfires-build-spec-v3.md in the context folder for the full technical specification.
 
 ## Stack
