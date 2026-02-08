@@ -1,6 +1,6 @@
 # Campfires
 
-Read campfires-build-spec-v2.docx in the context folder for the full technical specification.
+Read campfires-build-spec-v3.md in the context folder for the full technical specification.
 
 ## Stack
 - TypeScript throughout (server, extension, reel, shared)
@@ -11,7 +11,7 @@ Read campfires-build-spec-v2.docx in the context folder for the full technical s
 - Yjs for real-time sync and awareness
 
 ## Structure
-Monorepo with four packages: server/, extension/, reel/, shared/
+Monorepo with five packages: server/, extension/, cli/, reel/, shared/
 
 ## Rules
 - shared/types.ts is the source of truth for all data types
