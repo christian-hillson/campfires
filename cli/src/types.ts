@@ -22,6 +22,16 @@ export const CLI_CONFIG = {
 
   // Minimum terminal width before heavy truncation
   MIN_WIDTH: 40,
+
+  // File watcher throttling (milliseconds)
+  THROTTLE_FILE_SAVE: 5_000,
+  THROTTLE_FILE_OPEN: 2_000,
+
+  // Directories to ignore in file watcher
+  FILE_WATCH_IGNORE: ['node_modules', '.git', 'dist', '.next', '.cache', '__pycache__'],
+
+  // Debounce for .git filesystem events (milliseconds)
+  GIT_DEBOUNCE: 150,
 } as const;
 
 // ============================================
