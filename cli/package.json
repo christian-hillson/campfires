@@ -1,0 +1,22 @@
+{
+  "name": "@campfires/cli",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "bin": {
+    "campfire": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@campfires/shared": "*",
+    "y-websocket": "^2.0.4",
+    "yjs": "^13.6.14"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3"
+  }
+}
