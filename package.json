@@ -6,13 +6,16 @@
     "shared",
     "server",
     "extension",
-    "reel"
+    "reel",
+    "cli"
   ],
   "scripts": {
     "build": "npm run build --workspaces",
     "build:shared": "npm run build -w shared",
     "build:server": "npm run build -w server",
-    "dev:server": "npm run dev -w server"
+    "build:cli": "npm run build -w cli",
+    "dev:server": "npm run dev -w server",
+    "dev:cli": "npm run dev -w cli"
   },
   "devDependencies": {
     "typescript": "^5.3.3"
