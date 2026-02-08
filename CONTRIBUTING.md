@@ -22,7 +22,7 @@ campfires/
   shared/     @campfires/shared   — types and protocol (build this first)
   server/     @campfires/server   — Node.js + Express + y-websocket
   extension/  campfires (vscode)  — VS Code extension
-  cli/        (planned)           — campfire watch terminal client
+  cli/        @campfires/cli      — campfire watch terminal client
   reel/       @campfires/reel     — Vite web app for AI-summarized feed
   context/                        — specs, research, reference docs (read-only)
 ```
@@ -36,7 +36,9 @@ All packages import types from `@campfires/shared`. If you change `shared/src/ty
 | Build everything | `npm run build` |
 | Build shared types | `npm run build:shared` |
 | Build server | `npm run build:server` |
+| Build CLI | `npm run build:cli` |
 | Run server (dev) | `npm run dev:server` |
+| Run CLI (dev) | `npm run dev:cli -- watch` |
 | Run extension | Open `extension/` in VS Code, press F5 (launch config included) |
 | Run reel (dev) | `cd reel && npm run dev` |
 

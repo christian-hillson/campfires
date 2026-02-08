@@ -27,8 +27,8 @@ Terminal-native awareness for Claude Code and terminal workflows.
 
 | Feature | Status | Owner | Notes |
 |---------|--------|-------|-------|
-| CLI: entry point + auth | Not started | — | `cli/index.ts` (package not yet in workspace) |
-| CLI: three-tier terminal renderer | Not started | — | ANSI output, ~35 char width |
+| CLI: entry point + auth | Done | — | `cli/src/index.ts`, `cli/src/auth.ts` |
+| CLI: three-tier terminal renderer | Done | — | `cli/src/renderer.ts`, ANSI + alt screen buffer |
 | CLI: agent activity via git hooks | Not started | — | `post-commit`, `post-checkout` |
 | CLI: filesystem watcher for agent saves | Not started | — | Attributes saves to active agent session |
 
