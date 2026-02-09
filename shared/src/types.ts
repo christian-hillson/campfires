@@ -32,6 +32,7 @@ export interface User {
   teamId: string;
   orgId: string;
   type: UserType;
+  parentUserId: string | null;
   createdAt: string; // ISO timestamp
 }
 
@@ -76,6 +77,7 @@ export interface ActivityEvent {
   timestamp: string; // ISO timestamp
   userId: string;
   userType: UserType;
+  parentUserId: string | null;
   teamId: string;
   type: ActivityEventType;
   file: string | null;
@@ -111,6 +113,7 @@ export interface AwarenessState {
   userId: string;
   displayName: string;
   type: UserType;
+  parentUserId: string | null;
   status: UserStatus;
   currentFile: string | null;
   currentFunction: string | null;
@@ -173,6 +176,27 @@ export interface CreateTeamRequest {
 
 export interface JoinTeamRequest {
   inviteCode: string;
+}
+
+// ============================================
+// Agent API Types
+// ============================================
+
+export interface RegisterAgentRequest {
+  displayName?: string;
+}
+
+export interface RegisterAgentResponse {
+  agent: User;
+  token: string;
+}
+
+export interface AgentActivityRequest {
+  type: ActivityEventType;
+  file?: string;
+  branch?: string;
+  message?: string;
+  metadata?: Record<string, unknown>;
 }
 
 // ============================================

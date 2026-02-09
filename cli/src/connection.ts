@@ -9,6 +9,13 @@ export interface ConnectionState {
   reconnecting: boolean;
 }
 
+export interface AgentConfig {
+  agentUserId: string;
+  agentDisplayName: string;
+  agentColor: string;
+  parentUserId: string;
+}
+
 export type ConnectionCallback = (state: ConnectionState) => void;
 export type AwarenessCallback = (states: Map<number, AwarenessState>) => void;
 export type ActivityCallback = (events: ActivityEvent[]) => void;
@@ -23,6 +30,7 @@ export class CampfireConnection {
   private awarenessCallbacks = new Set<AwarenessCallback>();
   private activityCallbacks = new Set<ActivityCallback>();
   private throttleMap = new Map<string, number>();
+  private agentConfig: AgentConfig | null = null;
 
   constructor(
     private serverUrl: string,
@@ -73,6 +81,7 @@ export class CampfireConnection {
       userId: this.userId,
       displayName: this.displayName,
       type: 'human',
+      parentUserId: null,
       status: 'active',
       currentFile: null,
       currentFunction: null,
@@ -102,6 +111,35 @@ export class CampfireConnection {
       timestamp: new Date().toISOString(),
       userId: this.userId,
       userType: 'human',
+      parentUserId: null,
+      teamId: this.teamId,
+      type,
+      file: options.file ?? null,
+      branch: options.branch ?? null,
+      message: options.message ?? null,
+      metadata: options.metadata ?? null,
+    };
+
+    this.activityFeed.push([event]);
+  }
+
+  setAgentConfig(config: AgentConfig): void {
+    this.agentConfig = config;
+  }
+
+  pushAgentActivityEvent(
+    type: ActivityEventType,
+    options: { file?: string; branch?: string; message?: string; metadata?: Record<string, unknown> } = {},
+  ): void {
+    if (!this.agentConfig) return;
+    if (!this.shouldEmitEvent(type, options.file)) return;
+
+    const event: ActivityEvent = {
+      id: randomUUID(),
+      timestamp: new Date().toISOString(),
+      userId: this.agentConfig.agentUserId,
+      userType: 'agent',
+      parentUserId: this.agentConfig.parentUserId,
       teamId: this.teamId,
       type,
       file: options.file ?? null,

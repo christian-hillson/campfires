@@ -6,6 +6,8 @@ import type {
   UpdateOrgRequest,
   CreateTeamRequest,
   JoinTeamRequest,
+  RegisterAgentRequest,
+  AgentActivityRequest,
 } from '@campfires/shared';
 import { getPersistence } from './persistence.js';
 import {
@@ -289,6 +291,83 @@ router.get('/orgs/:id/summaries/stream', optionalAuthMiddleware, (req: Request, 
     clearInterval(pingInterval);
   });
 });
+
+// ============================================
+// Agent Endpoints
+// ============================================
+
+router.post('/agents', authMiddleware, (req: Request, res: Response) => {
+  const caller = req.user!;
+
+  // Only human users on a team can register agents
+  if (caller.type !== 'human') {
+    res.status(403).json({ error: 'Only human users can register agents' });
+    return;
+  }
+
+  if (!caller.teamId || !caller.orgId) {
+    res.status(400).json({ error: 'You must be on a team to register an agent' });
+    return;
+  }
+
+  const { displayName } = (req.body || {}) as RegisterAgentRequest;
+
+  const db = getPersistence();
+  const parentUser = db.getUser(caller.userId);
+  const agentName = displayName || `${parentUser?.displayName || caller.email}'s Claude`;
+
+  const agent = db.createAgentUser(caller.userId, agentName, caller.teamId, caller.orgId);
+
+  // Generate a JWT for the agent
+  const agentToken = generateToken({
+    userId: agent.userId,
+    email: agent.email,
+    teamId: agent.teamId || null,
+    orgId: agent.orgId || null,
+    type: 'agent',
+  });
+
+  res.status(201).json({ agent, token: agentToken });
+});
+
+router.post('/agents/activity', authMiddleware, (req: Request, res: Response) => {
+  const caller = req.user!;
+  const body = req.body as AgentActivityRequest;
+
+  if (!body.type) {
+    res.status(400).json({ error: 'Activity type is required' });
+    return;
+  }
+
+  if (!caller.teamId) {
+    res.status(400).json({ error: 'Agent must be on a team' });
+    return;
+  }
+
+  const db = getPersistence();
+
+  // Look up the agent user to get parentUserId
+  const agentUser = db.getUser(caller.userId);
+  const parentUserId = agentUser?.parentUserId || null;
+
+  const event = db.appendActivityEvent({
+    userId: caller.userId,
+    userType: caller.type,
+    parentUserId,
+    teamId: caller.teamId,
+    type: body.type,
+    file: body.file || null,
+    branch: body.branch || null,
+    message: body.message || null,
+    metadata: body.metadata || null,
+  });
+
+  res.status(201).json(event);
+});
+
+// ============================================
+// Reel Endpoints (continued)
+// ============================================
 
 router.get('/teams/:id/activity', optionalAuthMiddleware, (req: Request, res: Response) => {
   const { id } = req.params;

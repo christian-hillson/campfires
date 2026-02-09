@@ -9,16 +9,19 @@ import { GitWatcher, FileWatcher } from './watchers.js';
 import { enterAltScreen, exitAltScreen, render, renderImmediate } from './renderer.js';
 import { CLI_CONFIG } from './types.js';
 import type { RenderState, MemberState, ActivityDisplayEvent, TokenPayload } from './types.js';
+import { detectAgent } from './agent-detect.js';
+import { installGitHooks, uninstallGitHooks } from './git-hooks.js';
 
 // ============================================
 // Argument Parsing
 // ============================================
 
-function parseArgs(): { command: string; serverUrl: string; dir: string } {
+function parseArgs(): { command: string; serverUrl: string; dir: string; agentMode: 'auto' | 'force' | 'off' } {
   const args = process.argv.slice(2);
   let command = '';
   let serverUrl: string = CLI_CONFIG.DEFAULT_SERVER_URL;
   let dir: string = process.cwd();
+  let agentMode: 'auto' | 'force' | 'off' = 'auto';
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--server-url' && args[i + 1]) {
@@ -27,12 +30,16 @@ function parseArgs(): { command: string; serverUrl: string; dir: string } {
     } else if (args[i] === '--dir' && args[i + 1]) {
       dir = resolve(args[i + 1]);
       i++;
+    } else if (args[i] === '--agent') {
+      agentMode = 'force';
+    } else if (args[i] === '--no-agent') {
+      agentMode = 'off';
     } else if (!command) {
       command = args[i];
     }
   }
 
-  return { command, serverUrl, dir };
+  return { command, serverUrl, dir, agentMode };
 }
 
 // ============================================
@@ -144,10 +151,10 @@ function assembleRenderState(
 // ============================================
 
 async function main(): Promise<void> {
-  const { command, serverUrl, dir } = parseArgs();
+  const { command, serverUrl, dir, agentMode } = parseArgs();
 
   if (command !== 'watch') {
-    console.error('Usage: campfire watch [--server-url <url>] [--dir <path>]');
+    console.error('Usage: campfire watch [--server-url <url>] [--dir <path>] [--agent | --no-agent]');
     process.exit(1);
   }
 
@@ -185,6 +192,34 @@ async function main(): Promise<void> {
   const displayName = currentUser?.displayName || payload.email;
   const color = currentUser?.avatarColor || '#888888';
 
+  // --- Agent detection & registration ---
+  let agentActive = false;
+  let agentUserId: string | null = null;
+  let agentToken: string | null = null;
+  let agentDisplayName: string | null = null;
+  let agentColor: string | null = null;
+
+  const shouldDetect = agentMode === 'force' || (agentMode === 'auto' && detectAgent(dir).detected);
+
+  if (shouldDetect) {
+    try {
+      const detection = detectAgent(dir);
+      const name = detection.agentName ? `${displayName}'s ${detection.agentName}` : undefined;
+      const result = await api.registerAgent(name);
+      agentUserId = result.agent.userId;
+      agentToken = result.token;
+      agentDisplayName = result.agent.displayName;
+      agentColor = result.agent.avatarColor;
+      agentActive = true;
+
+      // Install persistent git hooks
+      installGitHooks({ workDir: dir, serverUrl, agentToken });
+    } catch (err) {
+      // Agent setup failure is non-fatal
+      console.error('Agent setup failed (continuing as human-only):', (err as Error).message);
+    }
+  }
+
   // --- Mutable state ---
   let currentAwareness = new Map<number, AwarenessState>();
   let currentActivity: ActivityEvent[] = [];
@@ -209,6 +244,16 @@ async function main(): Promise<void> {
 
   // --- Connect ---
   const connection = new CampfireConnection(serverUrl, teamId, token, userId, displayName, color);
+
+  // Configure agent identity on the connection
+  if (agentActive && agentUserId && agentDisplayName && agentColor) {
+    connection.setAgentConfig({
+      agentUserId,
+      agentDisplayName,
+      agentColor,
+      parentUserId: userId,
+    });
+  }
 
   connection.onConnectionChange((state) => {
     isConnected = state.connected;
@@ -238,20 +283,31 @@ async function main(): Promise<void> {
   connection.connect();
 
   // --- Watchers ---
+  const pushCommit = agentActive
+    ? (hash: string, message: string) => connection.pushAgentActivityEvent('commit', { message, metadata: { hash } })
+    : (hash: string, message: string) => connection.pushActivityEvent('commit', { message, metadata: { hash } });
+
+  const pushBranchSwitch = agentActive
+    ? (branch: string) => {
+        connection.setCurrentBranch(branch);
+        connection.pushAgentActivityEvent('branch_switch', { branch });
+      }
+    : (branch: string) => {
+        connection.setCurrentBranch(branch);
+        connection.pushActivityEvent('branch_switch', { branch });
+      };
+
+  const pushFileSave = agentActive
+    ? (relativePath: string) => connection.pushAgentActivityEvent('file_save', { file: relativePath })
+    : (relativePath: string) => connection.pushActivityEvent('file_save', { file: relativePath });
+
   const gitWatcher = new GitWatcher(dir, {
-    onCommit: (hash, message) => {
-      connection.pushActivityEvent('commit', { message, metadata: { hash } });
-    },
-    onBranchSwitch: (branch) => {
-      connection.setCurrentBranch(branch);
-      connection.pushActivityEvent('branch_switch', { branch });
-    },
+    onCommit: pushCommit,
+    onBranchSwitch: pushBranchSwitch,
   });
 
   const fileWatcher = new FileWatcher(dir, {
-    onFileSave: (relativePath) => {
-      connection.pushActivityEvent('file_save', { file: relativePath });
-    },
+    onFileSave: pushFileSave,
   });
 
   // Emit session_start once connected, then start watchers
@@ -260,6 +316,9 @@ async function main(): Promise<void> {
     if (state.connected && !watchersStarted) {
       watchersStarted = true;
       connection.pushActivityEvent('session_start');
+      if (agentActive) {
+        connection.pushAgentActivityEvent('session_start');
+      }
       await gitWatcher.start();
       // Set initial branch in awareness
       const branch = gitWatcher.getCurrentBranch();
@@ -285,6 +344,9 @@ async function main(): Promise<void> {
 
   // --- Graceful shutdown ---
   function cleanup(): void {
+    if (agentActive) {
+      connection.pushAgentActivityEvent('session_end');
+    }
     gitWatcher.dispose();
     fileWatcher.dispose();
     clearInterval(summaryInterval);
