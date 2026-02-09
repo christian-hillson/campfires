@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campfires — Map View</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0e0a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Silkscreen', monospace;
+    color: #c8d0b8;
+    overflow: hidden;
+  }
+
+  .header {
+    width: 100%;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0d120d;
+    border-bottom: 2px solid #1a2a1a;
+    z-index: 10;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header .logo {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: #f97316;
+    letter-spacing: 1px;
+  }
+
+  .header .org-name {
+    font-size: 12px;
+    color: #8a9878;
+    border-left: 1px solid #2a3a2a;
+    padding-left: 12px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 10px;
+    color: #5a6a4a;
+  }
+
+  .header-right .stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .header-right .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 4px #4ade8088;
+  }
+
+  .view-toggle {
+    display: flex;
+    gap: 2px;
+    background: #1a2a1a;
+    border-radius: 4px;
+    padding: 2px;
+  }
+
+  .view-toggle button {
+    font-family: 'Silkscreen', monospace;
+    font-size: 9px;
+    padding: 4px 10px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    background: transparent;
+    color: #5a6a4a;
+    transition: all 0.2s;
+  }
+
+  .view-toggle button.active {
+    background: #2a4a2a;
+    color: #a0d890;
+  }
+
+  .canvas-container {
+    flex: 1;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    cursor: crosshair;
+  }
+
+  .tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: #111a11ee;
+    border: 1px solid #2a4a2a;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-family: 'Silkscreen', monospace;
+    font-size: 10px;
+    color: #c8d0b8;
+    display: none;
+    z-index: 20;
+    max-width: 220px;
+    box-shadow: 0 4px 12px #00000088;
+  }
+
+  .tooltip .tt-name {
+    color: #f0f0e0;
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .tooltip .tt-role {
+    color: #f97316;
+    font-size: 9px;
+    margin-bottom: 6px;
+  }
+
+  .tooltip .tt-detail {
+    color: #7a8a6a;
+    font-size: 9px;
+    line-height: 1.6;
+  }
+
+  .legend {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    background: #0d120dee;
+    border: 1px solid #1a2a1a;
+    border-radius: 6px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 9px;
+    z-index: 10;
+  }
+
+  .legend-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: #5a6a4a;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #7a8a6a;
+  }
+
+  .legend-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .minimap {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 140px;
+    height: 100px;
+    background: #0d120dee;
+    border: 1px solid #1a2a1a;
+    border-radius: 6px;
+    z-index: 10;
+    overflow: hidden;
+  }
+
+  .minimap canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  .ai-summary-bar {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: #0d120dee;
+    border: 1px solid #1a2a1a;
+    border-radius: 6px;
+    padding: 10px 14px;
+    max-width: 300px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .ai-summary-bar .summary-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: #f97316;
+    letter-spacing: 1px;
+  }
+
+  .ai-summary-line {
+    font-size: 9px;
+    color: #7a8a6a;
+    line-height: 1.5;
+    display: flex;
+    gap: 6px;
+  }
+
+  .ai-summary-line .team-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="logo">🔥 CAMPFIRES</span>
+    <span class="org-name">Gusto Engineering</span>
+  </div>
+  <div class="header-right">
+    <div class="view-toggle">
+      <button>Feed</button>
+      <button class="active">Map</button>
+    </div>
+    <div class="stat"><span class="dot"></span> 14 online</div>
+    <div class="stat">4 campfires</div>
+  </div>
+</div>
+
+<div class="canvas-container">
+  <canvas id="map"></canvas>
+  <div class="tooltip" id="tooltip"></div>
+
+  <div class="ai-summary-bar">
+    <div class="summary-title">✦ AI REEL</div>
+    <div class="ai-summary-line">
+      <span class="team-dot" style="background:#f97316"></span>
+      <span><strong style="color:#d0c0a0">Payments</strong> — Building Stripe webhook support for Q1 billing migration</span>
+    </div>
+    <div class="ai-summary-line">
+      <span class="team-dot" style="background:#60a5fa"></span>
+      <span><strong style="color:#d0c0a0">Platform</strong> — Migrating auth service to OAuth 2.1</span>
+    </div>
+    <div class="ai-summary-line">
+      <span class="team-dot" style="background:#a78bfa"></span>
+      <span><strong style="color:#d0c0a0">Growth</strong> — A/B testing new onboarding flow for SMBs</span>
+    </div>
+    <div class="ai-summary-line">
+      <span class="team-dot" style="background:#4ade80"></span>
+      <span><strong style="color:#d0c0a0">Infra</strong> — DB connection pooling & Redis cluster upgrade</span>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-title">LEGEND</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#e8d070"></div> Human (active)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#6088a0"></div> Human (idle)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#505858"></div> Human (draft)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#88a8c8; border: 1px solid #a0c0e0"></div> Agent / Golem</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#f97316; border-radius:50%"></div> Campfire</div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ───
+const PIXEL_SCALE = 3;
+const SPRITE_SIZE = 8;
+const GROUND_COLOR = '#1a2018';
+const GRASS_COLORS = ['#1e2a1c', '#1c261a', '#22301e', '#1a2418'];
+const PATH_COLOR = '#2a2820';
+const TREE_TRUNK = '#3a2a1a';
+const TREE_LEAVES = ['#2a4a22', '#1e3a18', '#325828'];
+
+// ─── TEAM DEFINITIONS ───
+const teams = [
+  {
+    name: 'Payments',
+    description: 'Stripe webhooks · Q1 billing migration',
+    color: '#f97316',
+    x: 130, y: 80,
+    fireSize: 3, // large
+    members: [
+      { name: 'Christian', type: 'human', color: '#e05040', status: 'active', task: 'smithing', file: 'server/api.ts → handleAuth()' },
+      { name: 'JC', type: 'human', color: '#4080d0', status: 'active', task: 'scribing', file: 'reel/app.ts → renderFeed()' },
+      { name: 'John', type: 'human', color: '#50b860', status: 'idle', task: 'sitting', file: 'idle 12m' },
+      { name: 'Maria', type: 'human', color: '#c070d0', status: 'draft', task: 'tent', file: 'draft mode' },
+      { name: 'Agent-C1', type: 'agent', color: '#e05040', status: 'active', task: 'chopping', file: 'server/batch-job.ts', owner: 'Christian' },
+      { name: 'Agent-C2', type: 'agent', color: '#e05040', status: 'active', task: 'carrying', file: 'shared/types.ts', owner: 'Christian' },
+      { name: 'Agent-JC1', type: 'agent', color: '#4080d0', status: 'active', task: 'mining', file: 'reel/components/feed.ts', owner: 'JC' },
+    ]
+  },
+  {
+    name: 'Platform',
+    description: 'OAuth 2.1 migration · Auth service',
+    color: '#60a5fa',
+    x: 360, y: 60,
+    fireSize: 2, // medium
+    members: [
+      { name: 'Alex', type: 'human', color: '#d09040', status: 'active', task: 'smithing', file: 'auth/oauth.ts → validateToken()' },
+      { name: 'Sam', type: 'human', color: '#40b0a0', status: 'active', task: 'scribing', file: 'auth/middleware.ts → checkScope()' },
+      { name: 'Agent-A1', type: 'agent', color: '#d09040', status: 'active', task: 'chopping', file: 'auth/tests/oauth.test.ts', owner: 'Alex' },
+    ]
+  },
+  {
+    name: 'Growth',
+    description: 'SMB onboarding A/B test',
+    color: '#a78bfa',
+    x: 310, y: 155,
+    fireSize: 2,
+    members: [
+      { name: 'Priya', type: 'human', color: '#e07070', status: 'active', task: 'scribing', file: 'onboarding/flow.tsx → StepTwo()' },
+      { name: 'Dev', type: 'human', color: '#70a0e0', status: 'idle', task: 'sitting', file: 'idle 5m' },
+      { name: 'Agent-P1', type: 'agent', color: '#e07070', status: 'active', task: 'carrying', file: 'onboarding/analytics.ts', owner: 'Priya' },
+    ]
+  },
+  {
+    name: 'Infra',
+    description: 'DB pooling · Redis cluster',
+    color: '#4ade80',
+    x: 100, y: 170,
+    fireSize: 1, // small
+    members: [
+      { name: 'Kai', type: 'human', color: '#b0a050', status: 'active', task: 'mining', file: 'infra/redis.ts → connectCluster()' },
+      { name: 'Agent-K1', type: 'agent', color: '#b0a050', status: 'active', task: 'chopping', file: 'infra/pool.ts', owner: 'Kai' },
+    ]
+  }
+];
+
+// ─── CANVAS SETUP ───
+const canvas = document.getElementById('map');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+
+function resize() {
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ─── PIXEL ART HELPERS ───
+function px(x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(Math.floor(x * PIXEL_SCALE), Math.floor(y * PIXEL_SCALE), 
+               (w || 1) * PIXEL_SCALE, (h || 1) * PIXEL_SCALE);
+}
+
+// ─── DRAW GROUND ───
+const grassMap = [];
+for (let i = 0; i < 300; i++) {
+  grassMap.push({
+    x: Math.random() * 500,
+    y: Math.random() * 280,
+    color: GRASS_COLORS[Math.floor(Math.random() * GRASS_COLORS.length)],
+    size: Math.random() > 0.7 ? 2 : 1
+  });
+}
+
+// ─── TREES ───
+const trees = [];
+for (let i = 0; i < 25; i++) {
+  let tx = Math.random() * 480 + 10;
+  let ty = Math.random() * 260 + 10;
+  // keep trees away from campfire centers
+  let tooClose = teams.some(t => Math.hypot(tx - t.x, ty - t.y) < 60);
+  if (!tooClose) {
+    trees.push({
+      x: tx, y: ty,
+      size: Math.random() * 2 + 2,
+      leafColor: TREE_LEAVES[Math.floor(Math.random() * TREE_LEAVES.length)],
+      sway: Math.random() * Math.PI * 2
+    });
+  }
+}
+
+// ─── PATHS between campfires ───
+function drawPath(x1, y1, x2, y2) {
+  const steps = 40;
+  for (let i = 0; i < steps; i++) {
+    const t = i / steps;
+    const x = x1 + (x2 - x1) * t + (Math.sin(t * 6) * 4);
+    const y = y1 + (y2 - y1) * t + (Math.cos(t * 4) * 3);
+    px(x + Math.random() * 2, y + Math.random() * 2, 2, 1, PATH_COLOR);
+    px(x + Math.random() * 2, y + 1 + Math.random(), 2, 1, '#252218');
+  }
+}
+
+// ─── DRAW TREE ───
+function drawTree(tree, time) {
+  const { x, y, size, leafColor, sway } = tree;
+  const s = Math.sin(time * 0.8 + sway) * 0.3;
+  // trunk
+  px(x, y - size * 2, 1, size * 3, TREE_TRUNK);
+  px(x + 1, y - size * 2, 1, size * 3, '#4a3a2a');
+  // canopy
+  for (let dy = -size * 2 - 3; dy < -size; dy++) {
+    const w = Math.max(1, (size * 2) - Math.abs(dy + size * 2));
+    px(x - w / 2 + s, y + dy, w, 1, leafColor);
+  }
+  // highlight
+  px(x - 1 + s, y - size * 2 - 2, 2, 1, '#3a6830');
+}
+
+// ─── DRAW CAMPFIRE ───
+function drawCampfire(cx, cy, size, teamColor, time) {
+  const baseR = size * 5 + 4;
+
+  // stone ring
+  for (let angle = 0; angle < Math.PI * 2; angle += 0.4) {
+    const r = baseR + Math.sin(angle * 3) * 1.5;
+    px(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r * 0.5, 2, 2, '#3a3830');
+  }
+
+  // logs
+  px(cx - 3, cy + 1, 6, 1, '#4a3020');
+  px(cx - 2, cy - 1, 5, 1, '#3a2818');
+  if (size > 1) {
+    px(cx - 4, cy, 3, 1, '#4a3020');
+    px(cx + 2, cy + 2, 3, 1, '#3a2818');
+  }
+
+  // embers
+  const emberCount = size * 3 + 2;
+  for (let i = 0; i < emberCount; i++) {
+    const angle = (i / emberCount) * Math.PI * 2 + time * 0.5;
+    const r = 2 + Math.sin(time * 3 + i) * 1.5;
+    const ex = cx + Math.cos(angle) * r;
+    const ey = cy + Math.sin(angle) * r * 0.4;
+    px(ex, ey, 1, 1, Math.random() > 0.3 ? '#f06020' : '#f0a030');
+  }
+
+  // fire
+  const fireHeight = size * 4 + 3;
+  const flames = size * 2 + 2;
+  for (let f = 0; f < flames; f++) {
+    const fx = cx - size + f * (size * 2 / flames);
+    for (let fy = 0; fy < fireHeight; fy++) {
+      const t = fy / fireHeight;
+      const flicker = Math.sin(time * 8 + f * 2 + fy * 0.5) * (1 + t * 2);
+      const width = (1 - t) * (size + 1) + flicker * 0.3;
+      if (width > 0.3) {
+        let color;
+        if (t < 0.3) color = '#f0e8a0';
+        else if (t < 0.5) color = '#f0c040';
+        else if (t < 0.7) color = '#f08020';
+        else color = teamColor;
+        px(fx + flicker * 0.5, cy - fy - 2, Math.max(1, width), 1, color);
+      }
+    }
+  }
+
+  // sparks (larger fires have more)
+  if (size >= 2) {
+    for (let s = 0; s < size; s++) {
+      const sparkT = (time * 2 + s * 1.7) % 3;
+      if (sparkT < 2) {
+        const sx = cx + Math.sin(time * 3 + s * 5) * (3 + size);
+        const sy = cy - fireHeight - sparkT * 8;
+        px(sx, sy, 1, 1, Math.random() > 0.5 ? '#f0c040' : '#f0e8a0');
+      }
+    }
+  }
+
+  // glow on ground
+  const glowR = baseR + size * 4;
+  ctx.save();
+  const gradient = ctx.createRadialGradient(
+    cx * PIXEL_SCALE, cy * PIXEL_SCALE, 0,
+    cx * PIXEL_SCALE, cy * PIXEL_SCALE, glowR * PIXEL_SCALE
+  );
+  gradient.addColorStop(0, teamColor + '18');
+  gradient.addColorStop(0.5, teamColor + '08');
+  gradient.addColorStop(1, 'transparent');
+  ctx.fillStyle = gradient;
+  ctx.fillRect((cx - glowR) * PIXEL_SCALE, (cy - glowR) * PIXEL_SCALE, glowR * 2 * PIXEL_SCALE, glowR * 2 * PIXEL_SCALE);
+  ctx.restore();
+}
+
+// ─── DRAW TEAM LABEL ───
+function drawTeamLabel(cx, cy, name, fireSize) {
+  ctx.save();
+  ctx.font = `${10}px 'Silkscreen', monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#5a6a4aaa';
+  ctx.fillText(name, cx * PIXEL_SCALE, (cy + fireSize * 6 + 14) * PIXEL_SCALE);
+  ctx.restore();
+}
+
+// ─── SPRITE DRAWING ───
+function drawHumanSprite(x, y, color, status, task, time, name) {
+  const bobY = status === 'active' ? Math.sin(time * 4) * 0.5 : 0;
+  const bY = y + bobY;
+
+  if (status === 'draft') {
+    // tent shape
+    px(x - 3, bY - 1, 7, 4, '#3a3830');
+    px(x - 2, bY - 3, 5, 2, '#4a4840');
+    px(x, bY - 4, 1, 1, '#5a5850');
+    // person peeking
+    px(x, bY, 2, 1, color);
+    px(x, bY - 1, 2, 1, '#e0d8c8');
+    return;
+  }
+
+  if (status === 'idle') {
+    // sitting sprite
+    px(x, bY + 1, 3, 1, color); // legs stretched
+    px(x, bY, 2, 1, color); // body
+    px(x, bY - 1, 2, 1, '#e0d8c8'); // head
+    // zzz
+    const zOff = Math.sin(time * 2) * 0.5;
+    ctx.save();
+    ctx.font = `${6}px 'Press Start 2P', monospace`;
+    ctx.fillStyle = '#5a6a6a88';
+    ctx.fillText('z', (x + 3 + zOff) * PIXEL_SCALE, (bY - 3) * PIXEL_SCALE);
+    ctx.fillText('z', (x + 5 + zOff * 1.3) * PIXEL_SCALE, (bY - 5) * PIXEL_SCALE);
+    ctx.restore();
+    return;
+  }
+
+  // active sprite base
+  // legs
+  const legPhase = Math.sin(time * 5) * 0.5;
+  px(x, bY + 2, 1, 1, '#2a2020'); // left foot
+  px(x + 1, bY + 2, 1, 1, '#2a2020'); // right foot
+  // body
+  px(x, bY, 2, 2, color);
+  // head
+  px(x, bY - 1, 2, 1, '#e0d8c8');
+  // eyes
+  px(x, bY - 1, 1, 1, '#e0d8c8');
+
+  // task-specific animations
+  if (task === 'smithing') {
+    // arm with hammer
+    const hammerUp = Math.sin(time * 6) > 0;
+    px(x + 2, bY + (hammerUp ? -1 : 1), 1, 1, '#888'); // hammer head
+    px(x + 2, bY, 1, 1, '#5a4030'); // handle
+    // anvil nearby
+    px(x + 4, bY + 1, 3, 2, '#555');
+    px(x + 4, bY, 3, 1, '#666');
+    // sparks when hitting
+    if (!hammerUp) {
+      px(x + 4 + Math.random() * 3, bY - 1 - Math.random() * 2, 1, 1, '#f0c040');
+      px(x + 5 + Math.random() * 2, bY - Math.random() * 2, 1, 1, '#f08020');
+    }
+  } else if (task === 'scribing') {
+    // desk
+    px(x + 3, bY + 1, 4, 1, '#4a3828');
+    px(x + 3, bY + 2, 1, 2, '#3a2818');
+    px(x + 6, bY + 2, 1, 2, '#3a2818');
+    // paper
+    px(x + 3, bY, 3, 1, '#e8e0d0');
+    // quill moving
+    const qx = x + 4 + Math.sin(time * 5) * 0.8;
+    px(qx, bY - 1, 1, 1, '#2a2020');
+    // ink marks appearing
+    if (Math.sin(time * 3) > 0) {
+      px(x + 3 + (time * 2 % 3), bY, 1, 1, '#3a3020');
+    }
+  } else if (task === 'mining') {
+    // pickaxe swing
+    const swingAngle = Math.sin(time * 5);
+    px(x - 2 + swingAngle, bY - 1 + Math.abs(swingAngle), 1, 1, '#888');
+    px(x - 1, bY, 1, 1, '#5a4030');
+    // rock
+    px(x - 4, bY + 1, 3, 2, '#5a5a60');
+    px(x - 3, bY, 2, 1, '#6a6a70');
+    // debris when hitting
+    if (swingAngle < -0.5) {
+      px(x - 4 + Math.random() * 2, bY - 1 - Math.random() * 2, 1, 1, '#8a8a90');
+    }
+  }
+}
+
+function drawGolemSprite(x, y, color, task, time) {
+  const bobY = y + Math.sin(time * 3 + 1) * 0.3;
+
+  // golem body - blockier, slightly larger
+  // feet
+  px(x, bobY + 3, 1, 1, '#3a3a40');
+  px(x + 2, bobY + 3, 1, 1, '#3a3a40');
+  // legs
+  px(x, bobY + 2, 1, 1, darken(color, 0.5));
+  px(x + 2, bobY + 2, 1, 1, darken(color, 0.5));
+  // body - wider
+  px(x - 1, bobY, 4, 2, darken(color, 0.7));
+  // color stripe
+  px(x, bobY, 2, 1, color);
+  // head - square, glowing eyes
+  px(x, bobY - 1, 2, 1, '#6a6a70');
+  // glowing eyes
+  const eyeGlow = Math.sin(time * 4) > 0 ? '#80f0f0' : '#50c0c0';
+  px(x, bobY - 1, 1, 1, eyeGlow);
+  px(x + 1, bobY - 1, 1, 1, eyeGlow);
+  // rune mark
+  px(x + 0.5, bobY + 1, 1, 1, color);
+
+  // task animations
+  if (task === 'chopping') {
+    // axe swing
+    const swing = Math.sin(time * 6);
+    px(x + 3, bobY + (swing > 0 ? -1 : 1), 1, 1, '#aaa');
+    px(x + 3, bobY, 1, 1, '#5a4030');
+    // log
+    px(x + 5, bobY + 2, 2, 2, '#5a3820');
+    px(x + 5, bobY + 1, 2, 1, '#6a4830');
+    // wood chips
+    if (swing < -0.5) {
+      px(x + 5 + Math.random() * 3, bobY - Math.random() * 2, 1, 1, '#8a6840');
+    }
+  } else if (task === 'carrying') {
+    // carrying blocks/crates
+    px(x, bobY - 3, 3, 2, '#6a5830');
+    px(x, bobY - 2, 3, 1, '#7a6840');
+    // movement trail dots
+    const trail = Math.floor(time * 3) % 3;
+    px(x - 2 - trail, bobY + 3, 1, 1, '#2a2820');
+  } else if (task === 'mining') {
+    const swing = Math.sin(time * 5.5);
+    px(x - 2 + swing, bobY - 1 + Math.abs(swing), 1, 1, '#999');
+    px(x - 1, bobY, 1, 1, '#5a4030');
+    px(x - 4, bobY + 1, 3, 2, '#4a4a50');
+    if (swing < -0.5) {
+      px(x - 4 + Math.random() * 2, bobY - 1 - Math.random() * 2, 1, 1, '#7a7a80');
+    }
+  }
+}
+
+function darken(hex, factor) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgb(${Math.floor(r * factor)},${Math.floor(g * factor)},${Math.floor(b * factor)})`;
+}
+
+// ─── POSITION MEMBERS AROUND FIRE ───
+function getMemberPositions(team) {
+  const positions = [];
+  const count = team.members.length;
+  const radius = team.fireSize * 8 + 14;
+
+  team.members.forEach((member, i) => {
+    const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
+    const r = radius + (member.type === 'agent' ? 5 : 0) + (member.status === 'draft' ? 8 : 0);
+    positions.push({
+      ...member,
+      px: team.x + Math.cos(angle) * r,
+      py: team.y + Math.sin(angle) * r * 0.6, // squash for isometric feel
+      teamName: team.name
+    });
+  });
+
+  return positions;
+}
+
+// ─── DECORATION: workbenches, resource piles ───
+function drawWorkstation(x, y, type, time) {
+  if (type === 'woodpile') {
+    for (let i = 0; i < 3; i++) {
+      px(x + i * 2, y + 1, 2, 1, '#5a3820');
+      px(x + i * 2, y, 2, 1, '#6a4830');
+    }
+    px(x, y + 2, 6, 1, '#4a2818');
+  } else if (type === 'barrel') {
+    px(x, y, 3, 3, '#5a4030');
+    px(x, y, 3, 1, '#6a5040');
+    px(x + 1, y + 1, 1, 1, '#7a6050');
+  } else if (type === 'crates') {
+    px(x, y, 2, 2, '#6a5830');
+    px(x + 2, y + 1, 2, 2, '#5a4820');
+    px(x + 1, y - 1, 2, 2, '#7a6840');
+  } else if (type === 'torch') {
+    px(x, y, 1, 3, '#4a3020');
+    const flicker = Math.sin(time * 7) * 0.5;
+    px(x + flicker, y - 2, 1, 1, '#f0a030');
+    px(x + flicker, y - 1, 1, 1, '#f06020');
+  }
+}
+
+// ─── DECORATIONS per campfire ───
+const decorations = [
+  // Payments - big camp with lots of infrastructure
+  { team: 0, type: 'woodpile', ox: -30, oy: 15 },
+  { team: 0, type: 'barrel', ox: 25, oy: 18 },
+  { team: 0, type: 'crates', ox: -25, oy: -12 },
+  { team: 0, type: 'torch', ox: -18, oy: -20 },
+  { team: 0, type: 'torch', ox: 20, oy: -18 },
+  // Platform
+  { team: 1, type: 'crates', ox: -20, oy: 12 },
+  { team: 1, type: 'torch', ox: 15, oy: -14 },
+  // Growth
+  { team: 2, type: 'barrel', ox: 18, oy: 10 },
+  { team: 2, type: 'woodpile', ox: -22, oy: 8 },
+  // Infra - small, minimal
+  { team: 3, type: 'crates', ox: -15, oy: 8 },
+];
+
+// ─── HOVER DETECTION ───
+let allSprites = [];
+let hoveredSprite = null;
+
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  hoveredSprite = null;
+  for (const sprite of allSprites) {
+    const sx = sprite.px * PIXEL_SCALE;
+    const sy = sprite.py * PIXEL_SCALE;
+    const dist = Math.hypot(mx - sx, my - sy);
+    if (dist < 20) {
+      hoveredSprite = sprite;
+      break;
+    }
+  }
+
+  if (hoveredSprite) {
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX + 16) + 'px';
+    tooltip.style.top = (e.clientY - 10) + 'px';
+
+    const typeLabel = hoveredSprite.type === 'agent'
+      ? `⚙ Agent · owned by ${hoveredSprite.owner}`
+      : `◆ ${hoveredSprite.status}`;
+
+    tooltip.innerHTML = `
+      <div class="tt-name" style="color:${hoveredSprite.color}">${hoveredSprite.name}</div>
+      <div class="tt-role">${typeLabel} · ${hoveredSprite.teamName}</div>
+      <div class="tt-detail">${hoveredSprite.file}</div>
+    `;
+  } else {
+    tooltip.style.display = 'none';
+  }
+});
+
+// ─── MAIN RENDER LOOP ───
+function render(timestamp) {
+  const time = timestamp / 1000;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // ground fill
+  ctx.fillStyle = GROUND_COLOR;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // grass patches
+  for (const g of grassMap) {
+    px(g.x, g.y, g.size, g.size, g.color);
+  }
+
+  // paths between campfires
+  drawPath(teams[0].x, teams[0].y, teams[1].x, teams[1].y);
+  drawPath(teams[0].x, teams[0].y, teams[3].x, teams[3].y);
+  drawPath(teams[1].x, teams[1].y, teams[2].x, teams[2].y);
+  drawPath(teams[2].x, teams[2].y, teams[3].x, teams[3].y);
+
+  // trees (behind everything)
+  const sortedTrees = [...trees].sort((a, b) => a.y - b.y);
+  for (const tree of sortedTrees) {
+    if (tree.y < 120) drawTree(tree, time);
+  }
+
+  // collect all sprites for sorting
+  allSprites = [];
+  for (const team of teams) {
+    allSprites.push(...getMemberPositions(team));
+  }
+
+  // sort everything by y for depth
+  const renderOrder = [];
+
+  // add campfires to render order
+  for (const team of teams) {
+    renderOrder.push({ type: 'fire', data: team, y: team.y });
+  }
+
+  // add decorations
+  for (const dec of decorations) {
+    const team = teams[dec.team];
+    renderOrder.push({
+      type: 'decoration',
+      data: dec,
+      x: team.x + dec.ox,
+      y: team.y + dec.oy
+    });
+  }
+
+  // add sprites
+  for (const sprite of allSprites) {
+    renderOrder.push({ type: 'sprite', data: sprite, y: sprite.py });
+  }
+
+  // sort by y
+  renderOrder.sort((a, b) => a.y - b.y);
+
+  // render in order
+  for (const item of renderOrder) {
+    if (item.type === 'fire') {
+      drawCampfire(item.data.x, item.data.y, item.data.fireSize, item.data.color, time);
+      drawTeamLabel(item.data.x, item.data.y, item.data.name, item.data.fireSize);
+    } else if (item.type === 'decoration') {
+      drawWorkstation(item.x, item.y, item.data.type, time);
+    } else if (item.type === 'sprite') {
+      const s = item.data;
+      if (s.type === 'agent') {
+        drawGolemSprite(s.px, s.py, s.color, s.task, time);
+      } else {
+        drawHumanSprite(s.px, s.py, s.color, s.status, s.task, time, s.name);
+      }
+    }
+  }
+
+  // trees in front
+  for (const tree of sortedTrees) {
+    if (tree.y >= 120) drawTree(tree, time);
+  }
+
+  // vignette
+  ctx.save();
+  const vignette = ctx.createRadialGradient(
+    canvas.width / 2, canvas.height / 2, canvas.width * 0.3,
+    canvas.width / 2, canvas.height / 2, canvas.width * 0.7
+  );
+  vignette.addColorStop(0, 'transparent');
+  vignette.addColorStop(1, '#0a0e0a88');
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+
+  requestAnimationFrame(render);
+}
+
+requestAnimationFrame(render);
+</script>
+</body>
+</html>
