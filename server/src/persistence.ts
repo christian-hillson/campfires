@@ -105,6 +105,18 @@ export class Persistence {
       CREATE INDEX IF NOT EXISTS idx_users_email
         ON users(email);
     `);
+
+    // Migrations for parentUserId (idempotent)
+    try {
+      this.db.exec(`ALTER TABLE users ADD COLUMN parentUserId TEXT`);
+    } catch {
+      // Column already exists
+    }
+    try {
+      this.db.exec(`ALTER TABLE activity_log ADD COLUMN parentUserId TEXT`);
+    } catch {
+      // Column already exists
+    }
   }
 
   // ============================================
@@ -200,7 +212,7 @@ export class Persistence {
 
   getTeamMembers(teamId: string): User[] {
     return this.db.prepare(`
-      SELECT userId, email, displayName, avatarColor, teamId, orgId, type, createdAt
+      SELECT userId, email, displayName, avatarColor, teamId, orgId, type, parentUserId, createdAt
       FROM users WHERE teamId = ?
     `).all(teamId) as User[];
   }
@@ -241,35 +253,38 @@ export class Persistence {
       teamId: '',
       orgId: '',
       type,
+      parentUserId: null,
       createdAt,
     };
   }
 
   getUser(userId: string): User | null {
     const row = this.db.prepare(`
-      SELECT userId, email, displayName, avatarColor, teamId, orgId, type, createdAt
+      SELECT userId, email, displayName, avatarColor, teamId, orgId, type, parentUserId, createdAt
       FROM users WHERE userId = ?
-    `).get(userId) as (User & { teamId: string | null; orgId: string | null }) | undefined;
+    `).get(userId) as (User & { teamId: string | null; orgId: string | null; parentUserId: string | null }) | undefined;
 
     if (!row) return null;
     return {
       ...row,
       teamId: row.teamId || '',
       orgId: row.orgId || '',
+      parentUserId: row.parentUserId || null,
     };
   }
 
   getUserByEmail(email: string): (User & { passwordHash: string }) | null {
     const row = this.db.prepare(`
-      SELECT userId, email, passwordHash, displayName, avatarColor, teamId, orgId, type, createdAt
+      SELECT userId, email, passwordHash, displayName, avatarColor, teamId, orgId, type, parentUserId, createdAt
       FROM users WHERE email = ?
-    `).get(email) as (User & { passwordHash: string; teamId: string | null; orgId: string | null }) | undefined;
+    `).get(email) as (User & { passwordHash: string; teamId: string | null; orgId: string | null; parentUserId: string | null }) | undefined;
 
     if (!row) return null;
     return {
       ...row,
       teamId: row.teamId || '',
       orgId: row.orgId || '',
+      parentUserId: row.parentUserId || null,
     };
   }
 
@@ -278,6 +293,35 @@ export class Persistence {
       UPDATE users SET teamId = ?, orgId = ?
       WHERE userId = ?
     `).run(teamId, orgId, userId);
+  }
+
+  createAgentUser(
+    parentUserId: string,
+    displayName: string,
+    teamId: string,
+    orgId: string,
+  ): User {
+    const userId = uuidv4();
+    const email = `agent-${userId}@campfires.local`;
+    const avatarColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
+    const createdAt = new Date().toISOString();
+
+    this.db.prepare(`
+      INSERT INTO users (userId, email, passwordHash, displayName, avatarColor, teamId, orgId, type, parentUserId, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(userId, email, '', displayName, avatarColor, teamId, orgId, 'agent', parentUserId, createdAt);
+
+    return {
+      userId,
+      email,
+      displayName,
+      avatarColor,
+      teamId,
+      orgId,
+      type: 'agent',
+      parentUserId,
+      createdAt,
+    };
   }
 
   // ============================================
@@ -290,13 +334,14 @@ export class Persistence {
     const metadata = event.metadata ? JSON.stringify(event.metadata) : null;
 
     this.db.prepare(`
-      INSERT INTO activity_log (id, timestamp, userId, userType, teamId, type, file, branch, message, metadata)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO activity_log (id, timestamp, userId, userType, parentUserId, teamId, type, file, branch, message, metadata)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       timestamp,
       event.userId,
       event.userType,
+      event.parentUserId,
       event.teamId,
       event.type,
       event.file,
@@ -310,6 +355,7 @@ export class Persistence {
       timestamp,
       userId: event.userId,
       userType: event.userType,
+      parentUserId: event.parentUserId,
       teamId: event.teamId,
       type: event.type,
       file: event.file,
@@ -330,7 +376,7 @@ export class Persistence {
     const { since, limit = 100, types } = options;
 
     let query = `
-      SELECT id, timestamp, userId, userType, teamId, type, file, branch, message, metadata
+      SELECT id, timestamp, userId, userType, parentUserId, teamId, type, file, branch, message, metadata
       FROM activity_log
       WHERE teamId = ?
     `;
@@ -354,6 +400,7 @@ export class Persistence {
       timestamp: string;
       userId: string;
       userType: UserType;
+      parentUserId: string | null;
       teamId: string;
       type: ActivityEventType;
       file: string | null;
@@ -364,13 +411,14 @@ export class Persistence {
 
     return rows.map((row) => ({
       ...row,
+      parentUserId: row.parentUserId || null,
       metadata: row.metadata ? JSON.parse(row.metadata) : null,
     }));
   }
 
   getActivityEventsSince(since: string, orgId?: string): ActivityEvent[] {
     let query = `
-      SELECT al.id, al.timestamp, al.userId, al.userType, al.teamId, al.type, al.file, al.branch, al.message, al.metadata
+      SELECT al.id, al.timestamp, al.userId, al.userType, al.parentUserId, al.teamId, al.type, al.file, al.branch, al.message, al.metadata
       FROM activity_log al
     `;
     const params: string[] = [since];
@@ -389,6 +437,7 @@ export class Persistence {
       timestamp: string;
       userId: string;
       userType: UserType;
+      parentUserId: string | null;
       teamId: string;
       type: ActivityEventType;
       file: string | null;
@@ -399,6 +448,7 @@ export class Persistence {
 
     return rows.map((row) => ({
       ...row,
+      parentUserId: row.parentUserId || null,
       metadata: row.metadata ? JSON.parse(row.metadata) : null,
     }));
   }

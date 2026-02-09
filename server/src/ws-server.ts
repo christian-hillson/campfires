@@ -163,6 +163,7 @@ function setupActivityLogging(
             db.appendActivityEvent({
               userId: activityEvent.userId,
               userType: activityEvent.userType,
+              parentUserId: activityEvent.parentUserId ?? null,
               teamId: activityEvent.teamId,
               type: activityEvent.type,
               file: activityEvent.file,
