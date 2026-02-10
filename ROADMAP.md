@@ -39,9 +39,30 @@ AI-summarized org-wide view for non-dev stakeholders.
 | Shared: `oneLiner` on Summary | Done | — | Added to types + persistence for compact card display |
 | Server: read endpoints opened for Reel | Done | — | `GET /orgs/:id`, `/orgs/:id/teams`, `/teams/:id/members` use optional auth |
 
-## Sprint 4: Campfires IDE (VS Code Extension)
+## Sprint 4: Reel Map View — RPG-Style Graphical Interface
 
-Deprioritized — CLI + Reel cover the core workflows. Revisit after Sprint 3.
+2D pixel-art map view as an alternative rendering mode for PMs and non-dev stakeholders. Same data pipeline, same endpoints, no new backend — just a canvas-based rendering layer on top of the existing Reel.
+
+**Core concept:** Each team is a campfire on the map. Fire size/intensity reflects activity level. Human users are small sprites with task animations (smithing, scribing, mining, chopping). Agent sprites are visually distinct (blockier, glowing eyes) and color-matched to their human owner. Status maps to animation: active = working, idle = sitting with zzz, draft = inside tent, offline = absent.
+
+**Tech approach:** HTML5 canvas with pixel-art rendering, small sprite sheet (5-6 states), campfire animation with 3 intensity levels. Feed/Map toggle in the Reel UI. Phaser.js optional if zoom/scroll needed later.
+
+| Feature | Status | Owner | Notes |
+|---------|--------|-------|-------|
+| Reel: Feed/Map toggle | Not started | — | Switch between text feed and canvas map |
+| Map: canvas renderer + campfire sprites | Not started | — | 3 intensity levels based on team activity |
+| Map: human user sprites + animations | Not started | — | 5-6 states: working, idle/zzz, draft/tent, offline/absent |
+| Map: agent/golem sprites | Not started | — | Visually distinct, color-matched to parent user |
+| Map: environmental art | Not started | — | Woodpiles, barrels, torches, trees, paths between campfires |
+| Map: zoomed-out org view | Not started | — | All campfires visible, AI summary one-liners overlay |
+| Map: click-in team detail | Not started | — | Individual sprites, current file/function on hover |
+| Mockup: `campfires-map-mockup.html` | Done | — | Visual direction established |
+
+**Deferred from Sprint 4:** Zoom/scroll interaction, ambient display mode (TV in office), sprite customization, day/night cycle.
+
+## Sprint 5: Campfires IDE (VS Code Extension)
+
+Deprioritized — CLI + Reel cover the core workflows. Revisit after Map View.
 
 | Feature | Status | Owner | Notes |
 |---------|--------|-------|-------|
@@ -54,7 +75,7 @@ Deprioritized — CLI + Reel cover the core workflows. Revisit after Sprint 3.
 | Extension: idle detection | Scaffolded | — | 5-min timer |
 | Extension: git watcher | Scaffolded | — | Commits + branch switches |
 
-## Sprint 5: Polish
+## Sprint 6: Polish
 
 Iterate based on dogfooding. No fixed feature list — driven by real usage.
 
@@ -62,7 +83,6 @@ Iterate based on dogfooding. No fixed feature list — driven by real usage.
 
 These are explicitly deferred. Don't build them yet.
 
-- PM dashboard (Reel covers this for now)
 - Co-editing / shared cursors (not the differentiator)
 - AI merge/conflict detection (needs mature activity log)
 - Self-hosted / enterprise (cloud-first)
@@ -71,6 +91,10 @@ These are explicitly deferred. Don't build them yet.
 - Graphical TUI for CLI
 - Interactive CLI commands
 - Agent identity config (naming, colors)
+- Map View: zoom/scroll interaction (add if needed, Phaser.js)
+- Map View: ambient display mode (TV in the office)
+- Map View: sprite customization
+- Map View: day/night cycle
 
 ## How to Use This Doc
 
