@@ -38,7 +38,9 @@ All packages import types from `@campfires/shared`. If you change `shared/src/ty
 | Build server | `npm run build:server` |
 | Build CLI | `npm run build:cli` |
 | Run server (dev) | `npm run dev:server` |
-| Run CLI (dev) | `npm run dev:cli -- watch` |
+| Run CLI (dev) | `npm run dev:cli -- watch` (or `npx tsx cli/src/index.ts watch` from repo root) |
+| Run CLI with agent | `npx tsx cli/src/index.ts watch --agent` (force agent mode) |
+| Run CLI without agent | `npx tsx cli/src/index.ts watch --no-agent` |
 | Run extension | Open `extension/` in VS Code, press F5 (launch config included) |
 | Run reel (dev) | `cd reel && npm run dev` |
 
@@ -74,6 +76,9 @@ These are non-negotiable across all packages:
 | New WebSocket behavior | `server/src/ws-server.ts` |
 | New sidebar UI | `extension/src/campfire-panel.ts` |
 | New editor decoration | `extension/src/decorations.ts` |
+| Agent detection signals | `cli/src/agent-detect.ts` |
+| Git hook install/uninstall | `cli/src/git-hooks.ts` |
+| Agent API endpoints | `server/src/api.ts` (`POST /api/agents`, `POST /api/agents/activity`) |
 | AI summarization changes | `server/src/summarizer.ts` |
 | Reel UI components | `reel/components/` |
 

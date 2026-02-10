@@ -29,8 +29,8 @@ Terminal-native awareness for Claude Code and terminal workflows.
 |---------|--------|-------|-------|
 | CLI: entry point + auth | Done | — | `cli/src/index.ts`, `cli/src/auth.ts` |
 | CLI: three-tier terminal renderer | Done | — | `cli/src/renderer.ts`, ANSI + alt screen buffer |
-| CLI: agent activity via git hooks | Not started | — | `post-commit`, `post-checkout` |
-| CLI: filesystem watcher for agent saves | Not started | — | Attributes saves to active agent session |
+| CLI: agent activity via git hooks | Done | — | `post-commit`, `post-checkout` in `.git/hooks/`, config in `.git/campfires.json` |
+| CLI: filesystem watcher for agent saves | Done | — | Routes file saves through agent identity when agent is active |
 
 ## Sprint 3: Campfires Reel (Web App)
 
