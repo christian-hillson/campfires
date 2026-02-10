@@ -1,0 +1,259 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-card: #1c2128;
+  --border: #30363d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --accent: #f0883e;
+  --accent-dim: #d18616;
+  --green: #3fb950;
+  --blue: #58a6ff;
+  --radius: 8px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+#app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+/* Header */
+.reel-header {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.reel-header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.reel-header .mission {
+  color: var(--text-secondary);
+  font-size: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Team Cards */
+.team-cards {
+  display: grid;
+  gap: 16px;
+}
+
+.team-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.team-card:hover {
+  border-color: var(--accent-dim);
+  background: var(--bg-secondary);
+}
+
+.team-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.team-card-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.team-card-header .event-count {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.team-card .one-liner {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.team-card .updated-at {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.team-card.empty {
+  opacity: 0.6;
+}
+
+.team-card.empty .one-liner {
+  font-style: italic;
+}
+
+/* Detail View */
+.detail-view {
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.back-button {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13px;
+  margin-bottom: 24px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.back-button:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+.detail-header {
+  margin-bottom: 24px;
+}
+
+.detail-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.detail-header .description {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.detail-section {
+  margin-bottom: 24px;
+}
+
+.detail-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.summary-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.member-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.member-chip {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.member-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.member-type {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.activity-list {
+  list-style: none;
+}
+
+.activity-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  display: flex;
+  gap: 12px;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-type {
+  color: var(--accent);
+  font-weight: 500;
+  min-width: 100px;
+}
+
+.activity-message {
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.activity-time {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Loading / Error States */
+.loading {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 60px 0;
+  font-size: 16px;
+}
+
+.error {
+  text-align: center;
+  color: #f85149;
+  padding: 60px 0;
+  font-size: 16px;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px 0;
+  font-style: italic;
+}

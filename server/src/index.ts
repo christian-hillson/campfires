@@ -4,6 +4,7 @@ import http from 'http';
 import { router } from './api.js';
 import { createWebSocketServer } from './ws-server.js';
 import { getPersistence } from './persistence.js';
+import { Summarizer } from './summarizer.js';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const DB_PATH = process.env.DB_PATH || './campfires.db';
@@ -37,6 +38,9 @@ const server = http.createServer(app);
 // Create WebSocket server
 const wss = createWebSocketServer(server);
 
+// Create summarizer
+const summarizer = new Summarizer();
+
 // Start server
 server.listen(PORT, () => {
   console.log(`
@@ -50,11 +54,16 @@ server.listen(PORT, () => {
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
   `);
+
+  // Start summarizer and run initial tick
+  summarizer.start();
+  summarizer.runOnce();
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down...');
+  summarizer.stop();
   wss.close();
   server.close(() => {
     getPersistence().close();
@@ -64,6 +73,7 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
   console.log('SIGINT received, shutting down...');
+  summarizer.stop();
   wss.close();
   server.close(() => {
     getPersistence().close();

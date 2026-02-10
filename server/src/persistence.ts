@@ -117,6 +117,12 @@ export class Persistence {
     } catch {
       // Column already exists
     }
+    // Migration for oneLiner on summaries
+    try {
+      this.db.exec(`ALTER TABLE summaries ADD COLUMN oneLiner TEXT DEFAULT ''`);
+    } catch {
+      // Column already exists
+    }
   }
 
   // ============================================
@@ -200,6 +206,13 @@ export class Persistence {
       SELECT teamId, orgId, name, description, inviteCode, createdAt
       FROM teams WHERE orgId = ?
     `).all(orgId) as Team[];
+  }
+
+  getAllTeams(): Team[] {
+    return this.db.prepare(`
+      SELECT teamId, orgId, name, description, inviteCode, createdAt
+      FROM teams
+    `).all() as Team[];
   }
 
   getTeamWithMembers(teamId: string): TeamWithMembers | null {
@@ -463,24 +476,25 @@ export class Persistence {
     periodStart: string,
     periodEnd: string,
     content: string,
+    oneLiner: string,
     eventCount: number
   ): Summary {
     const id = uuidv4();
     const createdAt = new Date().toISOString();
 
     this.db.prepare(`
-      INSERT INTO summaries (id, orgId, teamId, periodStart, periodEnd, content, eventCount, createdAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, orgId, teamId, periodStart, periodEnd, content, eventCount, createdAt);
+      INSERT INTO summaries (id, orgId, teamId, periodStart, periodEnd, content, oneLiner, eventCount, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, orgId, teamId, periodStart, periodEnd, content, oneLiner, eventCount, createdAt);
 
-    return { id, orgId, teamId, periodStart, periodEnd, content, eventCount, createdAt };
+    return { id, orgId, teamId, periodStart, periodEnd, content, oneLiner, eventCount, createdAt };
   }
 
   getSummaries(orgId: string, options: { since?: string; limit?: number } = {}): Summary[] {
     const { since, limit = 50 } = options;
 
     let query = `
-      SELECT id, orgId, teamId, periodStart, periodEnd, content, eventCount, createdAt
+      SELECT id, orgId, teamId, periodStart, periodEnd, content, oneLiner, eventCount, createdAt
       FROM summaries
       WHERE orgId = ?
     `;

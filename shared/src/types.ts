@@ -97,6 +97,7 @@ export interface Summary {
   periodStart: string; // ISO timestamp
   periodEnd: string; // ISO timestamp
   content: string;
+  oneLiner: string;
   eventCount: number;
   createdAt: string; // ISO timestamp
 }
@@ -231,6 +232,10 @@ export const CONFIG = {
 
   // Reel summarization interval
   SUMMARIZATION_INTERVAL: 15 * 60 * 1000, // 15 minutes
+
+  // SSE stream intervals
+  SSE_POLL_INTERVAL: 30 * 1000, // 30 seconds
+  SSE_PING_INTERVAL: 15 * 1000, // 15 seconds
 
   // Activity feed rolling window
   ACTIVITY_FEED_MAX_EVENTS: 500,
