@@ -17,6 +17,14 @@
   --green: #3fb950;
   --blue: #58a6ff;
   --radius: 8px;
+
+  /* Map-specific */
+  --map-bg: #0a0e0a;
+  --map-border: #1a2a1a;
+  --map-text: #c8d0b8;
+  --map-text-dim: #5a6a4a;
+  --map-text-muted: #7a8a6a;
+  --map-panel: #0d120dee;
 }
 
 body {
@@ -25,15 +33,125 @@ body {
   color: var(--text-primary);
   line-height: 1.5;
   min-height: 100vh;
+  overflow: hidden;
 }
 
 #app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* ============================================ */
+/* App Header (shared Feed/Map)                 */
+/* ============================================ */
+
+.reel-app-header {
+  width: 100%;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0d120d;
+  border-bottom: 2px solid var(--map-border);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-logo {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+
+.header-org-name {
+  font-family: 'Silkscreen', monospace;
+  font-size: 12px;
+  color: #8a9878;
+  border-left: 1px solid #2a3a2a;
+  padding-left: 12px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: 'Silkscreen', monospace;
+  font-size: 10px;
+  color: var(--map-text-dim);
+}
+
+.header-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.header-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 4px #4ade8088;
+  display: inline-block;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--map-border);
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.view-toggle button {
+  font-family: 'Silkscreen', monospace;
+  font-size: 9px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--map-text-dim);
+  transition: all 0.2s;
+}
+
+.view-toggle button.active {
+  background: #2a4a2a;
+  color: #a0d890;
+}
+
+/* ============================================ */
+/* Content area                                 */
+/* ============================================ */
+
+.reel-content {
+  flex: 1;
+  overflow-y: auto;
   max-width: 960px;
   margin: 0 auto;
   padding: 32px 16px;
+  width: 100%;
 }
 
-/* Header */
+.reel-content.map-mode {
+  max-width: none;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ============================================ */
+/* Feed Header (inside feed content)            */
+/* ============================================ */
+
 .reel-header {
   text-align: center;
   margin-bottom: 40px;
@@ -256,4 +374,139 @@ body {
   color: var(--text-muted);
   padding: 40px 0;
   font-style: italic;
+}
+
+/* ============================================ */
+/* Map View                                     */
+/* ============================================ */
+
+.map-canvas-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: var(--map-bg);
+}
+
+.map-canvas-container canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  cursor: crosshair;
+}
+
+.map-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: #111a11ee;
+  border: 1px solid #2a4a2a;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: 'Silkscreen', monospace;
+  font-size: 10px;
+  color: var(--map-text);
+  display: none;
+  z-index: 20;
+  max-width: 220px;
+  box-shadow: 0 4px 12px #00000088;
+}
+
+.map-tooltip .tt-name {
+  color: #f0f0e0;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.map-tooltip .tt-role {
+  color: var(--accent);
+  font-size: 9px;
+  margin-bottom: 6px;
+}
+
+.map-tooltip .tt-detail {
+  color: var(--map-text-muted);
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+.map-legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: var(--map-panel);
+  border: 1px solid var(--map-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-family: 'Silkscreen', monospace;
+  font-size: 9px;
+  z-index: 10;
+}
+
+.map-legend-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: var(--map-text-dim);
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--map-text-muted);
+}
+
+.map-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.map-summary-bar {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: var(--map-panel);
+  border: 1px solid var(--map-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  max-width: 300px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: 'Silkscreen', monospace;
+}
+
+.map-summary-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+
+.map-summary-line {
+  font-size: 9px;
+  color: var(--map-text-muted);
+  line-height: 1.5;
+  display: flex;
+  gap: 6px;
+}
+
+.map-summary-line .team-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.map-summary-line strong {
+  color: #d0c0a0;
 }
