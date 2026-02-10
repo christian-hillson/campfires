@@ -183,6 +183,25 @@ function setupActivityLogging(
   console.log(`Activity logging set up for ${docName}`);
 }
 
+// Get awareness states for a team
+export function getTeamAwareness(teamId: string): AwarenessState[] {
+  const docName = `campfire:${teamId}`;
+  const doc = docs.get(docName) as (Y.Doc & { awareness?: { getStates(): Map<number, AwarenessState> } }) | undefined;
+
+  if (!doc?.awareness) {
+    return [];
+  }
+
+  const states: AwarenessState[] = [];
+  doc.awareness.getStates().forEach((state) => {
+    if (state && state.userId) {
+      states.push(state as AwarenessState);
+    }
+  });
+
+  return states;
+}
+
 // Get connected clients for a team
 export function getConnectedClients(wss: WebSocketServer, teamId: string): AuthenticatedWebSocket[] {
   const clients: AuthenticatedWebSocket[] = [];
