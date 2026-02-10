@@ -2,24 +2,16 @@
 
 Current status as of the latest update to this file. Update this doc when work starts, finishes, or plans change.
 
-## Sprint 1: Campfires IDE (VS Code Extension)
+## Sprint 1: Core Server + Shared Types
 
-The minimum to see each other and start dogfooding.
+The foundation everything else builds on.
 
 | Feature | Status | Owner | Notes |
 |---------|--------|-------|-------|
-| Server: WebSocket + Yjs rooms | Scaffolded | — | `server/src/ws-server.ts` |
-| Server: REST API (auth, teams, summaries) | Scaffolded | — | `server/src/api.ts`, `server/src/auth.ts` |
-| Server: SQLite persistence | Scaffolded | — | `server/src/persistence.ts` |
-| Shared types | Scaffolded | — | `shared/src/types.ts` |
-| Extension: activation + auth flow | Scaffolded | — | `extension/src/extension.ts` |
-| Extension: awareness provider | Scaffolded | — | Captures file, function, saves, commits |
-| Extension: campfire sidebar panel | Scaffolded | — | Webview with live activity stream |
-| Extension: editor decorations | Scaffolded | — | Gutter badges for teammate presence |
-| Extension: status bar | Scaffolded | — | Active count, draft toggle, connection |
-| Extension: draft mode | Scaffolded | — | One-toggle privacy |
-| Extension: idle detection | Scaffolded | — | 5-min timer |
-| Extension: git watcher | Scaffolded | — | Commits + branch switches |
+| Server: WebSocket + Yjs rooms | Done | — | `server/src/ws-server.ts` |
+| Server: REST API (auth, teams, summaries) | Done | — | `server/src/api.ts`, `server/src/auth.ts` |
+| Server: SQLite persistence | Done | — | `server/src/persistence.ts` |
+| Shared types | Done | — | `shared/src/types.ts` |
 
 ## Sprint 2: Campfire Watch CLI
 
@@ -45,7 +37,22 @@ AI-summarized org-wide view for non-dev stakeholders.
 | Server: org context ingestion | Not started | — | Mission, roadmap, team descriptions |
 | Server: SSE for summary stream | Not started | — | `GET /orgs/:id/summaries/stream` |
 
-## Sprint 4: Polish
+## Sprint 4: Campfires IDE (VS Code Extension)
+
+Deprioritized — CLI + Reel cover the core workflows. Revisit after Sprint 3.
+
+| Feature | Status | Owner | Notes |
+|---------|--------|-------|-------|
+| Extension: activation + auth flow | Scaffolded | — | `extension/src/extension.ts` |
+| Extension: awareness provider | Scaffolded | — | Captures file, function, saves, commits |
+| Extension: campfire sidebar panel | Scaffolded | — | Webview with live activity stream |
+| Extension: editor decorations | Scaffolded | — | Gutter badges for teammate presence |
+| Extension: status bar | Scaffolded | — | Active count, draft toggle, connection |
+| Extension: draft mode | Scaffolded | — | One-toggle privacy |
+| Extension: idle detection | Scaffolded | — | 5-min timer |
+| Extension: git watcher | Scaffolded | — | Commits + branch switches |
+
+## Sprint 5: Polish
 
 Iterate based on dogfooding. No fixed feature list — driven by real usage.
 
