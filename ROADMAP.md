@@ -30,12 +30,14 @@ AI-summarized org-wide view for non-dev stakeholders.
 
 | Feature | Status | Owner | Notes |
 |---------|--------|-------|-------|
-| Reel: web app shell | Scaffolded | — | Vite + vanilla TS |
-| Reel: summary feed UI | Not started | — | Team cards, grouped by recency |
-| Reel: team detail drill-down | Not started | — | Project-level view, no raw file activity |
-| Server: AI summarization batch job | Scaffolded | — | `server/src/summarizer.ts`, Claude API |
-| Server: org context ingestion | Not started | — | Mission, roadmap, team descriptions |
-| Server: SSE for summary stream | Not started | — | `GET /orgs/:id/summaries/stream` |
+| Reel: web app shell | Done | — | Vite + vanilla TS, `reel/index.html`, `reel/src/main.ts` |
+| Reel: summary feed UI | Done | — | Team cards grouped by recency, SSE live updates, `reel/src/components/summary-feed.ts` |
+| Reel: team detail drill-down | Done | — | Members, full summary, recent activity, `reel/src/components/detail-view.ts` |
+| Server: AI summarization batch job | Done | — | Stubbed `generateSummary()` in `server/src/summarizer.ts`, pluggable for real Claude API |
+| Server: org context ingestion | Done | — | Mission, roadmap, team descriptions passed to summarizer |
+| Server: SSE for summary stream | Done | — | `GET /orgs/:id/summaries/stream`, intervals in CONFIG |
+| Shared: `oneLiner` on Summary | Done | — | Added to types + persistence for compact card display |
+| Server: read endpoints opened for Reel | Done | — | `GET /orgs/:id`, `/orgs/:id/teams`, `/teams/:id/members` use optional auth |
 
 ## Sprint 4: Campfires IDE (VS Code Extension)
 
