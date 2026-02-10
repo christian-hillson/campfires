@@ -20,3 +20,6 @@ Monorepo with five packages: server/, extension/, cli/, reel/, shared/
 - Extension webview is a renderer only — no Yjs state in the webview
 - Activity log is append-only, never update or delete rows
 - All throttling values are config constants, not hardcoded
+- Agent detection is auto (`.claude/` directory) with `--agent`/`--no-agent` overrides
+- Agent setup failure is non-fatal — CLI continues as human-only
+- Git hooks persist after CLI exit; they no-op when `.git/campfires.json` is absent
