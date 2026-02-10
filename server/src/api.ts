@@ -1,13 +1,14 @@
 import { Router, Request, Response } from 'express';
-import type {
-  SignupRequest,
-  LoginRequest,
-  CreateOrgRequest,
-  UpdateOrgRequest,
-  CreateTeamRequest,
-  JoinTeamRequest,
-  RegisterAgentRequest,
-  AgentActivityRequest,
+import {
+  CONFIG,
+  type SignupRequest,
+  type LoginRequest,
+  type CreateOrgRequest,
+  type UpdateOrgRequest,
+  type CreateTeamRequest,
+  type JoinTeamRequest,
+  type RegisterAgentRequest,
+  type AgentActivityRequest,
 } from '@campfires/shared';
 import { getPersistence } from './persistence.js';
 import {
@@ -110,7 +111,7 @@ router.post('/orgs', authMiddleware, (req: Request, res: Response) => {
   res.status(201).json(org);
 });
 
-router.get('/orgs/:id', authMiddleware, (req: Request, res: Response) => {
+router.get('/orgs/:id', optionalAuthMiddleware, (req: Request, res: Response) => {
   const { id } = req.params;
   const db = getPersistence();
 
@@ -138,7 +139,7 @@ router.put('/orgs/:id', authMiddleware, (req: Request, res: Response) => {
   res.json(org);
 });
 
-router.get('/orgs/:id/teams', authMiddleware, (req: Request, res: Response) => {
+router.get('/orgs/:id/teams', optionalAuthMiddleware, (req: Request, res: Response) => {
   const { id } = req.params;
   const db = getPersistence();
 
@@ -216,7 +217,7 @@ router.post('/teams/join', authMiddleware, (req: Request, res: Response) => {
   res.json({ team, user, token });
 });
 
-router.get('/teams/:id/members', authMiddleware, (req: Request, res: Response) => {
+router.get('/teams/:id/members', optionalAuthMiddleware, (req: Request, res: Response) => {
   const { id } = req.params;
   const db = getPersistence();
 
@@ -270,7 +271,7 @@ router.get('/orgs/:id/summaries/stream', optionalAuthMiddleware, (req: Request, 
   const summaries = db.getSummaries(id, { limit: 10 });
   res.write(`data: ${JSON.stringify({ type: 'initial', summaries })}\n\n`);
 
-  // Poll for new summaries every 30 seconds
+  // Poll for new summaries
   let lastCheck = new Date().toISOString();
   const interval = setInterval(() => {
     const newSummaries = db.getSummaries(id, { since: lastCheck });
@@ -278,12 +279,12 @@ router.get('/orgs/:id/summaries/stream', optionalAuthMiddleware, (req: Request, 
       res.write(`data: ${JSON.stringify({ type: 'update', summaries: newSummaries })}\n\n`);
       lastCheck = new Date().toISOString();
     }
-  }, 30000);
+  }, CONFIG.SSE_POLL_INTERVAL);
 
-  // Send keep-alive ping every 15 seconds
+  // Send keep-alive ping
   const pingInterval = setInterval(() => {
     res.write(': ping\n\n');
-  }, 15000);
+  }, CONFIG.SSE_PING_INTERVAL);
 
   // Clean up on close
   req.on('close', () => {
