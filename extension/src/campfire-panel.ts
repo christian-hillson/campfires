@@ -16,6 +16,7 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
     eventTypes: [],
     focusMode: false,
   };
+  private visitingTeamName: string | null = null;
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -42,6 +43,9 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
           break;
         case 'openFile':
           this.openFile(message.file);
+          break;
+        case 'leaveVisit':
+          vscode.commands.executeCommand('campfires.leaveVisit');
           break;
       }
     });
@@ -71,6 +75,16 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
     this.refresh();
   }
 
+  public setVisitMode(teamName: string): void {
+    this.visitingTeamName = teamName;
+    this.refresh();
+  }
+
+  public clearVisitMode(): void {
+    this.visitingTeamName = null;
+    this.refresh();
+  }
+
   private refresh(): void {
     if (!this.view) return;
 
@@ -85,6 +99,7 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
       currentUserName: this.currentUserName,
       userNames: Object.fromEntries(this.userNames),
       filterConfig: this.filterConfig,
+      visitingTeamName: this.visitingTeamName,
     });
   }
 
@@ -111,10 +126,10 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
       teammates.push(state);
     });
 
-    // Sort by status (active first, then idle, then draft)
+    // Sort by status (active first, then idle, then draft, visitor, offline)
     return teammates.sort((a, b) => {
-      const order = { active: 0, idle: 1, draft: 2, offline: 3 };
-      return order[a.status] - order[b.status];
+      const order: Record<string, number> = { active: 0, idle: 1, draft: 2, visitor: 3, offline: 4 };
+      return (order[a.status] ?? 4) - (order[b.status] ?? 4);
     });
   }
 
@@ -238,6 +253,28 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
     .status-active { background: #28a745; color: white; }
     .status-idle { background: #ffc107; color: black; }
     .status-draft { background: #6c757d; color: white; }
+    .status-visitor { background: #58a6ff; color: white; }
+
+    .visit-banner {
+      display: none;
+      background: var(--vscode-inputValidation-infoBackground, #063b49);
+      border: 1px solid var(--vscode-inputValidation-infoBorder, #007acc);
+      border-radius: 4px;
+      padding: 8px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+    .visit-banner.active { display: block; }
+    .visit-banner-text { margin-bottom: 6px; }
+    .visit-banner button {
+      background: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+      border: none;
+      padding: 4px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 11px;
+    }
 
     .event {
       padding: 8px;
@@ -309,6 +346,10 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
 </head>
 <body>
   <div id="app">
+    <div class="visit-banner" id="visit-banner">
+      <div class="visit-banner-text" id="visit-banner-text"></div>
+      <button onclick="leaveVisit()">Leave Visit</button>
+    </div>
     <div class="section">
       <div class="section-header">Team</div>
       <div id="teammates"></div>
@@ -324,6 +365,12 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
     const vscode = acquireVsCodeApi();
     let state = { teammates: [], events: [], currentUserId: '' };
 
+    function esc(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
     window.addEventListener('message', (event) => {
       const message = event.data;
       if (message.type === 'update') {
@@ -333,8 +380,24 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
     });
 
     function render() {
+      renderVisitBanner();
       renderTeammates();
       renderEvents();
+    }
+
+    function renderVisitBanner() {
+      const banner = document.getElementById('visit-banner');
+      const text = document.getElementById('visit-banner-text');
+      if (state.visitingTeamName) {
+        banner.classList.add('active');
+        text.textContent = 'Visiting: ' + state.visitingTeamName;
+      } else {
+        banner.classList.remove('active');
+      }
+    }
+
+    function leaveVisit() {
+      vscode.postMessage({ type: 'leaveVisit' });
     }
 
     function renderTeammates() {
@@ -347,12 +410,12 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
 
       container.innerHTML = state.teammates.map(t => \`
         <div class="teammate">
-          <div class="avatar" style="background: \${t.color}">\${t.displayName.charAt(0).toUpperCase()}</div>
+          <div class="avatar" style="background: \${esc(t.color)}">\${esc(t.displayName.charAt(0).toUpperCase())}</div>
           <div class="teammate-info">
-            <div class="teammate-name">\${t.displayName}</div>
-            <div class="teammate-location">\${t.currentFile || 'No file open'}\${t.currentFunction ? ' · ' + t.currentFunction : ''}</div>
+            <div class="teammate-name">\${esc(t.displayName)}</div>
+            <div class="teammate-location">\${esc(t.currentFile || 'No file open')}\${t.currentFunction ? ' · ' + esc(t.currentFunction) : ''}</div>
           </div>
-          <span class="status-badge status-\${t.status}">\${t.status}</span>
+          <span class="status-badge status-\${esc(t.status)}">\${esc(t.status)}</span>
         </div>
       \`).join('');
     }
@@ -366,17 +429,22 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
       }
 
       container.innerHTML = state.events.map(e => \`
-        <div class="event" onclick="openFile('\${e.file || ''}')" data-file="\${e.file || ''}">
+        <div class="event" data-file="\${esc(e.file || '')}">
           <div class="event-header">
-            <span class="event-user">\${getUserName(e.userId)}</span>
+            <span class="event-user">\${esc(getUserName(e.userId))}</span>
             <span class="event-time">\${formatTime(e.timestamp)}</span>
           </div>
           <div class="event-content">
-            <span class="event-type type-\${e.type}">\${formatEventType(e.type)}</span>
-            \${e.file || ''}\${e.message ? ' · ' + e.message : ''}
+            <span class="event-type type-\${esc(e.type)}">\${esc(formatEventType(e.type))}</span>
+            \${esc(e.file || '')}\${e.message ? ' · ' + esc(e.message) : ''}
           </div>
         </div>
       \`).join('');
+
+      // Bind click handlers safely (avoids inline JS injection via file names)
+      container.querySelectorAll('.event[data-file]').forEach(el => {
+        el.addEventListener('click', () => openFile(el.getAttribute('data-file')));
+      });
     }
 
     function getUserName(userId) {

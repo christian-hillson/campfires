@@ -27,6 +27,7 @@ const STATUS_EMOJI: Record<string, string> = {
   idle: '🟡',
   draft: '⚫',
   offline: '⚪',
+  visitor: '👁️',
 };
 
 // Activity type emoji map
@@ -124,8 +125,8 @@ function renderTier1(state: RenderState, width: number): string[] {
 // ============================================
 
 function sortMembers(members: MemberState[]): MemberState[] {
-  const order: Record<string, number> = { active: 0, idle: 1, draft: 2, offline: 3 };
-  return [...members].sort((a, b) => (order[a.status] ?? 3) - (order[b.status] ?? 3));
+  const order: Record<string, number> = { active: 0, idle: 1, draft: 2, visitor: 3, offline: 4 };
+  return [...members].sort((a, b) => (order[a.status] ?? 4) - (order[b.status] ?? 4));
 }
 
 function renderMember(member: MemberState, width: number, isNested: boolean): string {
@@ -149,7 +150,11 @@ function renderTier2(state: RenderState, width: number): string[] {
   const { tier2 } = state;
 
   lines.push('');
-  lines.push(BOLD + '🏕️  ' + tier2.teamName + ' Campfire' + RESET);
+  if (tier2.visitingTeamName) {
+    lines.push(BOLD + CYAN + '👁️  Visiting: ' + tier2.visitingTeamName + ' Campfire' + RESET);
+  } else {
+    lines.push(BOLD + '🏕️  ' + tier2.teamName + ' Campfire' + RESET);
+  }
   lines.push(divider(width));
 
   const sorted = sortMembers(tier2.members);

@@ -1,10 +1,11 @@
-import type { User, ActivityEvent, Summary, Team } from '@campfires/shared';
+import type { User, ActivityEvent, Summary, Team, AwarenessState } from '@campfires/shared';
 
 export interface DetailContext {
   team: Team;
   orgId: string;
   serverUrl: string;
   onBack: () => void;
+  awareness?: AwarenessState[];
 }
 
 function timeAgo(isoString: string): string {
@@ -85,6 +86,56 @@ function renderSummaryContent(summaries: Summary[]): HTMLElement {
   content.textContent = latest.content;
   section.appendChild(content);
 
+  return section;
+}
+
+function renderPresence(awarenessStates: AwarenessState[]): HTMLElement {
+  const section = document.createElement('div');
+  section.className = 'detail-section';
+
+  const heading = document.createElement('h3');
+  heading.textContent = "Who's Here";
+  section.appendChild(heading);
+
+  const online = awarenessStates.filter((a) => a.status !== 'offline');
+  if (online.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = 'No one online right now.';
+    section.appendChild(empty);
+    return section;
+  }
+
+  const list = document.createElement('div');
+  list.className = 'member-list';
+
+  const statusColors: Record<string, string> = {
+    active: '#3fb950', idle: '#d29922', draft: '#6e7681', visitor: '#58a6ff',
+  };
+
+  for (const state of online) {
+    const chip = document.createElement('div');
+    chip.className = 'member-chip';
+
+    const dot = document.createElement('span');
+    dot.className = 'member-dot';
+    dot.style.backgroundColor = state.color;
+    chip.appendChild(dot);
+
+    const name = document.createElement('span');
+    name.textContent = state.displayName;
+    chip.appendChild(name);
+
+    const badge = document.createElement('span');
+    badge.className = 'member-type';
+    badge.style.color = statusColors[state.status] || '#6e7681';
+    badge.textContent = state.homeTeamId ? 'visitor' : state.status;
+    chip.appendChild(badge);
+
+    list.appendChild(chip);
+  }
+
+  section.appendChild(list);
   return section;
 }
 
@@ -184,6 +235,9 @@ export async function renderDetailView(container: HTMLElement, ctx: DetailContex
 
     loading.remove();
 
+    if (ctx.awareness && ctx.awareness.length > 0) {
+      view.appendChild(renderPresence(ctx.awareness));
+    }
     view.appendChild(renderMembers(members));
     view.appendChild(renderSummaryContent(teamSummaries));
     view.appendChild(renderActivityList(activity));

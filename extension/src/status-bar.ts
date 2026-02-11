@@ -6,6 +6,7 @@ export class StatusBar implements vscode.Disposable {
   private isDraftMode = false;
   private isConnected = false;
   private isReconnecting = false;
+  private visitingTeamName: string | null = null;
 
   constructor() {
     this.statusBarItem = vscode.window.createStatusBarItem(
@@ -52,6 +53,14 @@ export class StatusBar implements vscode.Disposable {
       return;
     }
 
+    if (this.visitingTeamName) {
+      const countText = this.activeCount === 1 ? '1 dev' : `${this.activeCount} devs`;
+      this.statusBarItem.text = `$(eye) Visiting: ${this.visitingTeamName} (${countText})`;
+      this.statusBarItem.tooltip = `Visiting ${this.visitingTeamName} campfire. Use "Campfires: Leave Visited Campfire" to return.`;
+      this.statusBarItem.backgroundColor = undefined;
+      return;
+    }
+
     const icon = this.isDraftMode ? '$(eye-closed)' : '$(flame)';
     const mode = this.isDraftMode ? 'Draft' : 'Live';
     const countText = this.activeCount === 1 ? '1 dev' : `${this.activeCount} devs`;
@@ -61,6 +70,16 @@ export class StatusBar implements vscode.Disposable {
       ? 'You are in draft mode. Your activity is hidden. Click to go live.'
       : `${this.activeCount} team member(s) online. Click to enter draft mode.`;
     this.statusBarItem.backgroundColor = undefined;
+  }
+
+  public setVisitMode(teamName: string): void {
+    this.visitingTeamName = teamName;
+    this.update();
+  }
+
+  public clearVisitMode(): void {
+    this.visitingTeamName = null;
+    this.update();
   }
 
   public showNotConnected(): void {

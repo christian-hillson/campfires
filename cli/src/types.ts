@@ -49,7 +49,7 @@ export interface MemberState {
   userId: string;
   displayName: string;
   type: 'human' | 'agent';
-  status: 'active' | 'idle' | 'draft' | 'offline';
+  status: 'active' | 'idle' | 'draft' | 'offline' | 'visitor';
   currentFile: string | null;
   currentFunction: string | null;
   color: string;
@@ -59,6 +59,7 @@ export interface MemberState {
 export interface Tier2State {
   teamName: string;
   members: MemberState[];
+  visitingTeamName?: string;
 }
 
 export interface ActivityDisplayEvent {

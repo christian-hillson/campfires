@@ -11,6 +11,7 @@ export interface MapViewConfig {
   members: Map<string, User[]>;
   awareness: Map<string, AwarenessState[]>;
   serverUrl: string;
+  onTeamSelect?: (teamId: string) => void;
 }
 
 export class MapView {
@@ -25,6 +26,8 @@ export class MapView {
   private allSprites: SpriteData[] = [];
   private environment!: EnvironmentData;
   private hoveredSprite: SpriteData | null = null;
+  private overlayElement: HTMLElement | null = null;
+  private overlayPollInterval: ReturnType<typeof setInterval> | null = null;
 
   // Map dimensions in pixel-art units
   private mapWidth = 500;
@@ -48,6 +51,7 @@ export class MapView {
       cancelAnimationFrame(this.animFrameId);
       this.animFrameId = null;
     }
+    this.hideOverlay();
   }
 
   updateSummaries(newSummaries: Summary[]): void {
@@ -94,6 +98,7 @@ export class MapView {
       <div class="map-legend-item"><div class="map-legend-swatch" style="background:#6088a0"></div> Human (idle)</div>
       <div class="map-legend-item"><div class="map-legend-swatch" style="background:#505858"></div> Human (draft)</div>
       <div class="map-legend-item"><div class="map-legend-swatch" style="background:#88a8c8; border: 1px solid #a0c0e0"></div> Agent / Golem</div>
+      <div class="map-legend-item"><div class="map-legend-swatch" style="background:#58a6ff"></div> Visitor</div>
       <div class="map-legend-item"><div class="map-legend-swatch" style="background:#f97316; border-radius:50%"></div> Campfire</div>
     `;
     wrapper.appendChild(legend);
@@ -208,6 +213,127 @@ export class MapView {
       this.hoveredSprite = null;
       this.tooltip.style.display = 'none';
     });
+
+    // Click to show campfire overlay
+    this.canvas.addEventListener('click', (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+
+      for (const cf of this.campfires) {
+        const cfx = cf.x * PIXEL_SCALE;
+        const cfy = cf.y * PIXEL_SCALE;
+        const hitRadius = (cf.fireSize * 6 + 10) * PIXEL_SCALE;
+        if (Math.hypot(mx - cfx, my - cfy) < hitRadius) {
+          this.showOverlay(cf);
+          return;
+        }
+      }
+
+      // Clicked empty space — close overlay
+      this.hideOverlay();
+    });
+  }
+
+  private showOverlay(campfire: CampfirePosition): void {
+    this.hideOverlay();
+
+    const wrapper = this.canvas.parentElement!;
+    const overlay = document.createElement('div');
+    overlay.className = 'map-campfire-overlay';
+    this.overlayElement = overlay;
+
+    // Loading state
+    overlay.innerHTML = `
+      <div class="overlay-header">
+        <span class="overlay-team-name" style="color:${campfire.color}">${campfire.name}</span>
+        <button class="overlay-close">\u2715</button>
+      </div>
+      <div class="overlay-body"><div class="loading">Loading...</div></div>
+    `;
+
+    overlay.querySelector('.overlay-close')!.addEventListener('click', () => this.hideOverlay());
+    wrapper.appendChild(overlay);
+
+    // Fetch and populate
+    this.fetchOverlayData(campfire);
+
+    // Poll for fresh awareness every 10s while open
+    this.overlayPollInterval = setInterval(() => {
+      if (this.overlayElement) this.fetchOverlayData(campfire);
+    }, 10000);
+  }
+
+  private async fetchOverlayData(campfire: CampfirePosition): Promise<void> {
+    if (!this.overlayElement) return;
+
+    try {
+      const [membersRes, awarenessRes, summariesRes] = await Promise.all([
+        fetch(`${this.config.serverUrl}/api/teams/${campfire.teamId}/members`),
+        fetch(`${this.config.serverUrl}/api/teams/${campfire.teamId}/awareness`),
+        fetch(`${this.config.serverUrl}/api/orgs/${this.config.org.orgId}/summaries`),
+      ]);
+
+      const members: User[] = membersRes.ok ? await membersRes.json() : [];
+      const awareness: AwarenessState[] = awarenessRes.ok ? await awarenessRes.json() : [];
+      const allSummaries: Summary[] = summariesRes.ok ? await summariesRes.json() : [];
+      const teamSummary = allSummaries
+        .filter((s) => s.teamId === campfire.teamId)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+
+      if (!this.overlayElement) return;
+
+      const team = this.config.teams.find((t) => t.teamId === campfire.teamId);
+      const onlineCount = awareness.filter((a) => a.status === 'active' || a.status === 'idle').length;
+
+      const statusBadge = (status: string) => {
+        const colors: Record<string, string> = {
+          active: '#3fb950', idle: '#d29922', draft: '#6e7681', visitor: '#58a6ff', offline: '#484f58',
+        };
+        return `<span class="overlay-status-dot" style="background:${colors[status] || '#484f58'}"></span>${status}`;
+      };
+
+      const body = this.overlayElement.querySelector('.overlay-body')!;
+      body.innerHTML = `
+        ${team?.description ? `<div class="overlay-description">${team.description}</div>` : ''}
+        ${teamSummary ? `<div class="overlay-summary">${teamSummary.oneLiner || 'Activity recorded'}</div>` : ''}
+        <div class="overlay-stats">${members.length} member${members.length !== 1 ? 's' : ''} \u00b7 ${onlineCount} online</div>
+        <div class="overlay-members">
+          ${members.map((m) => {
+            const a = awareness.find((s) => s.userId === m.userId);
+            const status = a?.status || 'offline';
+            return `<div class="overlay-member"><span class="overlay-member-dot" style="background:${m.avatarColor}"></span>${m.displayName} ${statusBadge(status)}</div>`;
+          }).join('')}
+          ${awareness.filter((a) => a.homeTeamId && !members.find((m) => m.userId === a.userId)).map((a) =>
+            `<div class="overlay-member"><span class="overlay-member-dot" style="background:${a.color}"></span>${a.displayName} ${statusBadge('visitor')}</div>`
+          ).join('')}
+        </div>
+        <div class="overlay-actions">
+          <button class="overlay-btn overlay-btn-detail">View Details</button>
+        </div>
+      `;
+
+      body.querySelector('.overlay-btn-detail')?.addEventListener('click', () => {
+        this.hideOverlay();
+        this.config.onTeamSelect?.(campfire.teamId);
+      });
+    } catch {
+      if (this.overlayElement) {
+        const body = this.overlayElement.querySelector('.overlay-body');
+        if (body) body.innerHTML = '<div class="error">Failed to load</div>';
+      }
+    }
+  }
+
+  private hideOverlay(): void {
+    if (this.overlayPollInterval) {
+      clearInterval(this.overlayPollInterval);
+      this.overlayPollInterval = null;
+    }
+    if (this.overlayElement) {
+      this.overlayElement.remove();
+      this.overlayElement = null;
+    }
   }
 
   private render = (timestamp: number): void => {

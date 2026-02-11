@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import type { AwarenessState, ActivityEvent, Org, Team, Summary, User } from '@campfires/shared';
 import { loadToken, decodeTokenPayload, interactiveLogin } from './auth.js';
 import { ApiClient } from './api.js';
-import { CampfireConnection } from './connection.js';
+import { CampfireConnection, type VisitorConfig } from './connection.js';
 import { GitWatcher, FileWatcher } from './watchers.js';
 import { enterAltScreen, exitAltScreen, render, renderImmediate } from './renderer.js';
 import { CLI_CONFIG } from './types.js';
@@ -16,12 +16,13 @@ import { installGitHooks, uninstallGitHooks } from './git-hooks.js';
 // Argument Parsing
 // ============================================
 
-function parseArgs(): { command: string; serverUrl: string; dir: string; agentMode: 'auto' | 'force' | 'off' } {
+function parseArgs(): { command: string; serverUrl: string; dir: string; agentMode: 'auto' | 'force' | 'off'; visitTeamId: string | null } {
   const args = process.argv.slice(2);
   let command = '';
   let serverUrl: string = CLI_CONFIG.DEFAULT_SERVER_URL;
   let dir: string = process.cwd();
   let agentMode: 'auto' | 'force' | 'off' = 'auto';
+  let visitTeamId: string | null = null;
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--server-url' && args[i + 1]) {
@@ -34,12 +35,15 @@ function parseArgs(): { command: string; serverUrl: string; dir: string; agentMo
       agentMode = 'force';
     } else if (args[i] === '--no-agent') {
       agentMode = 'off';
+    } else if (args[i] === '--visit' && args[i + 1]) {
+      visitTeamId = args[i + 1];
+      i++;
     } else if (!command) {
       command = args[i];
     }
   }
 
-  return { command, serverUrl, dir, agentMode };
+  return { command, serverUrl, dir, agentMode, visitTeamId };
 }
 
 // ============================================
@@ -80,6 +84,7 @@ function assembleRenderState(
   activityEvents: ActivityEvent[],
   connected: boolean,
   reconnecting: boolean,
+  visitingTeamName?: string,
 ): RenderState {
   // Build member list from awareness, falling back to REST members
   const memberMap = new Map<string, MemberState>();
@@ -137,6 +142,7 @@ function assembleRenderState(
     tier2: {
       teamName: team?.name || 'Unknown Team',
       members: Array.from(memberMap.values()),
+      ...(visitingTeamName ? { visitingTeamName } : {}),
     },
     tier3: {
       events: displayEvents,
@@ -151,10 +157,10 @@ function assembleRenderState(
 // ============================================
 
 async function main(): Promise<void> {
-  const { command, serverUrl, dir, agentMode } = parseArgs();
+  const { command, serverUrl, dir, agentMode, visitTeamId } = parseArgs();
 
   if (command !== 'watch') {
-    console.error('Usage: campfire watch [--server-url <url>] [--dir <path>] [--agent | --no-agent]');
+    console.error('Usage: campfire watch [--server-url <url>] [--dir <path>] [--agent | --no-agent] [--visit <teamId>]');
     process.exit(1);
   }
 
@@ -187,6 +193,28 @@ async function main(): Promise<void> {
 
   const team = teams.find((t) => t.teamId === teamId) || null;
 
+  // --- Visit mode validation ---
+  let visitTargetTeamId = teamId;
+  let visitTargetTeam = team;
+  let isVisitMode = false;
+
+  if (visitTeamId) {
+    const targetTeam = teams.find((t) => t.teamId === visitTeamId);
+    if (!targetTeam) {
+      console.error(`Team "${visitTeamId}" not found in your organization.`);
+      console.error('Available teams:');
+      for (const t of teams) {
+        if (t.teamId !== teamId) {
+          console.error(`  ${t.teamId} — ${t.name}`);
+        }
+      }
+      process.exit(1);
+    }
+    visitTargetTeamId = visitTeamId;
+    visitTargetTeam = targetTeam;
+    isVisitMode = true;
+  }
+
   // Find the current user's display name and color
   const currentUser = members.find((m) => m.userId === userId);
   const displayName = currentUser?.displayName || payload.email;
@@ -199,7 +227,7 @@ async function main(): Promise<void> {
   let agentDisplayName: string | null = null;
   let agentColor: string | null = null;
 
-  const shouldDetect = agentMode === 'force' || (agentMode === 'auto' && detectAgent(dir).detected);
+  const shouldDetect = !isVisitMode && (agentMode === 'force' || (agentMode === 'auto' && detectAgent(dir).detected));
 
   if (shouldDetect) {
     try {
@@ -231,19 +259,21 @@ async function main(): Promise<void> {
     const state = assembleRenderState(
       org,
       teams,
-      team,
+      visitTargetTeam,
       currentSummaries,
-      members,
+      isVisitMode ? [] : members,
       currentAwareness,
       currentActivity,
       isConnected,
       isReconnecting,
+      isVisitMode ? visitTargetTeam?.name : undefined,
     );
     render(state);
   }
 
   // --- Connect ---
-  const connection = new CampfireConnection(serverUrl, teamId, token, userId, displayName, color);
+  const visitorCfg: VisitorConfig | undefined = isVisitMode ? { homeTeamId: teamId } : undefined;
+  const connection = new CampfireConnection(serverUrl, visitTargetTeamId, token, userId, displayName, color, visitorCfg);
 
   // Configure agent identity on the connection
   if (agentActive && agentUserId && agentDisplayName && agentColor) {
@@ -275,57 +305,63 @@ async function main(): Promise<void> {
   enterAltScreen();
 
   const initialState = assembleRenderState(
-    org, teams, team, currentSummaries, members,
+    org, teams, visitTargetTeam, currentSummaries, isVisitMode ? [] : members,
     currentAwareness, currentActivity, isConnected, isReconnecting,
+    isVisitMode ? visitTargetTeam?.name : undefined,
   );
   renderImmediate(initialState);
 
   connection.connect();
 
-  // --- Watchers ---
-  const pushCommit = agentActive
-    ? (hash: string, message: string) => connection.pushAgentActivityEvent('commit', { message, metadata: { hash } })
-    : (hash: string, message: string) => connection.pushActivityEvent('commit', { message, metadata: { hash } });
+  // --- Watchers (skip in visit mode) ---
+  let gitWatcher: GitWatcher | null = null;
+  let fileWatcher: FileWatcher | null = null;
 
-  const pushBranchSwitch = agentActive
-    ? (branch: string) => {
-        connection.setCurrentBranch(branch);
-        connection.pushAgentActivityEvent('branch_switch', { branch });
+  if (!isVisitMode) {
+    const pushCommit = agentActive
+      ? (hash: string, message: string) => connection.pushAgentActivityEvent('commit', { message, metadata: { hash } })
+      : (hash: string, message: string) => connection.pushActivityEvent('commit', { message, metadata: { hash } });
+
+    const pushBranchSwitch = agentActive
+      ? (branch: string) => {
+          connection.setCurrentBranch(branch);
+          connection.pushAgentActivityEvent('branch_switch', { branch });
+        }
+      : (branch: string) => {
+          connection.setCurrentBranch(branch);
+          connection.pushActivityEvent('branch_switch', { branch });
+        };
+
+    const pushFileSave = agentActive
+      ? (relativePath: string) => connection.pushAgentActivityEvent('file_save', { file: relativePath })
+      : (relativePath: string) => connection.pushActivityEvent('file_save', { file: relativePath });
+
+    gitWatcher = new GitWatcher(dir, {
+      onCommit: pushCommit,
+      onBranchSwitch: pushBranchSwitch,
+    });
+
+    fileWatcher = new FileWatcher(dir, {
+      onFileSave: pushFileSave,
+    });
+
+    // Emit session_start once connected, then start watchers
+    let watchersStarted = false;
+    connection.onConnectionChange(async (state) => {
+      if (state.connected && !watchersStarted) {
+        watchersStarted = true;
+        connection.pushActivityEvent('session_start');
+        if (agentActive) {
+          connection.pushAgentActivityEvent('session_start');
+        }
+        await gitWatcher!.start();
+        // Set initial branch in awareness
+        const branch = gitWatcher!.getCurrentBranch();
+        if (branch) connection.setCurrentBranch(branch);
+        fileWatcher!.start();
       }
-    : (branch: string) => {
-        connection.setCurrentBranch(branch);
-        connection.pushActivityEvent('branch_switch', { branch });
-      };
-
-  const pushFileSave = agentActive
-    ? (relativePath: string) => connection.pushAgentActivityEvent('file_save', { file: relativePath })
-    : (relativePath: string) => connection.pushActivityEvent('file_save', { file: relativePath });
-
-  const gitWatcher = new GitWatcher(dir, {
-    onCommit: pushCommit,
-    onBranchSwitch: pushBranchSwitch,
-  });
-
-  const fileWatcher = new FileWatcher(dir, {
-    onFileSave: pushFileSave,
-  });
-
-  // Emit session_start once connected, then start watchers
-  let watchersStarted = false;
-  connection.onConnectionChange(async (state) => {
-    if (state.connected && !watchersStarted) {
-      watchersStarted = true;
-      connection.pushActivityEvent('session_start');
-      if (agentActive) {
-        connection.pushAgentActivityEvent('session_start');
-      }
-      await gitWatcher.start();
-      // Set initial branch in awareness
-      const branch = gitWatcher.getCurrentBranch();
-      if (branch) connection.setCurrentBranch(branch);
-      fileWatcher.start();
-    }
-  });
+    });
+  }
 
   // --- Summary polling ---
   const summaryInterval = setInterval(async () => {
@@ -347,8 +383,8 @@ async function main(): Promise<void> {
     if (agentActive) {
       connection.pushAgentActivityEvent('session_end');
     }
-    gitWatcher.dispose();
-    fileWatcher.dispose();
+    gitWatcher?.dispose();
+    fileWatcher?.dispose();
     clearInterval(summaryInterval);
     connection.disconnect();
     exitAltScreen();
