@@ -7,3 +7,4 @@ dist
 *.db-shm
 *.db-wal
 scripts/test-seed-sprint6.json
+coverage
