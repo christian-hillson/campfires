@@ -240,4 +240,8 @@ export const CONFIG = {
 
   // Activity feed rolling window
   ACTIVITY_FEED_MAX_EVENTS: 500,
+
+  // Auth rate limiting
+  AUTH_RATE_LIMIT_WINDOW_MS: 15 * 60 * 1000, // 15 minutes
+  AUTH_RATE_LIMIT_MAX_ATTEMPTS: 5,
 } as const;

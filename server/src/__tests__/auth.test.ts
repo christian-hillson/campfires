@@ -1,8 +1,10 @@
+import { createHash } from 'crypto';
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import type { Express } from 'express';
 import { createTestApp } from './setup.js';
 import { signupAndGetToken } from './helpers.js';
+import { getPersistence } from '../persistence.js';
 
 describe('Auth API', () => {
   let app: Express;
@@ -105,6 +107,63 @@ describe('Auth API', () => {
         .post('/api/auth/refresh')
         .set('Authorization', 'Bearer invalid-token')
         .expect(401);
+    });
+  });
+
+  describe('Rate limiting', () => {
+    it('returns 429 after exceeding max attempts on login', async () => {
+      await signupAndGetToken(app, { email: 'target@example.com', password: 'secret' });
+
+      // Signup used 1 of 5 allowed attempts. Make 4 more failed login attempts.
+      for (let i = 0; i < 4; i++) {
+        await request(app)
+          .post('/api/auth/login')
+          .send({ email: 'target@example.com', password: 'wrong' })
+          .expect(401);
+      }
+
+      // Next attempt should be rate limited (6th total auth request)
+      const res = await request(app)
+        .post('/api/auth/login')
+        .send({ email: 'target@example.com', password: 'wrong' })
+        .expect(429);
+
+      expect(res.body.error).toMatch(/too many/i);
+    });
+  });
+
+  describe('bcrypt migration', () => {
+    it('logs in with a legacy SHA256 hash and upgrades it to bcrypt', async () => {
+      const password = 'migrationtest';
+      const jwtSecret = 'campfires-dev-secret-change-in-production';
+      const legacyHash = createHash('sha256')
+        .update(password + jwtSecret)
+        .digest('hex');
+
+      // Directly insert a user with a legacy SHA256 hash
+      const db = getPersistence();
+      db.createUser('legacy@example.com', legacyHash, 'Legacy User', 'human');
+
+      // Login should succeed with old hash
+      const res = await request(app)
+        .post('/api/auth/login')
+        .send({ email: 'legacy@example.com', password })
+        .expect(200);
+
+      expect(res.body.token).toBeDefined();
+      expect(res.body.user.email).toBe('legacy@example.com');
+
+      // Verify the hash was upgraded to bcrypt (starts with $2a$ or $2b$)
+      const updatedUser = db.getUserByEmail('legacy@example.com');
+      expect(updatedUser!.passwordHash).toMatch(/^\$2[ab]\$/);
+
+      // Login should still work after migration
+      const res2 = await request(app)
+        .post('/api/auth/login')
+        .send({ email: 'legacy@example.com', password })
+        .expect(200);
+
+      expect(res2.body.token).toBeDefined();
     });
   });
 });
