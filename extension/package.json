@@ -34,6 +34,16 @@
         }
       ]
     },
+    "configuration": {
+      "title": "Campfires",
+      "properties": {
+        "campfires.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "URL of the Campfires server"
+        }
+      }
+    },
     "commands": [
       {
         "command": "campfires.toggleDraftMode",
@@ -58,8 +68,9 @@
     ]
   },
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc --watch",
+    "build": "node esbuild.js",
+    "build:tsc": "tsc --noEmit",
+    "watch": "node esbuild.js --watch",
     "package": "vsce package"
   },
   "dependencies": {
@@ -70,6 +81,7 @@
   "devDependencies": {
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^2.22.0",
+    "esbuild": "^0.20.0",
     "typescript": "^5.3.3"
   }
 }

@@ -6,8 +6,8 @@ import type {
   ActivityEvent,
   ActivityEventType,
   UserStatus,
-  CONFIG,
 } from '@campfires/shared';
+import { CONFIG } from '@campfires/shared';
 
 export interface ConnectionState {
   connected: boolean;
@@ -123,6 +123,7 @@ export class AwarenessProvider implements vscode.Disposable {
       userId: this.userId,
       displayName: this.displayName,
       type: 'human',
+      parentUserId: null,
       status: this.getStatus(),
       currentFile: this.isDraftMode ? null : this.currentFile,
       currentFunction: this.isDraftMode ? null : this.currentFunction,
@@ -196,6 +197,7 @@ export class AwarenessProvider implements vscode.Disposable {
       timestamp: new Date().toISOString(),
       userId: this.userId,
       userType: 'human',
+      parentUserId: null,
       teamId: this.teamId,
       type,
       file: options.file || null,
@@ -214,14 +216,14 @@ export class AwarenessProvider implements vscode.Disposable {
       case 'file_save': {
         if (!file) return true;
         const lastSave = this.lastFileSave.get(file) || 0;
-        if (now - lastSave < 5000) return false; // 5 second throttle
+        if (now - lastSave < CONFIG.THROTTLE_FILE_SAVE) return false;
         this.lastFileSave.set(file, now);
         return true;
       }
       case 'file_open': {
         if (!file) return true;
         const lastOpen = this.lastFileOpen.get(file) || 0;
-        if (now - lastOpen < 2000) return false; // 2 second throttle
+        if (now - lastOpen < CONFIG.THROTTLE_FILE_OPEN) return false;
         this.lastFileOpen.set(file, now);
         return true;
       }
