@@ -63,18 +63,18 @@ AI-summarized org-wide view for non-dev stakeholders.
 
 ## Sprint 5: Campfires IDE (VS Code Extension)
 
-Deprioritized — CLI + Reel cover the core workflows. Revisit after Map View.
+Build fixes, esbuild bundling, CSP, and configuration — extension compiles and runs.
 
 | Feature | Status | Owner | Notes |
 |---------|--------|-------|-------|
-| Extension: activation + auth flow | Scaffolded | — | `extension/src/extension.ts` |
-| Extension: awareness provider | Scaffolded | — | Captures file, function, saves, commits |
-| Extension: campfire sidebar panel | Scaffolded | — | Webview with live activity stream |
-| Extension: editor decorations | Scaffolded | — | Gutter badges for teammate presence |
-| Extension: status bar | Scaffolded | — | Active count, draft toggle, connection |
-| Extension: draft mode | Scaffolded | — | One-toggle privacy |
-| Extension: idle detection | Scaffolded | — | 5-min timer |
-| Extension: git watcher | Scaffolded | — | Commits + branch switches |
+| Extension: activation + auth flow | Done | — | `extension/src/extension.ts` |
+| Extension: awareness provider | Done | — | Captures file, function, saves, commits; uses CONFIG constants |
+| Extension: campfire sidebar panel | Done | — | Webview with CSP and live activity stream |
+| Extension: editor decorations | Done | — | Gutter badges for teammate presence |
+| Extension: status bar | Done | — | Active count, draft toggle, connection |
+| Extension: draft mode | Done | — | One-toggle privacy |
+| Extension: idle detection | Done | — | 5-min timer |
+| Extension: git watcher | Done | — | Commits + branch switches |
 
 ## Sprint 6: Polish
 
