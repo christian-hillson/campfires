@@ -80,6 +80,21 @@ Build fixes, esbuild bundling, CSP, and configuration — extension compiles and
 
 Iterate based on dogfooding. No fixed feature list — driven by real usage.
 
+## Sprint 7: Cross-Team Observation & Campfire Visits
+
+Let people see into other campfires and temporarily visit them. The Map View already shows all campfires in the org — this sprint makes them interactive. Click a campfire to see who's there, what they're working on (via AI summary), and optionally join as a visitor.
+
+**Core concept:** You're at your campfire and you see a big fire burning across the map. You walk over, peek in, see what's happening, and maybe sit down for a while. Visitors see the same awareness and activity feed as members but don't broadcast their own activity into that campfire.
+
+| Feature | Status | Owner | Notes |
+|---------|--------|-------|-------|
+| Map: click campfire to open detail overlay | Not started | — | Team name, AI summary, member list with statuses, headcount |
+| Reel: campfire detail as entry point for visits | Not started | — | Existing detail drill-down gains a "Visit this campfire" action |
+| Server: cross-team read access for visitors | Not started | — | Read-only awareness + activity for any team in your org |
+| Server: visitor presence (lightweight) | Not started | — | Visitors appear in awareness with a distinct `visitor` status, don't emit activity events |
+| Extension: visit campfire command | Not started | — | Switch sidebar to observe a different team's campfire temporarily |
+| CLI: visit campfire flag | Not started | — | `campfire watch --visit <teamId>` to observe another team |
+
 ## Not in MVP
 
 These are explicitly deferred. Don't build them yet.
