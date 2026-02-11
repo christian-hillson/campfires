@@ -73,7 +73,7 @@ export function drawHumanSprite(
     const qx = x + 4 + Math.sin(time * 5) * 0.8;
     px(ctx, qx, bY - 1, 1, 1, '#2a2020');
     if (Math.sin(time * 3) > 0) {
-      px(ctx, x + 3 + (time * 2 % 3), bY, 1, 1, '#3a3020');
+      px(ctx, x + 3 + ((time * 2) % 3), bY, 1, 1, '#3a3020');
     }
   } else if (task === 'mining') {
     const swingAngle = Math.sin(time * 5);

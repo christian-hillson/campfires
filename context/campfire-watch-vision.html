@@ -1,331 +1,468 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Campfires — Terminal Vision</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Campfires — Terminal Vision</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-  body {
-    background: #0a0a0a;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 32px;
-    font-family: 'JetBrains Mono', monospace;
-  }
+      body {
+        background: #0a0a0a;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 32px;
+        font-family: 'JetBrains Mono', monospace;
+      }
 
-  .terminal-frame {
-    width: 100%;
-    max-width: 960px;
-    background: #111;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 0 80px rgba(255, 120, 30, 0.08), 0 0 2px rgba(255,255,255,0.05);
-    border: 1px solid #222;
-  }
+      .terminal-frame {
+        width: 100%;
+        max-width: 960px;
+        background: #111;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow:
+          0 0 80px rgba(255, 120, 30, 0.08),
+          0 0 2px rgba(255, 255, 255, 0.05);
+        border: 1px solid #222;
+      }
 
-  .title-bar {
-    background: #1a1a1a;
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border-bottom: 1px solid #222;
-  }
+      .title-bar {
+        background: #1a1a1a;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid #222;
+      }
 
-  .title-bar .dot { width: 12px; height: 12px; border-radius: 50%; }
-  .dot.red { background: #ff5f57; }
-  .dot.yellow { background: #febc2e; }
-  .dot.green { background: #28c840; }
-  .title-bar .title {
-    flex: 1;
-    text-align: center;
-    color: #555;
-    font-size: 12px;
-    letter-spacing: 0.5px;
-  }
+      .title-bar .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+      .dot.red {
+        background: #ff5f57;
+      }
+      .dot.yellow {
+        background: #febc2e;
+      }
+      .dot.green {
+        background: #28c840;
+      }
+      .title-bar .title {
+        flex: 1;
+        text-align: center;
+        color: #555;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+      }
 
-  .split-container {
-    display: flex;
-    height: 520px;
-  }
+      .split-container {
+        display: flex;
+        height: 520px;
+      }
 
-  /* LEFT PANE — Claude Code */
-  .left-pane {
-    flex: 1.4;
-    padding: 16px 20px;
-    border-right: 1px solid #222;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    background: #0d0d0d;
-  }
+      /* LEFT PANE — Claude Code */
+      .left-pane {
+        flex: 1.4;
+        padding: 16px 20px;
+        border-right: 1px solid #222;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        background: #0d0d0d;
+      }
 
-  .left-pane .line {
-    font-size: 13px;
-    line-height: 1.7;
-    color: #888;
-    white-space: nowrap;
-  }
+      .left-pane .line {
+        font-size: 13px;
+        line-height: 1.7;
+        color: #888;
+        white-space: nowrap;
+      }
 
-  .left-pane .prompt {
-    color: #c084fc;
-    font-weight: 600;
-  }
+      .left-pane .prompt {
+        color: #c084fc;
+        font-weight: 600;
+      }
 
-  .left-pane .user-input {
-    color: #e2e2e2;
-    font-weight: 500;
-  }
+      .left-pane .user-input {
+        color: #e2e2e2;
+        font-weight: 500;
+      }
 
-  .left-pane .success {
-    color: #4ade80;
-  }
+      .left-pane .success {
+        color: #4ade80;
+      }
 
-  .left-pane .response {
-    color: #999;
-  }
+      .left-pane .response {
+        color: #999;
+      }
 
-  .left-pane .cursor-line {
-    color: #c084fc;
-    font-weight: 600;
-  }
+      .left-pane .cursor-line {
+        color: #c084fc;
+        font-weight: 600;
+      }
 
-  .cursor {
-    display: inline-block;
-    width: 8px;
-    height: 15px;
-    background: #c084fc;
-    vertical-align: middle;
-    animation: blink 1s step-end infinite;
-    margin-left: 2px;
-  }
+      .cursor {
+        display: inline-block;
+        width: 8px;
+        height: 15px;
+        background: #c084fc;
+        vertical-align: middle;
+        animation: blink 1s step-end infinite;
+        margin-left: 2px;
+      }
 
-  @keyframes blink {
-    50% { opacity: 0; }
-  }
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
 
-  /* RIGHT PANE — Campfire Watch */
-  .right-pane {
-    flex: 1;
-    padding: 16px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    background: #0f0f0f;
-  }
+      /* RIGHT PANE — Campfire Watch */
+      .right-pane {
+        flex: 1;
+        padding: 16px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        background: #0f0f0f;
+      }
 
-  /* Org Header */
-  .org-header {
-    margin-bottom: 8px;
-  }
+      /* Org Header */
+      .org-header {
+        margin-bottom: 8px;
+      }
 
-  .org-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #f8f8f8;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
+      .org-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #f8f8f8;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
 
-  .org-title .fire { color: #f97316; }
+      .org-title .fire {
+        color: #f97316;
+      }
 
-  .org-stats {
-    font-size: 11px;
-    color: #555;
-    margin-top: 2px;
-    padding-left: 22px;
-  }
+      .org-stats {
+        font-size: 11px;
+        color: #555;
+        margin-top: 2px;
+        padding-left: 22px;
+      }
 
-  .divider {
-    height: 1px;
-    background: linear-gradient(to right, #f9731622, #f9731608, transparent);
-    margin: 10px 0;
-  }
+      .divider {
+        height: 1px;
+        background: linear-gradient(to right, #f9731622, #f9731608, transparent);
+        margin: 10px 0;
+      }
 
-  /* AI Summaries */
-  .ai-summaries {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-bottom: 2px;
-  }
+      /* AI Summaries */
+      .ai-summaries {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-bottom: 2px;
+      }
 
-  .ai-line {
-    font-size: 11px;
-    line-height: 1.5;
-    color: #777;
-    display: flex;
-    gap: 6px;
-  }
+      .ai-line {
+        font-size: 11px;
+        line-height: 1.5;
+        color: #777;
+        display: flex;
+        gap: 6px;
+      }
 
-  .ai-line .icon { color: #f97316; flex-shrink: 0; }
-  .ai-line .team-name { color: #b0b0b0; font-weight: 600; }
+      .ai-line .icon {
+        color: #f97316;
+        flex-shrink: 0;
+      }
+      .ai-line .team-name {
+        color: #b0b0b0;
+        font-weight: 600;
+      }
 
-  /* Team Section */
-  .team-header {
-    font-size: 12px;
-    font-weight: 600;
-    color: #ddd;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
+      /* Team Section */
+      .team-header {
+        font-size: 12px;
+        font-weight: 600;
+        color: #ddd;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
 
-  .team-header .pin { color: #f97316; }
+      .team-header .pin {
+        color: #f97316;
+      }
 
-  .member {
-    font-size: 11px;
-    line-height: 1.8;
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    padding-left: 8px;
-  }
+      .member {
+        font-size: 11px;
+        line-height: 1.8;
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        padding-left: 8px;
+      }
 
-  .member .name {
-    color: #ccc;
-    font-weight: 500;
-    min-width: 80px;
-  }
+      .member .name {
+        color: #ccc;
+        font-weight: 500;
+        min-width: 80px;
+      }
 
-  .member .status { flex-shrink: 0; }
-  .member .detail {
-    color: #666;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+      .member .status {
+        flex-shrink: 0;
+      }
+      .member .detail {
+        color: #666;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-  .member .detail.active-detail { color: #888; }
-  .member .detail.idle-detail { color: #555; font-style: italic; }
-  .member .detail.draft-detail { color: #555; font-style: italic; }
+      .member .detail.active-detail {
+        color: #888;
+      }
+      .member .detail.idle-detail {
+        color: #555;
+        font-style: italic;
+      }
+      .member .detail.draft-detail {
+        color: #555;
+        font-style: italic;
+      }
 
-  .member.agent .name { color: #888; font-weight: 400; }
-  .member.agent .detail { color: #555; }
-  .member.agent { opacity: 0.8; }
+      .member.agent .name {
+        color: #888;
+        font-weight: 400;
+      }
+      .member.agent .detail {
+        color: #555;
+      }
+      .member.agent {
+        opacity: 0.8;
+      }
 
-  /* Activity Feed */
-  .feed {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    flex: 1;
-    overflow: hidden;
-  }
+      /* Activity Feed */
+      .feed {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        flex: 1;
+        overflow: hidden;
+      }
 
-  .event {
-    font-size: 11px;
-    line-height: 1.6;
-    color: #555;
-    display: flex;
-    gap: 6px;
-    white-space: nowrap;
-  }
+      .event {
+        font-size: 11px;
+        line-height: 1.6;
+        color: #555;
+        display: flex;
+        gap: 6px;
+        white-space: nowrap;
+      }
 
-  .event .time { color: #444; min-width: 38px; flex-shrink: 0; }
-  .event .who { color: #888; min-width: 72px; flex-shrink: 0; }
-  .event .what { color: #666; overflow: hidden; text-overflow: ellipsis; }
-  .event.commit-event .what { color: #f9a84c; }
+      .event .time {
+        color: #444;
+        min-width: 38px;
+        flex-shrink: 0;
+      }
+      .event .who {
+        color: #888;
+        min-width: 72px;
+        flex-shrink: 0;
+      }
+      .event .what {
+        color: #666;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .event.commit-event .what {
+        color: #f9a84c;
+      }
 
-  .label {
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: #333;
-    margin-bottom: 4px;
-    margin-top: 2px;
-  }
-</style>
-</head>
-<body>
-<div class="terminal-frame">
-  <div class="title-bar">
-    <div class="dot red"></div>
-    <div class="dot yellow"></div>
-    <div class="dot green"></div>
-    <div class="title">Terminal — campfires</div>
-  </div>
-  <div class="split-container">
+      .label {
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: #333;
+        margin-bottom: 4px;
+        margin-top: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="terminal-frame">
+      <div class="title-bar">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+        <div class="title">Terminal — campfires</div>
+      </div>
+      <div class="split-container">
+        <!-- LEFT: Claude Code -->
+        <div class="left-pane">
+          <div class="line">
+            <span class="prompt">$</span> <span class="user-input">claude</span>
+          </div>
+          <div class="line">&nbsp;</div>
+          <div class="line">
+            <span class="prompt">&gt;</span>
+            <span class="user-input">Build the Reel summarization pipeline.</span>
+          </div>
+          <div class="line">
+            <span class="response"> Read server/summarizer.ts and wire it</span>
+          </div>
+          <div class="line"><span class="response"> up to the batch job...</span></div>
+          <div class="line">&nbsp;</div>
+          <div class="line">
+            <span class="success">✓</span>
+            <span class="response">Reading server/summarizer.ts</span>
+          </div>
+          <div class="line">
+            <span class="success">✓</span> <span class="response">Created server/batch-job.ts</span>
+          </div>
+          <div class="line">
+            <span class="success">✓</span> <span class="response">Updated server/api.ts with</span>
+          </div>
+          <div class="line"><span class="response"> /summaries endpoint</span></div>
+          <div class="line">
+            <span class="success">✓</span> <span class="response">Running npm test...</span>
+          </div>
+          <div class="line">&nbsp;</div>
+          <div class="line"><span class="response">All tests passing. The summarization</span></div>
+          <div class="line"><span class="response">pipeline runs every 15 minutes and</span></div>
+          <div class="line"><span class="response">generates org-level summaries from</span></div>
+          <div class="line"><span class="response">the activity log.</span></div>
+          <div class="line">&nbsp;</div>
+          <div class="line"><span class="cursor-line">&gt;</span> <span class="cursor"></span></div>
+        </div>
 
-    <!-- LEFT: Claude Code -->
-    <div class="left-pane">
-      <div class="line"><span class="prompt">$</span> <span class="user-input">claude</span></div>
-      <div class="line">&nbsp;</div>
-      <div class="line"><span class="prompt">&gt;</span> <span class="user-input">Build the Reel summarization pipeline.</span></div>
-      <div class="line"><span class="response">  Read server/summarizer.ts and wire it</span></div>
-      <div class="line"><span class="response">  up to the batch job...</span></div>
-      <div class="line">&nbsp;</div>
-      <div class="line"><span class="success">✓</span> <span class="response">Reading server/summarizer.ts</span></div>
-      <div class="line"><span class="success">✓</span> <span class="response">Created server/batch-job.ts</span></div>
-      <div class="line"><span class="success">✓</span> <span class="response">Updated server/api.ts with</span></div>
-      <div class="line"><span class="response">  /summaries endpoint</span></div>
-      <div class="line"><span class="success">✓</span> <span class="response">Running npm test...</span></div>
-      <div class="line">&nbsp;</div>
-      <div class="line"><span class="response">All tests passing. The summarization</span></div>
-      <div class="line"><span class="response">pipeline runs every 15 minutes and</span></div>
-      <div class="line"><span class="response">generates org-level summaries from</span></div>
-      <div class="line"><span class="response">the activity log.</span></div>
-      <div class="line">&nbsp;</div>
-      <div class="line"><span class="cursor-line">&gt;</span> <span class="cursor"></span></div>
+        <!-- RIGHT: Campfire Watch -->
+        <div class="right-pane">
+          <!-- Org Header -->
+          <div class="org-header">
+            <div class="org-title"><span class="fire">🔥</span> Gusto Bonfire</div>
+            <div class="org-stats">3 campfires · 12 online</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- AI Summaries -->
+          <div class="ai-summaries">
+            <div class="ai-line">
+              <span class="icon">💬</span
+              ><span
+                ><span class="team-name">Payments:</span> Building Stripe webhook support for the Q1
+                billing migration</span
+              >
+            </div>
+            <div class="ai-line">
+              <span class="icon">💬</span
+              ><span
+                ><span class="team-name">Platform:</span> Migrating auth service to OAuth 2.1</span
+              >
+            </div>
+            <div class="ai-line">
+              <span class="icon">💬</span
+              ><span
+                ><span class="team-name">Growth:</span> A/B testing new onboarding flow for
+                SMBs</span
+              >
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Your Team -->
+          <div class="team-header"><span class="pin">🏕️</span> Payments Campfire</div>
+          <div class="member">
+            <span class="name">Christian</span><span class="status">🔥</span
+            ><span class="detail active-detail">server/api.ts → handleAuth()</span>
+          </div>
+          <div class="member agent">
+            <span class="name"> ↳ Agent-C1</span><span class="status">🤖</span
+            ><span class="detail active-detail">server/auth.ts → validateJWT()</span>
+          </div>
+          <div class="member agent">
+            <span class="name"> ↳ Agent-C2</span><span class="status">🤖</span
+            ><span class="detail active-detail">shared/types.ts → Summary</span>
+          </div>
+          <div class="member">
+            <span class="name">JC</span><span class="status">🔥</span
+            ><span class="detail active-detail">reel/app.ts → renderFeed()</span>
+          </div>
+          <div class="member agent">
+            <span class="name"> ↳ Agent-J1</span><span class="status">🤖</span
+            ><span class="detail active-detail">reel/components/team-card.ts</span>
+          </div>
+          <div class="member">
+            <span class="name">John</span><span class="status">💤</span
+            ><span class="detail idle-detail">idle 12m</span>
+          </div>
+          <div class="member agent">
+            <span class="name"> ↳ Agent-JO</span><span class="status">🤖</span
+            ><span class="detail active-detail">server/persistence.ts → migrate()</span>
+          </div>
+          <div class="member">
+            <span class="name">Maria</span><span class="status">🔒</span
+            ><span class="detail draft-detail">draft mode</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Activity Feed -->
+          <div class="label">Activity</div>
+          <div class="feed">
+            <div class="event">
+              <span class="time">14:32</span><span class="who">JC</span
+              ><span class="what">saved reel/app.ts</span>
+            </div>
+            <div class="event">
+              <span class="time">14:29</span><span class="who">JC</span
+              ><span class="what">switched to feat/reel</span>
+            </div>
+            <div class="event commit-event">
+              <span class="time">14:25</span><span class="who">Christian</span
+              ><span class="what">committed "add batch summarizer"</span>
+            </div>
+            <div class="event">
+              <span class="time">14:21</span><span class="who">JC</span
+              ><span class="what">opened reel/index.html</span>
+            </div>
+            <div class="event">
+              <span class="time">14:18</span><span class="who">Christian</span
+              ><span class="what">saved server/summarizer.ts</span>
+            </div>
+            <div class="event commit-event">
+              <span class="time">14:12</span><span class="who">John</span
+              ><span class="what">committed "fix currency rounding"</span>
+            </div>
+            <div class="event">
+              <span class="time">14:08</span><span class="who">JC</span
+              ><span class="what">saved server/persistence.ts</span>
+            </div>
+            <div class="event">
+              <span class="time">14:02</span><span class="who">Christian</span
+              ><span class="what">switched to feat/status-bar</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <!-- RIGHT: Campfire Watch -->
-    <div class="right-pane">
-
-      <!-- Org Header -->
-      <div class="org-header">
-        <div class="org-title"><span class="fire">🔥</span> Gusto Bonfire</div>
-        <div class="org-stats">3 campfires · 12 online</div>
-      </div>
-
-      <div class="divider"></div>
-
-      <!-- AI Summaries -->
-      <div class="ai-summaries">
-        <div class="ai-line"><span class="icon">💬</span><span><span class="team-name">Payments:</span> Building Stripe webhook support for the Q1 billing migration</span></div>
-        <div class="ai-line"><span class="icon">💬</span><span><span class="team-name">Platform:</span> Migrating auth service to OAuth 2.1</span></div>
-        <div class="ai-line"><span class="icon">💬</span><span><span class="team-name">Growth:</span> A/B testing new onboarding flow for SMBs</span></div>
-      </div>
-
-      <div class="divider"></div>
-
-      <!-- Your Team -->
-      <div class="team-header"><span class="pin">🏕️</span> Payments Campfire</div>
-      <div class="member"><span class="name">Christian</span><span class="status">🔥</span><span class="detail active-detail">server/api.ts → handleAuth()</span></div>
-      <div class="member agent"><span class="name">  ↳ Agent-C1</span><span class="status">🤖</span><span class="detail active-detail">server/auth.ts → validateJWT()</span></div>
-      <div class="member agent"><span class="name">  ↳ Agent-C2</span><span class="status">🤖</span><span class="detail active-detail">shared/types.ts → Summary</span></div>
-      <div class="member"><span class="name">JC</span><span class="status">🔥</span><span class="detail active-detail">reel/app.ts → renderFeed()</span></div>
-      <div class="member agent"><span class="name">  ↳ Agent-J1</span><span class="status">🤖</span><span class="detail active-detail">reel/components/team-card.ts</span></div>
-      <div class="member"><span class="name">John</span><span class="status">💤</span><span class="detail idle-detail">idle 12m</span></div>
-      <div class="member agent"><span class="name">  ↳ Agent-JO</span><span class="status">🤖</span><span class="detail active-detail">server/persistence.ts → migrate()</span></div>
-      <div class="member"><span class="name">Maria</span><span class="status">🔒</span><span class="detail draft-detail">draft mode</span></div>
-
-      <div class="divider"></div>
-
-      <!-- Activity Feed -->
-      <div class="label">Activity</div>
-      <div class="feed">
-        <div class="event"><span class="time">14:32</span><span class="who">JC</span><span class="what">saved reel/app.ts</span></div>
-        <div class="event"><span class="time">14:29</span><span class="who">JC</span><span class="what">switched to feat/reel</span></div>
-        <div class="event commit-event"><span class="time">14:25</span><span class="who">Christian</span><span class="what">committed "add batch summarizer"</span></div>
-        <div class="event"><span class="time">14:21</span><span class="who">JC</span><span class="what">opened reel/index.html</span></div>
-        <div class="event"><span class="time">14:18</span><span class="who">Christian</span><span class="what">saved server/summarizer.ts</span></div>
-        <div class="event commit-event"><span class="time">14:12</span><span class="who">John</span><span class="what">committed "fix currency rounding"</span></div>
-        <div class="event"><span class="time">14:08</span><span class="who">JC</span><span class="what">saved server/persistence.ts</span></div>
-        <div class="event"><span class="time">14:02</span><span class="who">Christian</span><span class="what">switched to feat/status-bar</span></div>
-      </div>
-
-    </div>
-  </div>
-</div>
-</body>
+  </body>
 </html>

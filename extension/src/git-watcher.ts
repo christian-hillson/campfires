@@ -84,7 +84,7 @@ export class GitWatcher implements vscode.Disposable {
     this.disposables.push(
       this.gitApi.onDidOpenRepository((repo) => {
         this.watchRepository(repo);
-      })
+      }),
     );
   }
 
@@ -99,7 +99,7 @@ export class GitWatcher implements vscode.Disposable {
     this.disposables.push(
       repo.onDidChangeState(() => {
         this.handleStateChange(repo);
-      })
+      }),
     );
   }
 

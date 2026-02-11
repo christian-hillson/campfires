@@ -17,24 +17,18 @@ export class IdleDetector implements vscode.Disposable {
 
   private setupListeners(): void {
     // Text document changes (typing)
-    this.disposables.push(
-      vscode.workspace.onDidChangeTextDocument(() => this.onActivity())
-    );
+    this.disposables.push(vscode.workspace.onDidChangeTextDocument(() => this.onActivity()));
 
     // Editor selection changes (cursor movement, scrolling)
-    this.disposables.push(
-      vscode.window.onDidChangeTextEditorSelection(() => this.onActivity())
-    );
+    this.disposables.push(vscode.window.onDidChangeTextEditorSelection(() => this.onActivity()));
 
     // Visible ranges change (scrolling)
     this.disposables.push(
-      vscode.window.onDidChangeTextEditorVisibleRanges(() => this.onActivity())
+      vscode.window.onDidChangeTextEditorVisibleRanges(() => this.onActivity()),
     );
 
     // Active editor changes (switching tabs)
-    this.disposables.push(
-      vscode.window.onDidChangeActiveTextEditor(() => this.onActivity())
-    );
+    this.disposables.push(vscode.window.onDidChangeActiveTextEditor(() => this.onActivity()));
 
     // Window focus
     this.disposables.push(
@@ -42,7 +36,7 @@ export class IdleDetector implements vscode.Disposable {
         if (state.focused) {
           this.onActivity();
         }
-      })
+      }),
     );
   }
 

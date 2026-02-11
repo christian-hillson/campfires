@@ -28,7 +28,7 @@ The product is three UIs powered by one data pipeline:
 - URL: `campfires.app/org/{orgId}`
 - AI-summarized feed grouped by team, sorted by recency
 - Summaries batch-generated every 15-30 min using Claude API + company context (mission, roadmap, team descriptions)
-- Translates raw dev activity into business language: *"The payments team is building Stripe webhook support — this is part of the Q1 billing migration"*
+- Translates raw dev activity into business language: _"The payments team is building Stripe webhook support — this is part of the Q1 billing migration"_
 - Click-through to team detail: who's active, hot modules, recent commits with messages, AI progress summary
 - **Never exposes raw file-level activity** — that stays in the IDE/CLI
 
@@ -56,11 +56,11 @@ CLI (campfire watch) ┘       (awareness + events)                           |
 
 ## Naming Hierarchy
 
-| Level | Name | Emoji | Example |
-|-------|------|-------|---------|
-| Org | **Bonfire** | fire | "Gusto Bonfire" |
-| Team | **Campfire** | camping | "Payments Campfire" |
-| Individual | **Flame** | sparkler | Single dev's activity |
+| Level      | Name         | Emoji    | Example               |
+| ---------- | ------------ | -------- | --------------------- |
+| Org        | **Bonfire**  | fire     | "Gusto Bonfire"       |
+| Team       | **Campfire** | camping  | "Payments Campfire"   |
+| Individual | **Flame**    | sparkler | Single dev's activity |
 
 ---
 
@@ -72,20 +72,20 @@ Agents (Claude Code, etc.) are first-class citizens with `type: 'agent'` and `pa
 
 ## Key Gaps (spec vs. built)
 
-| Spec feature | Status |
-|---|---|
-| Sidebar webview HTML/CSS | Not built |
-| Reel web app | Not started |
-| AI summarization (Claude API batch job) | Not started |
-| Agent registration + `parentUserId` | Data model missing `parentUserId` |
-| Agent REST endpoints (`/agents`, `/agents/activity`) | Not built |
-| Git hooks install (`post-commit`, `post-checkout`) | Not built |
-| Function detection via `DocumentSymbolProvider` | Stubbed |
-| SSE summary streaming | Stubbed |
-| Company context ingestion (mission/roadmap for Reel AI) | API exists, no UI |
-| Summary `oneLiner` field | Not in current data model |
-| Reel click-through detail page | Not started |
-| Filters (by person, directory, event type, focus mode) | Not built |
+| Spec feature                                            | Status                            |
+| ------------------------------------------------------- | --------------------------------- |
+| Sidebar webview HTML/CSS                                | Not built                         |
+| Reel web app                                            | Not started                       |
+| AI summarization (Claude API batch job)                 | Not started                       |
+| Agent registration + `parentUserId`                     | Data model missing `parentUserId` |
+| Agent REST endpoints (`/agents`, `/agents/activity`)    | Not built                         |
+| Git hooks install (`post-commit`, `post-checkout`)      | Not built                         |
+| Function detection via `DocumentSymbolProvider`         | Stubbed                           |
+| SSE summary streaming                                   | Stubbed                           |
+| Company context ingestion (mission/roadmap for Reel AI) | API exists, no UI                 |
+| Summary `oneLiner` field                                | Not in current data model         |
+| Reel click-through detail page                          | Not started                       |
+| Filters (by person, directory, event type, focus mode)  | Not built                         |
 
 ---
 
@@ -101,10 +101,10 @@ Agents (Claude Code, etc.) are first-class citizens with `type: 'agent'` and `pa
 
 ### Package status
 
-| Package | Files | Status |
-|---------|-------|--------|
-| **shared** | 2 | Complete — single source of truth for all types |
-| **server** | 5 | Functional — auth, REST, WebSocket, SQLite all working |
-| **extension** | 7 | Core working, webview UI not built |
-| **cli** | 7 | Connection + renderer + watchers working |
-| **reel** | 0 src | Not started |
+| Package       | Files | Status                                                 |
+| ------------- | ----- | ------------------------------------------------------ |
+| **shared**    | 2     | Complete — single source of truth for all types        |
+| **server**    | 5     | Functional — auth, REST, WebSocket, SQLite all working |
+| **extension** | 7     | Core working, webview UI not built                     |
+| **cli**       | 7     | Connection + renderer + watchers working               |
+| **reel**      | 0 src | Not started                                            |

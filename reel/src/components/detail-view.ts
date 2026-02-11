@@ -110,7 +110,10 @@ function renderPresence(awarenessStates: AwarenessState[]): HTMLElement {
   list.className = 'member-list';
 
   const statusColors: Record<string, string> = {
-    active: '#3fb950', idle: '#d29922', draft: '#6e7681', visitor: '#58a6ff',
+    active: '#3fb950',
+    idle: '#d29922',
+    draft: '#6e7681',
+    visitor: '#58a6ff',
   };
 
   for (const state of online) {

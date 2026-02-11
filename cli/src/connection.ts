@@ -110,7 +110,12 @@ export class CampfireConnection {
 
   pushActivityEvent(
     type: ActivityEventType,
-    options: { file?: string; branch?: string; message?: string; metadata?: Record<string, unknown> } = {},
+    options: {
+      file?: string;
+      branch?: string;
+      message?: string;
+      metadata?: Record<string, unknown>;
+    } = {},
   ): void {
     if (this.visitorConfig) return; // Visitors don't emit activity events
     if (!this.shouldEmitEvent(type, options.file)) return;
@@ -138,7 +143,12 @@ export class CampfireConnection {
 
   pushAgentActivityEvent(
     type: ActivityEventType,
-    options: { file?: string; branch?: string; message?: string; metadata?: Record<string, unknown> } = {},
+    options: {
+      file?: string;
+      branch?: string;
+      message?: string;
+      metadata?: Record<string, unknown>;
+    } = {},
   ): void {
     if (this.visitorConfig) return; // Visitors don't emit activity events
     if (!this.agentConfig) return;
@@ -214,9 +224,15 @@ export class CampfireConnection {
   }
 
   // Callback registration
-  onConnectionChange(cb: ConnectionCallback): void { this.connectionCallbacks.add(cb); }
-  onAwarenessChange(cb: AwarenessCallback): void { this.awarenessCallbacks.add(cb); }
-  onActivityChange(cb: ActivityCallback): void { this.activityCallbacks.add(cb); }
+  onConnectionChange(cb: ConnectionCallback): void {
+    this.connectionCallbacks.add(cb);
+  }
+  onAwarenessChange(cb: AwarenessCallback): void {
+    this.awarenessCallbacks.add(cb);
+  }
+  onActivityChange(cb: ActivityCallback): void {
+    this.activityCallbacks.add(cb);
+  }
 
   getAwarenessStates(): Map<number, AwarenessState> {
     if (!this.provider) return new Map();

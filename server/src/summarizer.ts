@@ -15,7 +15,7 @@ interface SummaryResult {
 export function generateSummary(
   events: ActivityEvent[],
   _orgContext: { mission: string; roadmap: string },
-  teamContext: { name: string; description: string }
+  teamContext: { name: string; description: string },
 ): SummaryResult {
   const commits = events.filter((e) => e.type === 'commit');
   const fileSaves = events.filter((e) => e.type === 'file_save');
@@ -108,7 +108,8 @@ export class Summarizer {
     const lastSummaryTime = db.getLatestSummaryTime(team.teamId);
     const since = lastSummaryTime || new Date(0).toISOString();
 
-    const events = db.getActivityEventsSince(since, team.orgId)
+    const events = db
+      .getActivityEventsSince(since, team.orgId)
       .filter((e) => e.teamId === team.teamId);
 
     if (events.length === 0) {
