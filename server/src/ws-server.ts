@@ -2,7 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import http from 'http';
 import { setupWSConnection, docs } from 'y-websocket/bin/utils';
 import * as Y from 'yjs';
-import type { ActivityEvent, AwarenessState, CONFIG } from '@campfires/shared';
+import type { ActivityEvent, AwarenessState } from '@campfires/shared';
 import { getPersistence } from './persistence.js';
 import { verifyToken } from './auth.js';
 
@@ -199,7 +199,7 @@ function setupActivityLogging(
 
     // Process added items
     event.changes.added.forEach((item) => {
-      if (item.content.type === Y.ContentAny) {
+      if (item.content instanceof Y.ContentAny) {
         const events = (item.content as Y.ContentAny).arr as ActivityEvent[];
         events.forEach((activityEvent) => {
           // Skip persisting events from visitors

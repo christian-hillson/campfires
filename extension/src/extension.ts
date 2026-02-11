@@ -9,7 +9,6 @@ import { CampfirePanel } from './campfire-panel';
 
 const SECRET_KEY_TOKEN = 'campfires.token';
 const SECRET_KEY_USER = 'campfires.user';
-const CONFIG_SERVER_URL = 'campfires.serverUrl';
 const DEFAULT_SERVER_URL = 'http://localhost:3000';
 
 let awarenessProvider: AwarenessProvider | null = null;

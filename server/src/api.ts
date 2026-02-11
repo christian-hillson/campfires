@@ -66,7 +66,7 @@ export function createRouter(): Router {
       }
 
       res.status(201).json(result);
-    } catch (_err) {
+    } catch {
       res.status(500).json({ error: 'Internal server error' });
     }
   });
@@ -88,7 +88,7 @@ export function createRouter(): Router {
       }
 
       res.json(result);
-    } catch (_err) {
+    } catch {
       res.status(500).json({ error: 'Internal server error' });
     }
   });
