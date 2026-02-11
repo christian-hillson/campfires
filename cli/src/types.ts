@@ -1,4 +1,4 @@
-import type { AwarenessState, ActivityEvent, Summary, Org, Team, User } from '@campfires/shared';
+import type { ActivityEvent, Summary } from '@campfires/shared';
 
 // ============================================
 // CLI Configuration Constants

@@ -10,7 +10,7 @@ import { enterAltScreen, exitAltScreen, render, renderImmediate } from './render
 import { CLI_CONFIG } from './types.js';
 import type { RenderState, MemberState, ActivityDisplayEvent, TokenPayload } from './types.js';
 import { detectAgent } from './agent-detect.js';
-import { installGitHooks, uninstallGitHooks } from './git-hooks.js';
+import { installGitHooks } from './git-hooks.js';
 
 // ============================================
 // Argument Parsing
