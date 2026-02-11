@@ -365,6 +365,12 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
     const vscode = acquireVsCodeApi();
     let state = { teammates: [], events: [], currentUserId: '' };
 
+    function esc(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
     window.addEventListener('message', (event) => {
       const message = event.data;
       if (message.type === 'update') {
@@ -404,12 +410,12 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
 
       container.innerHTML = state.teammates.map(t => \`
         <div class="teammate">
-          <div class="avatar" style="background: \${t.color}">\${t.displayName.charAt(0).toUpperCase()}</div>
+          <div class="avatar" style="background: \${esc(t.color)}">\${esc(t.displayName.charAt(0).toUpperCase())}</div>
           <div class="teammate-info">
-            <div class="teammate-name">\${t.displayName}</div>
-            <div class="teammate-location">\${t.currentFile || 'No file open'}\${t.currentFunction ? ' · ' + t.currentFunction : ''}</div>
+            <div class="teammate-name">\${esc(t.displayName)}</div>
+            <div class="teammate-location">\${esc(t.currentFile || 'No file open')}\${t.currentFunction ? ' · ' + esc(t.currentFunction) : ''}</div>
           </div>
-          <span class="status-badge status-\${t.status}">\${t.status}</span>
+          <span class="status-badge status-\${esc(t.status)}">\${esc(t.status)}</span>
         </div>
       \`).join('');
     }
@@ -423,17 +429,22 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
       }
 
       container.innerHTML = state.events.map(e => \`
-        <div class="event" onclick="openFile('\${e.file || ''}')" data-file="\${e.file || ''}">
+        <div class="event" data-file="\${esc(e.file || '')}">
           <div class="event-header">
-            <span class="event-user">\${getUserName(e.userId)}</span>
+            <span class="event-user">\${esc(getUserName(e.userId))}</span>
             <span class="event-time">\${formatTime(e.timestamp)}</span>
           </div>
           <div class="event-content">
-            <span class="event-type type-\${e.type}">\${formatEventType(e.type)}</span>
-            \${e.file || ''}\${e.message ? ' · ' + e.message : ''}
+            <span class="event-type type-\${esc(e.type)}">\${esc(formatEventType(e.type))}</span>
+            \${esc(e.file || '')}\${e.message ? ' · ' + esc(e.message) : ''}
           </div>
         </div>
       \`).join('');
+
+      // Bind click handlers safely (avoids inline JS injection via file names)
+      container.querySelectorAll('.event[data-file]').forEach(el => {
+        el.addEventListener('click', () => openFile(el.getAttribute('data-file')));
+      });
     }
 
     function getUserName(userId) {

@@ -23,6 +23,10 @@ function isRateLimited(userId: string, maxEventsPerSecond: number): boolean {
   let timestamps = userEventTimestamps.get(userId) || [];
   timestamps = timestamps.filter((ts) => ts > oneSecondAgo);
 
+  if (timestamps.length === 0) {
+    userEventTimestamps.delete(userId);
+  }
+
   if (timestamps.length >= maxEventsPerSecond) {
     return true;
   }
@@ -31,6 +35,20 @@ function isRateLimited(userId: string, maxEventsPerSecond: number): boolean {
   userEventTimestamps.set(userId, timestamps);
   return false;
 }
+
+// Prune stale rate-limit entries every 60 seconds
+setInterval(() => {
+  const now = Date.now();
+  const oneSecondAgo = now - 1000;
+  for (const [userId, timestamps] of userEventTimestamps) {
+    const recent = timestamps.filter((ts) => ts > oneSecondAgo);
+    if (recent.length === 0) {
+      userEventTimestamps.delete(userId);
+    } else {
+      userEventTimestamps.set(userId, recent);
+    }
+  }
+}, 60_000);
 
 // Track visitor userIds per room for activity filtering
 const roomVisitors: Map<string, Set<string>> = new Map();
@@ -70,6 +88,12 @@ export function createWebSocketServer(server: http.Server): WebSocketServer {
 
     // Verify user belongs to this team or same org
     if (payload.teamId !== teamId) {
+      // Must have an orgId to visit cross-team
+      if (!payload.orgId) {
+        socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+        socket.destroy();
+        return;
+      }
       // Check if same org
       const targetTeam = db.getTeam(teamId);
       if (!targetTeam || targetTeam.orgId !== payload.orgId) {
