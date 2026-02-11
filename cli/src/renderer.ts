@@ -1,4 +1,4 @@
-import type { RenderState, MemberState, ActivityDisplayEvent } from './types.js';
+import type { RenderState, MemberState } from './types.js';
 import { CLI_CONFIG } from './types.js';
 
 // ANSI escape codes
@@ -7,11 +7,9 @@ const RESET = `${ESC}[0m`;
 const BOLD = `${ESC}[1m`;
 const DIM = `${ESC}[2m`;
 const AMBER = `${ESC}[38;5;214m`;
-const GREEN = `${ESC}[32m`;
 const YELLOW = `${ESC}[33m`;
 const GRAY = `${ESC}[90m`;
 const CYAN = `${ESC}[36m`;
-const WHITE = `${ESC}[37m`;
 const RED = `${ESC}[31m`;
 
 // Alternate screen buffer
@@ -222,7 +220,7 @@ function renderTier3(state: RenderState, width: number): string[] {
 // Status Bar
 // ============================================
 
-function renderStatusBar(state: RenderState, width: number): string {
+function renderStatusBar(state: RenderState, _width: number): string {
   if (!state.connected && state.reconnecting) {
     return YELLOW + 'Reconnecting...' + RESET;
   }

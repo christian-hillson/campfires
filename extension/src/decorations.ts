@@ -66,7 +66,7 @@ export class DecorationManager implements vscode.Disposable {
     if (teammates.length === 0) return;
 
     // Create decorations for each teammate
-    teammates.forEach((teammate, index) => {
+    teammates.forEach((teammate, _index) => {
       const decorationType = this.getOrCreateDecorationType(teammate.color);
 
       // Add gutter decoration at line 0 (or where they are if we had line info)

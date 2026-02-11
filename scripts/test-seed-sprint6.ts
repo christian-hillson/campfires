@@ -165,7 +165,6 @@ async function main() {
   // We'll register an agent for Alice and push a few events
   console.log('  Seeding activity events...');
   for (let ti = 0; ti < createdTeams.length; ti++) {
-    const team = createdTeams[ti];
     const memberIdx = TEAMS[ti].members[0];
 
     // Push events via agent activity endpoint (simplest way without Yjs)
@@ -218,9 +217,6 @@ async function main() {
 
   console.log(`  Reel (browser):`);
   console.log(`    Open: http://localhost:5173/org/${org.orgId}\n`);
-
-  const aliceToken = tokens[0];
-  const carolToken = tokens[2];
 
   console.log(`  CLI — Alice watches her own campfire:`);
   console.log(`    node cli/dist/index.js watch --server-url ${SERVER_URL}\n`);
