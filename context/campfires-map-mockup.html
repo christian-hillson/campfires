@@ -563,7 +563,12 @@ function drawHumanSprite(x, y, color, status, task, time, name) {
   px(x, bY - 1, 1, 1, '#e0d8c8');
 
   // task-specific animations
-  if (task === 'smithing') {
+  if (task === 'walking') {
+    // walking — just the sprite with swinging arms, no workstation
+    const armSwing = Math.sin(time * 6) * 1.5;
+    px(x - 1, bY + armSwing, 1, 1, color); // left arm
+    px(x + 2, bY - armSwing, 1, 1, color); // right arm
+  } else if (task === 'smithing') {
     // arm with hammer
     const hammerUp = Math.sin(time * 6) > 0;
     px(x + 2, bY + (hammerUp ? -1 : 1), 1, 1, '#888'); // hammer head
@@ -673,6 +678,8 @@ function getMemberPositions(team) {
   const radius = team.fireSize * 8 + 14;
 
   team.members.forEach((member, i) => {
+    // skip members who are currently traveling
+    if (isTraveling(member.name)) return;
     const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
     const r = radius + (member.type === 'agent' ? 5 : 0) + (member.status === 'draft' ? 8 : 0);
     positions.push({
@@ -727,6 +734,111 @@ const decorations = [
   // Infra - small, minimal
   { team: 3, type: 'crates', ox: -15, oy: 8 },
 ];
+
+// ─── TRAVELERS (sprites moving between campfires) ───
+const travelers = [];
+const TRAVEL_DURATION = 8;   // seconds to walk between campfires
+const VISIT_DURATION = 25;   // seconds spent visiting
+const TRAVEL_INTERVAL = 35;  // seconds between new travelers
+let lastTravelTime = -10;    // start first travel soon
+
+function startTravel(time) {
+  // pick a random active human who isn't already traveling
+  const travelingNames = new Set(travelers.map(t => t.member.name));
+  const candidates = [];
+  teams.forEach((team, ti) => {
+    team.members.forEach(m => {
+      if (m.type === 'human' && m.status === 'active' && !travelingNames.has(m.name)) {
+        candidates.push({ teamIndex: ti, member: m });
+      }
+    });
+  });
+  if (candidates.length === 0) return;
+
+  const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+  // pick a different team to visit
+  const otherTeams = teams.map((_, i) => i).filter(i => i !== chosen.teamIndex);
+  const destIndex = otherTeams[Math.floor(Math.random() * otherTeams.length)];
+
+  travelers.push({
+    member: chosen.member,
+    sourceTeam: chosen.teamIndex,
+    destTeam: destIndex,
+    phase: 'going',    // 'going' | 'visiting' | 'returning'
+    startTime: time,
+    teamName: teams[destIndex].name
+  });
+}
+
+function updateTravelers(time) {
+  // maybe start a new traveler
+  if (time - lastTravelTime > TRAVEL_INTERVAL + Math.random() * 10) {
+    startTravel(time);
+    lastTravelTime = time;
+  }
+
+  // update existing travelers
+  for (let i = travelers.length - 1; i >= 0; i--) {
+    const t = travelers[i];
+    const elapsed = time - t.startTime;
+
+    if (t.phase === 'going') {
+      if (elapsed >= TRAVEL_DURATION) {
+        t.phase = 'visiting';
+        t.startTime = time;
+      }
+    } else if (t.phase === 'visiting') {
+      if (elapsed >= VISIT_DURATION) {
+        t.phase = 'returning';
+        t.startTime = time;
+      }
+    } else if (t.phase === 'returning') {
+      if (elapsed >= TRAVEL_DURATION) {
+        travelers.splice(i, 1); // journey complete
+      }
+    }
+  }
+}
+
+function getTravelerPosition(t, time) {
+  const src = teams[t.sourceTeam];
+  const dst = teams[t.destTeam];
+  const elapsed = time - t.startTime;
+
+  if (t.phase === 'going') {
+    const progress = Math.min(elapsed / TRAVEL_DURATION, 1);
+    // ease in-out
+    const ease = progress < 0.5
+      ? 2 * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+    return {
+      x: src.x + (dst.x - src.x) * ease + Math.sin(progress * 12) * 3,
+      y: src.y + (dst.y - src.y) * ease + Math.cos(progress * 8) * 2
+    };
+  } else if (t.phase === 'visiting') {
+    // sit near the destination campfire, offset slightly so they don't overlap members
+    const angle = Math.PI * 0.8 + (travelers.indexOf(t) * 0.4);
+    const radius = dst.fireSize * 8 + 22;
+    return {
+      x: dst.x + Math.cos(angle) * radius,
+      y: dst.y + Math.sin(angle) * radius * 0.6
+    };
+  } else {
+    // returning
+    const progress = Math.min(elapsed / TRAVEL_DURATION, 1);
+    const ease = progress < 0.5
+      ? 2 * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+    return {
+      x: dst.x + (src.x - dst.x) * ease + Math.sin(progress * 12) * 3,
+      y: dst.y + (src.y - dst.y) * ease + Math.cos(progress * 8) * 2
+    };
+  }
+}
+
+function isTraveling(memberName) {
+  return travelers.some(t => t.member.name === memberName);
+}
 
 // ─── HOVER DETECTION ───
 let allSprites = [];
@@ -793,10 +905,31 @@ function render(timestamp) {
     if (tree.y < 120) drawTree(tree, time);
   }
 
+  // update travelers
+  updateTravelers(time);
+
   // collect all sprites for sorting
   allSprites = [];
   for (const team of teams) {
     allSprites.push(...getMemberPositions(team));
+  }
+
+  // add traveler sprites
+  for (const t of travelers) {
+    const pos = getTravelerPosition(t, time);
+    const isWalking = t.phase !== 'visiting';
+    allSprites.push({
+      ...t.member,
+      px: pos.x,
+      py: pos.y,
+      teamName: t.phase === 'visiting'
+        ? `${teams[t.destTeam].name} (visiting)`
+        : teams[t.sourceTeam].name,
+      status: t.phase === 'visiting' ? 'idle' : 'active',
+      task: t.phase === 'visiting' ? 'sitting' : 'walking',
+      _isTraveler: true,
+      _phase: t.phase
+    });
   }
 
   // sort everything by y for depth
