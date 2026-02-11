@@ -41,21 +41,22 @@ AI-summarized org-wide view for non-dev stakeholders.
 
 ## Sprint 4: Reel Map View — RPG-Style Graphical Interface
 
-2D pixel-art map view as an alternative rendering mode for PMs and non-dev stakeholders. Same data pipeline, same endpoints, no new backend — just a canvas-based rendering layer on top of the existing Reel.
+2D pixel-art map view as an alternative rendering mode for PMs and non-dev stakeholders. Same data pipeline, same SSE stream, same access controls — canvas-based rendering layer on top of the existing Reel.
 
-**Core concept:** Each team is a campfire on the map. Fire size/intensity reflects activity level. Human users are small sprites with task animations (smithing, scribing, mining, chopping). Agent sprites are visually distinct (blockier, glowing eyes) and color-matched to their human owner. Status maps to animation: active = working, idle = sitting with zzz, draft = inside tent, offline = absent.
+**Core concept:** Each team is a campfire on the map. Fire size/intensity reflects activity level. Human users are small sprites with task animations (smithing, scribing, mining). Agent sprites are visually distinct (blockier, glowing eyes) and color-matched to their human owner. Status maps to animation: active = working, idle = sitting with zzz, draft = inside tent, offline = absent.
 
-**Tech approach:** HTML5 canvas with pixel-art rendering, small sprite sheet (5-6 states), campfire animation with 3 intensity levels. Feed/Map toggle in the Reel UI. Phaser.js optional if zoom/scroll needed later.
+**Tech approach:** Pure HTML5 canvas with pixel-art rendering, y-sorted depth, auto-layout. Feed/Map toggle in shared header. Awareness polling via REST endpoint every 10s.
 
 | Feature | Status | Owner | Notes |
 |---------|--------|-------|-------|
-| Reel: Feed/Map toggle | Not started | — | Switch between text feed and canvas map |
-| Map: canvas renderer + campfire sprites | Not started | — | 3 intensity levels based on team activity |
-| Map: human user sprites + animations | Not started | — | 5-6 states: working, idle/zzz, draft/tent, offline/absent |
-| Map: agent/golem sprites | Not started | — | Visually distinct, color-matched to parent user |
-| Map: environmental art | Not started | — | Woodpiles, barrels, torches, trees, paths between campfires |
-| Map: zoomed-out org view | Not started | — | All campfires visible, AI summary one-liners overlay |
-| Map: click-in team detail | Not started | — | Individual sprites, current file/function on hover |
+| Reel: Feed/Map toggle + shared header | Done | — | `reel/src/components/header.ts`, Press Start 2P + Silkscreen fonts |
+| Map: canvas renderer + campfire sprites | Done | — | 3 intensity levels from event count, `reel/src/map/renderer.ts` |
+| Map: human user sprites + animations | Done | — | smithing/scribing/mining + idle/zzz + draft/tent, `reel/src/map/sprites.ts` |
+| Map: agent/golem sprites | Done | — | Blockier body, glowing eyes, color-matched to parent, `reel/src/map/sprites.ts` |
+| Map: environmental art | Done | — | Trees, paths, woodpiles, barrels, crates, torches, `reel/src/map/environment.ts` |
+| Map: zoomed-out org view | Done | — | Elliptical auto-layout, AI summary one-liners overlay, `reel/src/map/layout.ts` |
+| Map: hover tooltips | Done | — | Hit detection on sprites, name/role/team/file tooltip |
+| Server: awareness REST endpoint | Done | — | `GET /api/teams/:id/awareness`, reads Yjs awareness state |
 | Mockup: `campfires-map-mockup.html` | Done | — | Visual direction established |
 
 **Deferred from Sprint 4:** Zoom/scroll interaction, ambient display mode (TV in office), sprite customization, day/night cycle.

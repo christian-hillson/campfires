@@ -11,6 +11,7 @@ import {
   type AgentActivityRequest,
 } from '@campfires/shared';
 import { getPersistence } from './persistence.js';
+import { getTeamAwareness } from './ws-server.js';
 import {
   signup,
   login,
@@ -229,6 +230,20 @@ router.get('/teams/:id/members', optionalAuthMiddleware, (req: Request, res: Res
 
   const members = db.getTeamMembers(id);
   res.json(members);
+});
+
+router.get('/teams/:id/awareness', optionalAuthMiddleware, (req: Request, res: Response) => {
+  const { id } = req.params;
+  const db = getPersistence();
+
+  const team = db.getTeam(id);
+  if (!team) {
+    res.status(404).json({ error: 'Team not found' });
+    return;
+  }
+
+  const states = getTeamAwareness(id);
+  res.json(states);
 });
 
 // ============================================
