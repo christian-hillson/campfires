@@ -1,4 +1,4 @@
-import { px, PIXEL_SCALE, GROUND_COLOR, GRASS_COLORS, PATH_COLOR, TREE_TRUNK, TREE_LEAVES } from './renderer.js';
+import { px, GROUND_COLOR, GRASS_COLORS, PATH_COLOR, TREE_TRUNK, TREE_LEAVES } from './renderer.js';
 import type { CampfirePosition } from './layout.js';
 
 interface GrassPatch {

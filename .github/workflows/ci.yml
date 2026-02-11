@@ -35,7 +35,6 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
-        continue-on-error: true
 
       - name: Test
         run: npm test
