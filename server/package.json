@@ -11,9 +11,11 @@
   },
   "dependencies": {
     "@campfires/shared": "*",
+    "bcryptjs": "^3.0.3",
     "better-sqlite3": "^11.3.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",
+    "express-rate-limit": "^8.2.1",
     "jsonwebtoken": "^9.0.2",
     "uuid": "^9.0.1",
     "ws": "^8.16.0",
@@ -21,6 +23,7 @@
     "yjs": "^13.6.14"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/better-sqlite3": "^7.6.9",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",

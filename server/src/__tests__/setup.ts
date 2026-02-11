@@ -1,6 +1,6 @@
 import express from 'express';
 import { resetPersistence, getPersistence } from '../persistence.js';
-import { router } from '../api.js';
+import { createRouter } from '../api.js';
 
 export function createTestApp() {
   resetPersistence();
@@ -8,7 +8,7 @@ export function createTestApp() {
 
   const app = express();
   app.use(express.json());
-  app.use('/api', router);
+  app.use('/api', createRouter());
 
   return app;
 }

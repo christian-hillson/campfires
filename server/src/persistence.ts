@@ -301,6 +301,13 @@ export class Persistence {
     };
   }
 
+  updateUserPasswordHash(userId: string, newHash: string): void {
+    this.db.prepare(`
+      UPDATE users SET passwordHash = ?
+      WHERE userId = ?
+    `).run(newHash, userId);
+  }
+
   updateUserTeam(userId: string, teamId: string, orgId: string): void {
     this.db.prepare(`
       UPDATE users SET teamId = ?, orgId = ?
