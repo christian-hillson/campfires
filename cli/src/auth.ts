@@ -27,9 +27,7 @@ export function decodeTokenPayload(token: string): TokenPayload | null {
     if (parts.length !== 3) return null;
 
     // Base64url decode the payload segment
-    const payload = parts[1]
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     const decoded = Buffer.from(payload, 'base64').toString('utf-8');
     return JSON.parse(decoded) as TokenPayload;
   } catch {
@@ -43,7 +41,9 @@ function prompt(rl: readline.Interface, question: string): Promise<string> {
   });
 }
 
-export async function interactiveLogin(serverUrl: string): Promise<{ token: string; payload: TokenPayload }> {
+export async function interactiveLogin(
+  serverUrl: string,
+): Promise<{ token: string; payload: TokenPayload }> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stderr, // Prompts on stderr so stdout stays clean
@@ -62,11 +62,11 @@ export async function interactiveLogin(serverUrl: string): Promise<{ token: stri
     });
 
     if (!res.ok) {
-      const err = await res.json() as { error: string };
+      const err = (await res.json()) as { error: string };
       throw new Error(err.error || `Login failed (${res.status})`);
     }
 
-    const data = await res.json() as AuthResponse;
+    const data = (await res.json()) as AuthResponse;
     saveToken(data.token);
 
     const payload = decodeTokenPayload(data.token);

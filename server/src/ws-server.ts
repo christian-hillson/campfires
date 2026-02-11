@@ -178,7 +178,7 @@ const loggedDocs = new Set<string>();
 function setupActivityLogging(
   doc: Y.Doc,
   teamId: string,
-  db: ReturnType<typeof getPersistence>
+  db: ReturnType<typeof getPersistence>,
 ): void {
   const docName = `campfire:${teamId}`;
 
@@ -242,7 +242,9 @@ function setupActivityLogging(
 // Get awareness states for a team
 export function getTeamAwareness(teamId: string): AwarenessState[] {
   const docName = `campfire:${teamId}`;
-  const doc = docs.get(docName) as (Y.Doc & { awareness?: { getStates(): Map<number, AwarenessState> } }) | undefined;
+  const doc = docs.get(docName) as
+    | (Y.Doc & { awareness?: { getStates(): Map<number, AwarenessState> } })
+    | undefined;
 
   if (!doc?.awareness) {
     return [];
@@ -259,7 +261,10 @@ export function getTeamAwareness(teamId: string): AwarenessState[] {
 }
 
 // Get connected clients for a team
-export function getConnectedClients(wss: WebSocketServer, teamId: string): AuthenticatedWebSocket[] {
+export function getConnectedClients(
+  wss: WebSocketServer,
+  teamId: string,
+): AuthenticatedWebSocket[] {
   const clients: AuthenticatedWebSocket[] = [];
   wss.clients.forEach((ws) => {
     const authWs = ws as AuthenticatedWebSocket;
@@ -271,11 +276,7 @@ export function getConnectedClients(wss: WebSocketServer, teamId: string): Authe
 }
 
 // Broadcast a message to all clients in a team
-export function broadcastToTeam(
-  wss: WebSocketServer,
-  teamId: string,
-  message: unknown
-): void {
+export function broadcastToTeam(wss: WebSocketServer, teamId: string, message: unknown): void {
   const clients = getConnectedClients(wss, teamId);
   const data = JSON.stringify(message);
   clients.forEach((ws) => {

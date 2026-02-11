@@ -31,18 +31,18 @@ All packages import types from `@campfires/shared`. If you change `shared/src/ty
 
 ## Development
 
-| Task | Command |
-|------|---------|
-| Build everything | `npm run build` |
-| Build shared types | `npm run build:shared` |
-| Build server | `npm run build:server` |
-| Build CLI | `npm run build:cli` |
-| Run server (dev) | `npm run dev:server` |
-| Run CLI (dev) | `npm run dev:cli -- watch` (or `npx tsx cli/src/index.ts watch` from repo root) |
-| Run CLI with agent | `npx tsx cli/src/index.ts watch --agent` (force agent mode) |
-| Run CLI without agent | `npx tsx cli/src/index.ts watch --no-agent` |
-| Run extension | Open `extension/` in VS Code, press F5 (launch config included) |
-| Run reel (dev) | `cd reel && npm run dev` |
+| Task                  | Command                                                                         |
+| --------------------- | ------------------------------------------------------------------------------- |
+| Build everything      | `npm run build`                                                                 |
+| Build shared types    | `npm run build:shared`                                                          |
+| Build server          | `npm run build:server`                                                          |
+| Build CLI             | `npm run build:cli`                                                             |
+| Run server (dev)      | `npm run dev:server`                                                            |
+| Run CLI (dev)         | `npm run dev:cli -- watch` (or `npx tsx cli/src/index.ts watch` from repo root) |
+| Run CLI with agent    | `npx tsx cli/src/index.ts watch --agent` (force agent mode)                     |
+| Run CLI without agent | `npx tsx cli/src/index.ts watch --no-agent`                                     |
+| Run extension         | Open `extension/` in VS Code, press F5 (launch config included)                 |
+| Run reel (dev)        | `cd reel && npm run dev`                                                        |
 
 The server uses `tsx watch` for hot reload in dev mode.
 
@@ -69,18 +69,18 @@ These are non-negotiable across all packages:
 
 ## What Goes Where
 
-| Change | Package |
-|--------|---------|
-| New data type or event type | `shared/src/types.ts` |
-| New REST endpoint | `server/src/api.ts` |
-| New WebSocket behavior | `server/src/ws-server.ts` |
-| New sidebar UI | `extension/src/campfire-panel.ts` |
-| New editor decoration | `extension/src/decorations.ts` |
-| Agent detection signals | `cli/src/agent-detect.ts` |
-| Git hook install/uninstall | `cli/src/git-hooks.ts` |
-| Agent API endpoints | `server/src/api.ts` (`POST /api/agents`, `POST /api/agents/activity`) |
-| AI summarization changes | `server/src/summarizer.ts` |
-| Reel UI components | `reel/components/` |
+| Change                      | Package                                                               |
+| --------------------------- | --------------------------------------------------------------------- |
+| New data type or event type | `shared/src/types.ts`                                                 |
+| New REST endpoint           | `server/src/api.ts`                                                   |
+| New WebSocket behavior      | `server/src/ws-server.ts`                                             |
+| New sidebar UI              | `extension/src/campfire-panel.ts`                                     |
+| New editor decoration       | `extension/src/decorations.ts`                                        |
+| Agent detection signals     | `cli/src/agent-detect.ts`                                             |
+| Git hook install/uninstall  | `cli/src/git-hooks.ts`                                                |
+| Agent API endpoints         | `server/src/api.ts` (`POST /api/agents`, `POST /api/agents/activity`) |
+| AI summarization changes    | `server/src/summarizer.ts`                                            |
+| Reel UI components          | `reel/components/`                                                    |
 
 ## Spec Reference
 

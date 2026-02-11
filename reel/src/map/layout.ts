@@ -10,7 +10,14 @@ export interface CampfirePosition {
 }
 
 export type SpriteStatus = 'active' | 'idle' | 'draft' | 'offline' | 'visitor';
-export type SpriteTask = 'smithing' | 'scribing' | 'mining' | 'chopping' | 'carrying' | 'sitting' | 'tent';
+export type SpriteTask =
+  | 'smithing'
+  | 'scribing'
+  | 'mining'
+  | 'chopping'
+  | 'carrying'
+  | 'sitting'
+  | 'tent';
 
 export interface SpriteData {
   userId: string;
@@ -27,8 +34,14 @@ export interface SpriteData {
 }
 
 const TEAM_COLORS = [
-  '#f97316', '#60a5fa', '#a78bfa', '#4ade80',
-  '#f472b6', '#facc15', '#34d399', '#fb923c',
+  '#f97316',
+  '#60a5fa',
+  '#a78bfa',
+  '#4ade80',
+  '#f472b6',
+  '#facc15',
+  '#34d399',
+  '#fb923c',
 ];
 
 const TASK_FOR_HUMAN: SpriteTask[] = ['smithing', 'scribing', 'mining'];
@@ -128,9 +141,10 @@ export function layoutSprites(
         task = 'sitting';
       } else {
         status = 'active';
-        task = member.type === 'agent'
-          ? TASK_FOR_AGENT[i % TASK_FOR_AGENT.length]
-          : TASK_FOR_HUMAN[i % TASK_FOR_HUMAN.length];
+        task =
+          member.type === 'agent'
+            ? TASK_FOR_AGENT[i % TASK_FOR_AGENT.length]
+            : TASK_FOR_HUMAN[i % TASK_FOR_HUMAN.length];
       }
       file = awareness.currentFile || '';
     } else {
@@ -152,7 +166,7 @@ export function layoutSprites(
       status,
       task,
       file,
-      parentName: member.parentUserId ? (nameMap.get(member.parentUserId) || null) : null,
+      parentName: member.parentUserId ? nameMap.get(member.parentUserId) || null : null,
       teamName: campfire.name,
       px: spriteX,
       py: spriteY,
@@ -164,7 +178,8 @@ export function layoutSprites(
   const visitors = awarenessStates.filter((a) => a.homeTeamId && !memberIds.has(a.userId));
   for (let v = 0; v < visitors.length; v++) {
     const visitor = visitors[v];
-    const angle = ((members.length + v) / (members.length + visitors.length)) * Math.PI * 2 - Math.PI / 2;
+    const angle =
+      ((members.length + v) / (members.length + visitors.length)) * Math.PI * 2 - Math.PI / 2;
     const vRadius = radius + 8;
     const vx = campfire.x + Math.cos(angle) * vRadius;
     const vy = campfire.y + Math.sin(angle) * vRadius * 0.6;

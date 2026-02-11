@@ -29,11 +29,11 @@ The terminal-native awareness surface. Developers working in Claude Code or othe
 
 The product uses a fire-based naming hierarchy across all surfaces (CLI, extension, Reel):
 
-| Level | Name | Emoji | Scope |
-|-------|------|-------|-------|
-| Organization | **Bonfire** | `🔥` | Company-wide view (e.g. "Gusto Bonfire") |
-| Team | **Campfire** | `🏕️` | Team-level view (e.g. "Payments Campfire") |
-| Individual | **Flame** | `🎇` | Single developer's activity |
+| Level        | Name         | Emoji | Scope                                      |
+| ------------ | ------------ | ----- | ------------------------------------------ |
+| Organization | **Bonfire**  | `🔥`  | Company-wide view (e.g. "Gusto Bonfire")   |
+| Team         | **Campfire** | `🏕️`  | Team-level view (e.g. "Payments Campfire") |
+| Individual   | **Flame**    | `🎇`  | Single developer's activity                |
 
 ### 1.2 Core Principles
 
@@ -64,6 +64,7 @@ The minimum to see each other and start dogfooding.
 
 **The Campfire Panel (Sidebar)**
 A VS Code sidebar view displaying a live, filterable activity stream for the team:
+
 - **Presence**: who is online, active, idle, or in draft mode
 - **Location**: what file and function each teammate is currently in
 - **Activity feed**: chronological stream of events — file opens, saves, commits, branch switches
@@ -71,6 +72,7 @@ A VS Code sidebar view displaying a live, filterable activity stream for the tea
 - **Filters**: by person, by directory/module, by event type. Focus mode to mute all except immediate collaborators
 
 **Inline Awareness (Editor Decorations)**
+
 - Gutter badges showing when a teammate is in the same file
 - File-level indicator in the tab bar or breadcrumb showing teammate presence
 - Ghost cursors deferred — this is awareness, not co-editing
@@ -90,20 +92,23 @@ The terminal-native surface — lighter lift than the Reel, validates the data p
 
 **Three-Tier Layout**
 
-*Tier 1: Org Header*
+_Tier 1: Org Header_
+
 - Company name (Bonfire), active campfire count, online user count
 - AI-generated one-liner summaries of what each campfire is working on
 - Summaries pulled from the Reel's summarization pipeline via REST
 - Updates every 15-30 minutes (matches the Reel batch cycle)
 
-*Tier 2: Your Campfire*
+_Tier 2: Your Campfire_
+
 - Team name with member presence
 - Each human member shows: name, status (active/idle/draft), current file -> function
 - Agents nested under their human owner with `↳` prefix and `🤖` icon
 - Agents remain visible and active even when their human owner is idle
 - Status indicators: `🔥` active, `💤` idle, `🔒` draft, `🤖` agent
 
-*Tier 3: Activity Feed*
+_Tier 3: Activity Feed_
+
 - Chronological stream of raw events from your campfire
 - File saves, commits (highlighted), branch switches, file opens
 - No AI interpretation — devs want the raw data in the terminal
@@ -112,17 +117,20 @@ The terminal-native surface — lighter lift than the Reel, validates the data p
 **Agent Activity Emission**
 
 Claude Code agents (and other CLI-based agents) cannot be instrumented directly. Their activity is captured via:
+
 - **Git hooks**: `post-commit` and `post-checkout` hooks broadcast events through the Campfires pipeline
 - **Filesystem watchers**: a background process detects file saves in the workspace and attributes them to the active agent session
 
 This requires the `parentUserId` field on agent users in the data model (see Section 6.1).
 
 **Scope**
+
 - Plain text terminal output with ANSI colors and emoji
 - Three-tier layout (org header, team presence, activity feed)
 - Read-only display (no interactive commands beyond starting/stopping)
 
 **Deferred from CLI MVP**
+
 - Graphical/TUI version (borders, scrollable regions, mouse interaction)
 - Campfire-level AI summaries (only org-level summaries in MVP)
 - Interactive commands (e.g., toggling draft mode from the CLI)
@@ -133,6 +141,7 @@ This requires the `parentUserId` field on agent users in the data model (see Sec
 The AI-summarized org-wide view.
 
 **Reel Web App**
+
 - Single-page web app accessible at `campfires.app/org/{orgId}`
 - Shows AI-summarized activity feed across all teams in the org
 - Summaries generated every 15-30 minutes as a batch, not per-event
@@ -142,6 +151,7 @@ The AI-summarized org-wide view.
 
 **Reel Context Ingestion**
 During org setup, the admin provides:
+
 - Team names and brief descriptions of what each team owns
 - Company mission statement
 - Current roadmap or list of active projects/initiatives
@@ -150,12 +160,13 @@ This context is stored as structured text and injected into the AI summarization
 
 **AI Summarization Context Sources**
 
-*MVP*: Hardcoded/uploaded text provided during org setup
+_MVP_: Hardcoded/uploaded text provided during org setup
+
 - Team names and descriptions of what each team owns
 - Company mission statement
 - Current roadmap or list of active projects/initiatives
 
-*Future (deferred)*: Notion integration as an automatic context provider, replacing or supplementing uploaded text. This would pull roadmap items, project docs, and team wikis directly from Notion via OAuth. The context injection interface should be designed as a simple text blob so that swapping in Notion (or other sources) later is just a new context provider behind the same interface.
+_Future (deferred)_: Notion integration as an automatic context provider, replacing or supplementing uploaded text. This would pull roadmap items, project docs, and team wikis directly from Notion via OAuth. The context injection interface should be designed as a simple text blob so that swapping in Notion (or other sources) later is just a new context provider behind the same interface.
 
 **Reel Click-Through**
 Clicking a team or project in the Reel shows a project-level detail page (still within the web app). This shows: who's active on that team, what modules are hot, recent commits with messages, AI summary of recent progress. It does NOT show raw file-level activity — that stays in the IDE.
@@ -166,17 +177,17 @@ Iterate based on dogfooding experience. Tune throttling, improve AI summaries, f
 
 ### 2.5 Explicitly Not in MVP
 
-| Feature | Phase | Rationale |
-|---------|-------|-----------|
-| PM Dashboard (separate from Reel) | Phase 2 | Reel covers this for now |
-| Co-editing / shared cursors | Phase 3+ | Not the differentiator; Live Share exists |
-| AI merge/conflict detection | Phase 3+ | Requires mature activity log |
-| Self-hosted / enterprise | Phase 4 | Cloud-first for internal launch |
-| Reel notifications / follow | Phase 2 | Get the core view right first |
-| Daily digest emails | Phase 2 | Reel is the primary interface first |
-| Graphical TUI for CLI | Phase 2 | Plain text CLI first |
-| Interactive CLI commands | Phase 2 | Read-only display first |
-| Agent identity config (naming, colors) | Phase 2 | Data model supports it; UI deferred |
+| Feature                                | Phase    | Rationale                                 |
+| -------------------------------------- | -------- | ----------------------------------------- |
+| PM Dashboard (separate from Reel)      | Phase 2  | Reel covers this for now                  |
+| Co-editing / shared cursors            | Phase 3+ | Not the differentiator; Live Share exists |
+| AI merge/conflict detection            | Phase 3+ | Requires mature activity log              |
+| Self-hosted / enterprise               | Phase 4  | Cloud-first for internal launch           |
+| Reel notifications / follow            | Phase 2  | Get the core view right first             |
+| Daily digest emails                    | Phase 2  | Reel is the primary interface first       |
+| Graphical TUI for CLI                  | Phase 2  | Plain text CLI first                      |
+| Interactive CLI commands               | Phase 2  | Read-only display first                   |
+| Agent identity config (naming, colors) | Phase 2  | Data model supports it; UI deferred       |
 
 ---
 
@@ -239,53 +250,53 @@ When WebSocket drops: immediately show "reconnecting..." in status bar (extensio
 
 Monorepo with five packages:
 
-| Path | Purpose |
-|------|---------|
-| **server/** | Node.js + Express WebSocket server |
-| `server/ws-server.ts` | WebSocket server using y-websocket, handles connections and room management |
-| `server/awareness-engine.ts` | Processes awareness updates, maintains team state, broadcasts activity events |
-| `server/persistence.ts` | Append-only activity log (SQLite) |
-| `server/auth.ts` | JWT-based auth for teams/orgs |
-| `server/summarizer.ts` | Batch job that calls Claude API to generate Reel summaries |
-| `server/api.ts` | REST endpoints for auth, teams, summaries, and health |
-| **extension/** | VS Code Extension (Campfires IDE) |
-| `extension/extension.ts` | Extension entry point, lifecycle management |
-| `extension/awareness-provider.ts` | Captures local dev activity: active file, function, saves, commits |
-| `extension/campfire-panel.ts` | Sidebar webview showing the live activity stream with filters |
-| `extension/decorations.ts` | Inline editor decorations for teammate presence |
-| `extension/status-bar.ts` | Status bar: active count, draft mode toggle, connection status |
-| `extension/git-watcher.ts` | Watches for commits and branch switches via VS Code Git API |
-| `extension/idle-detector.ts` | 5-minute idle timer, resets on any editor activity |
-| **cli/** | Campfire Watch terminal client |
-| `cli/index.ts` | Entry point, auth check, WebSocket connection |
-| `cli/renderer.ts` | ANSI terminal rendering for the three-tier layout |
-| `cli/agent-watcher.ts` | Filesystem watcher for agent activity emission |
-| `cli/git-hooks.ts` | Installs/manages post-commit and post-checkout hooks |
-| **reel/** | Campfires Reel Web App |
-| `reel/index.html` | Single-page app entry point |
-| `reel/app.ts` | Main app logic, fetches and displays summaries |
-| `reel/components/` | UI components: team cards, summary feed, detail views |
-| **shared/** | Shared types and protocol |
-| `shared/types.ts` | ActivityEvent, User, Team, Org, AwarenessState, FilterConfig, Summary types |
-| `shared/protocol.ts` | Message types and serialization for client-server communication |
+| Path                              | Purpose                                                                       |
+| --------------------------------- | ----------------------------------------------------------------------------- |
+| **server/**                       | Node.js + Express WebSocket server                                            |
+| `server/ws-server.ts`             | WebSocket server using y-websocket, handles connections and room management   |
+| `server/awareness-engine.ts`      | Processes awareness updates, maintains team state, broadcasts activity events |
+| `server/persistence.ts`           | Append-only activity log (SQLite)                                             |
+| `server/auth.ts`                  | JWT-based auth for teams/orgs                                                 |
+| `server/summarizer.ts`            | Batch job that calls Claude API to generate Reel summaries                    |
+| `server/api.ts`                   | REST endpoints for auth, teams, summaries, and health                         |
+| **extension/**                    | VS Code Extension (Campfires IDE)                                             |
+| `extension/extension.ts`          | Extension entry point, lifecycle management                                   |
+| `extension/awareness-provider.ts` | Captures local dev activity: active file, function, saves, commits            |
+| `extension/campfire-panel.ts`     | Sidebar webview showing the live activity stream with filters                 |
+| `extension/decorations.ts`        | Inline editor decorations for teammate presence                               |
+| `extension/status-bar.ts`         | Status bar: active count, draft mode toggle, connection status                |
+| `extension/git-watcher.ts`        | Watches for commits and branch switches via VS Code Git API                   |
+| `extension/idle-detector.ts`      | 5-minute idle timer, resets on any editor activity                            |
+| **cli/**                          | Campfire Watch terminal client                                                |
+| `cli/index.ts`                    | Entry point, auth check, WebSocket connection                                 |
+| `cli/renderer.ts`                 | ANSI terminal rendering for the three-tier layout                             |
+| `cli/agent-watcher.ts`            | Filesystem watcher for agent activity emission                                |
+| `cli/git-hooks.ts`                | Installs/manages post-commit and post-checkout hooks                          |
+| **reel/**                         | Campfires Reel Web App                                                        |
+| `reel/index.html`                 | Single-page app entry point                                                   |
+| `reel/app.ts`                     | Main app logic, fetches and displays summaries                                |
+| `reel/components/`                | UI components: team cards, summary feed, detail views                         |
+| **shared/**                       | Shared types and protocol                                                     |
+| `shared/types.ts`                 | ActivityEvent, User, Team, Org, AwarenessState, FilterConfig, Summary types   |
+| `shared/protocol.ts`              | Message types and serialization for client-server communication               |
 
 ---
 
 ## 5. Tech Stack
 
-| Layer | Technology | Rationale |
-|-------|-----------|-----------|
-| Real-time sync | Yjs + y-websocket | Battle-tested CRDT with awareness protocol; Monaco bindings for future co-editing |
-| Transport | WebSocket | Simple, reliable; upgradeable to WebRTC via Yjs provider swap |
-| IDE Extension | TypeScript + VS Code API | Native sidebar, decorations, status bar, webview panels |
-| CLI | Node.js + ANSI escape codes | Same language as server/extension; no TUI framework overhead for MVP |
-| Server | Node.js + Express | Same language as extension; y-websocket is Node-native |
-| Persistence | SQLite (better-sqlite3) | Append-only activity log; synchronous reads for simplicity; Postgres upgrade path exists |
-| Auth | JWT tokens | Simple team/org scoping; upgradeable to SSO for enterprise |
-| Reel Web App | Vanilla TypeScript + Vite | Lightweight, fast build, no framework overhead for a read-mostly app |
-| Reel Data | SSE (Server-Sent Events) | Simpler than WebSocket for a read-only summary stream |
-| AI Summarization | Claude API (Sonnet) | Batch summarization every 15-30 min with company context |
-| Hosting | Railway or Fly.io | Zero-friction; WebSocket support out of the box |
+| Layer            | Technology                  | Rationale                                                                                |
+| ---------------- | --------------------------- | ---------------------------------------------------------------------------------------- |
+| Real-time sync   | Yjs + y-websocket           | Battle-tested CRDT with awareness protocol; Monaco bindings for future co-editing        |
+| Transport        | WebSocket                   | Simple, reliable; upgradeable to WebRTC via Yjs provider swap                            |
+| IDE Extension    | TypeScript + VS Code API    | Native sidebar, decorations, status bar, webview panels                                  |
+| CLI              | Node.js + ANSI escape codes | Same language as server/extension; no TUI framework overhead for MVP                     |
+| Server           | Node.js + Express           | Same language as extension; y-websocket is Node-native                                   |
+| Persistence      | SQLite (better-sqlite3)     | Append-only activity log; synchronous reads for simplicity; Postgres upgrade path exists |
+| Auth             | JWT tokens                  | Simple team/org scoping; upgradeable to SSO for enterprise                               |
+| Reel Web App     | Vanilla TypeScript + Vite   | Lightweight, fast build, no framework overhead for a read-mostly app                     |
+| Reel Data        | SSE (Server-Sent Events)    | Simpler than WebSocket for a read-only summary stream                                    |
+| AI Summarization | Claude API (Sonnet)         | Batch summarization every 15-30 min with company context                                 |
+| Hosting          | Railway or Fly.io           | Zero-friction; WebSocket support out of the box                                          |
 
 ---
 
@@ -293,90 +304,90 @@ Monorepo with five packages:
 
 ### 6.1 User (Persisted)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| userId | UUID | Unique user identifier |
-| email | string | User email |
-| displayName | string | Name shown in the campfire |
-| avatarColor | string | Server-assigned color for decorations |
-| teamId | UUID | Single team per user in MVP |
-| orgId | UUID | Organization the user belongs to |
-| type | enum | `human \| agent` |
-| parentUserId | UUID \| null | For agents: the human owner's userId. Null for humans. Used for nested display in campfire watch and the sidebar. |
-| createdAt | ISO timestamp | When the user was created |
+| Field        | Type          | Description                                                                                                       |
+| ------------ | ------------- | ----------------------------------------------------------------------------------------------------------------- |
+| userId       | UUID          | Unique user identifier                                                                                            |
+| email        | string        | User email                                                                                                        |
+| displayName  | string        | Name shown in the campfire                                                                                        |
+| avatarColor  | string        | Server-assigned color for decorations                                                                             |
+| teamId       | UUID          | Single team per user in MVP                                                                                       |
+| orgId        | UUID          | Organization the user belongs to                                                                                  |
+| type         | enum          | `human \| agent`                                                                                                  |
+| parentUserId | UUID \| null  | For agents: the human owner's userId. Null for humans. Used for nested display in campfire watch and the sidebar. |
+| createdAt    | ISO timestamp | When the user was created                                                                                         |
 
 ### 6.2 Org (Persisted)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| orgId | UUID | Unique org identifier |
-| name | string | Organization name (displayed as "{name} Bonfire") |
-| mission | text | Company mission statement (for Reel AI context) |
-| roadmap | text | Current roadmap / active projects (for Reel AI context) |
-| createdAt | ISO timestamp | When the org was created |
+| Field     | Type          | Description                                             |
+| --------- | ------------- | ------------------------------------------------------- |
+| orgId     | UUID          | Unique org identifier                                   |
+| name      | string        | Organization name (displayed as "{name} Bonfire")       |
+| mission   | text          | Company mission statement (for Reel AI context)         |
+| roadmap   | text          | Current roadmap / active projects (for Reel AI context) |
+| createdAt | ISO timestamp | When the org was created                                |
 
 ### 6.3 Team (Persisted)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| teamId | UUID | Unique team identifier |
-| orgId | UUID | Parent org |
-| name | string | Team display name (displayed as "{name} Campfire") |
-| description | text | What this team owns (for Reel AI context) |
-| inviteCode | string | Shareable code for joining the campfire |
-| members | User[] | List of team members |
-| createdAt | ISO timestamp | When the team was created |
+| Field       | Type          | Description                                        |
+| ----------- | ------------- | -------------------------------------------------- |
+| teamId      | UUID          | Unique team identifier                             |
+| orgId       | UUID          | Parent org                                         |
+| name        | string        | Team display name (displayed as "{name} Campfire") |
+| description | text          | What this team owns (for Reel AI context)          |
+| inviteCode  | string        | Shareable code for joining the campfire            |
+| members     | User[]        | List of team members                               |
+| createdAt   | ISO timestamp | When the team was created                          |
 
 ### 6.4 Awareness State (Real-Time, In-Memory via Yjs)
 
 Each connected client broadcasts this via the Yjs awareness protocol. Ephemeral, not persisted.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| userId | string | Unique user identifier |
-| displayName | string | Name shown in the campfire |
-| type | enum | `human \| agent` |
-| parentUserId | string \| null | For agents: the human owner's userId |
-| status | enum | `active \| idle \| draft \| offline` |
-| currentFile | string \| null | Relative path of active editor file |
+| Field           | Type           | Description                                               |
+| --------------- | -------------- | --------------------------------------------------------- |
+| userId          | string         | Unique user identifier                                    |
+| displayName     | string         | Name shown in the campfire                                |
+| type            | enum           | `human \| agent`                                          |
+| parentUserId    | string \| null | For agents: the human owner's userId                      |
+| status          | enum           | `active \| idle \| draft \| offline`                      |
+| currentFile     | string \| null | Relative path of active editor file                       |
 | currentFunction | string \| null | Function/symbol name at cursor via DocumentSymbolProvider |
-| currentBranch | string \| null | Active git branch |
-| lastActivity | ISO timestamp | Last time any editor activity was detected |
-| color | string | Assigned avatar color for decorations |
+| currentBranch   | string \| null | Active git branch                                         |
+| lastActivity    | ISO timestamp  | Last time any editor activity was detected                |
+| color           | string         | Assigned avatar color for decorations                     |
 
 ### 6.5 Activity Event (Persisted, Append-Only)
 
 Discrete events written to the `activity_log` table. These form the forensic trail and the input to Reel summarization.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | UUID | Unique event ID |
-| timestamp | ISO timestamp | When the event occurred |
-| userId | string | Who triggered the event |
-| userType | enum | `human \| agent` (denormalized for query efficiency) |
-| parentUserId | string \| null | For agent events: the human owner's userId |
-| teamId | UUID | Which team campfire this belongs to |
-| type | enum | `file_open \| file_save \| commit \| branch_switch \| session_start \| session_end` |
-| file | string \| null | File involved in the event |
-| branch | string \| null | Branch at time of event |
-| message | string \| null | Commit message (for commit events) |
-| metadata | JSON \| null | Extensible payload for future event types |
+| Field        | Type           | Description                                                                         |
+| ------------ | -------------- | ----------------------------------------------------------------------------------- |
+| id           | UUID           | Unique event ID                                                                     |
+| timestamp    | ISO timestamp  | When the event occurred                                                             |
+| userId       | string         | Who triggered the event                                                             |
+| userType     | enum           | `human \| agent` (denormalized for query efficiency)                                |
+| parentUserId | string \| null | For agent events: the human owner's userId                                          |
+| teamId       | UUID           | Which team campfire this belongs to                                                 |
+| type         | enum           | `file_open \| file_save \| commit \| branch_switch \| session_start \| session_end` |
+| file         | string \| null | File involved in the event                                                          |
+| branch       | string \| null | Branch at time of event                                                             |
+| message      | string \| null | Commit message (for commit events)                                                  |
+| metadata     | JSON \| null   | Extensible payload for future event types                                           |
 
 ### 6.6 Summary (Persisted)
 
 AI-generated summaries for the Reel and the campfire watch org header, stored after each batch summarization run.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | UUID | Unique summary ID |
-| orgId | UUID | Which org this summary is for |
-| teamId | UUID | Which team this summary covers |
-| periodStart | ISO timestamp | Start of the summarized period |
-| periodEnd | ISO timestamp | End of the summarized period |
-| content | text | The AI-generated summary text |
-| oneLiner | text | Short one-line summary for campfire watch org header and compact views |
-| eventCount | integer | Number of raw events summarized |
-| createdAt | ISO timestamp | When the summary was generated |
+| Field       | Type          | Description                                                            |
+| ----------- | ------------- | ---------------------------------------------------------------------- |
+| id          | UUID          | Unique summary ID                                                      |
+| orgId       | UUID          | Which org this summary is for                                          |
+| teamId      | UUID          | Which team this summary covers                                         |
+| periodStart | ISO timestamp | Start of the summarized period                                         |
+| periodEnd   | ISO timestamp | End of the summarized period                                           |
+| content     | text          | The AI-generated summary text                                          |
+| oneLiner    | text          | Short one-line summary for campfire watch org header and compact views |
+| eventCount  | integer       | Number of raw events summarized                                        |
+| createdAt   | ISO timestamp | When the summary was generated                                         |
 
 ---
 
@@ -386,44 +397,44 @@ The WebSocket handles real-time awareness. These HTTP endpoints handle everythin
 
 ### 7.1 Auth
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/auth/signup` | POST | Create account with email/password or GitHub OAuth. Returns JWT with userId, teamId, orgId. |
-| `/auth/login` | POST | Authenticate, returns JWT. |
-| `/auth/refresh` | POST | Refresh expired JWT. |
+| Endpoint        | Method | Description                                                                                 |
+| --------------- | ------ | ------------------------------------------------------------------------------------------- |
+| `/auth/signup`  | POST   | Create account with email/password or GitHub OAuth. Returns JWT with userId, teamId, orgId. |
+| `/auth/login`   | POST   | Authenticate, returns JWT.                                                                  |
+| `/auth/refresh` | POST   | Refresh expired JWT.                                                                        |
 
 ### 7.2 Org & Team Management
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/orgs` | POST | Create org. Returns orgId. |
-| `/orgs/:id` | GET | Get org details including mission, roadmap. |
-| `/orgs/:id` | PUT | Update org context (mission, roadmap) for Reel AI. |
-| `/orgs/:id/teams` | GET | List all teams in org. |
-| `/teams` | POST | Create team within org. Returns teamId + inviteCode. |
-| `/teams/join` | POST | Join a team via invite code. |
-| `/teams/:id/members` | GET | List team members. |
+| Endpoint             | Method | Description                                          |
+| -------------------- | ------ | ---------------------------------------------------- |
+| `/orgs`              | POST   | Create org. Returns orgId.                           |
+| `/orgs/:id`          | GET    | Get org details including mission, roadmap.          |
+| `/orgs/:id`          | PUT    | Update org context (mission, roadmap) for Reel AI.   |
+| `/orgs/:id/teams`    | GET    | List all teams in org.                               |
+| `/teams`             | POST   | Create team within org. Returns teamId + inviteCode. |
+| `/teams/join`        | POST   | Join a team via invite code.                         |
+| `/teams/:id/members` | GET    | List team members.                                   |
 
 ### 7.3 Reel & Summaries
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/orgs/:id/summaries` | GET | Latest summaries for all teams in org. Supports `?since=` param. Returns both full `content` and `oneLiner` fields. |
-| `/orgs/:id/summaries/stream` | GET | SSE stream of new summaries as they are generated. |
-| `/teams/:id/activity` | GET | Recent activity events for a team (for Reel detail view). Filtered to commits + branch switches only for non-team-members. |
+| Endpoint                     | Method | Description                                                                                                                |
+| ---------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `/orgs/:id/summaries`        | GET    | Latest summaries for all teams in org. Supports `?since=` param. Returns both full `content` and `oneLiner` fields.        |
+| `/orgs/:id/summaries/stream` | GET    | SSE stream of new summaries as they are generated.                                                                         |
+| `/teams/:id/activity`        | GET    | Recent activity events for a team (for Reel detail view). Filtered to commits + branch switches only for non-team-members. |
 
 ### 7.4 Agent Management
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/agents` | POST | Register an agent user linked to the authenticated human via `parentUserId`. Returns agent JWT. |
-| `/agents/activity` | POST | Submit activity events from git hooks / filesystem watchers. Requires agent JWT. |
+| Endpoint           | Method | Description                                                                                     |
+| ------------------ | ------ | ----------------------------------------------------------------------------------------------- |
+| `/agents`          | POST   | Register an agent user linked to the authenticated human via `parentUserId`. Returns agent JWT. |
+| `/agents/activity` | POST   | Submit activity events from git hooks / filesystem watchers. Requires agent JWT.                |
 
 ### 7.5 System
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Server health check. |
+| Endpoint  | Method | Description          |
+| --------- | ------ | -------------------- |
+| `/health` | GET    | Server health check. |
 
 ---
 
@@ -434,6 +445,7 @@ The WebSocket handles real-time awareness. These HTTP endpoints handle everythin
 The extension activates on `onStartupFinished` (VS Code activation event).
 
 Activation sequence:
+
 1. Check for stored JWT in VS Code SecretStorage
 2. If no JWT: show login/signup webview (inline, no browser redirect)
 3. If valid JWT: extract teamId from token
@@ -446,6 +458,7 @@ Activation sequence:
 ### 8.2 Deactivation
 
 On extension deactivate or VS Code close:
+
 1. Send `session_end` activity event
 2. Set awareness state to offline
 3. Disconnect WebSocket cleanly
@@ -469,6 +482,7 @@ campfire watch
 ```
 
 Startup sequence:
+
 1. Check for stored JWT in `~/.campfires/token` (same token format as the extension)
 2. If no token: prompt for login interactively in the terminal
 3. If valid token: extract teamId, orgId from token
@@ -480,6 +494,7 @@ Startup sequence:
 ### 9.2 Agent Session Registration
 
 When `campfire watch` detects it is running alongside a Claude Code session (or is explicitly started with `--agent` flag):
+
 1. Call `POST /agents` to register an agent user linked to the human
 2. Install git hooks in the current workspace (`post-commit`, `post-checkout`)
 3. Start filesystem watcher for the workspace directory
@@ -488,6 +503,7 @@ When `campfire watch` detects it is running alongside a Claude Code session (or 
 ### 9.3 Shutdown
 
 On `Ctrl+C` or terminal close:
+
 1. Send `session_end` for any active agent sessions
 2. Disconnect WebSocket cleanly
 3. Git hooks remain installed (idempotent; no-op when CLI isn't running)
@@ -495,6 +511,7 @@ On `Ctrl+C` or terminal close:
 ### 9.4 Display Rendering
 
 The CLI renders plain text with ANSI escape codes. Target width: ~35 characters (narrow split pane). Rendering approach:
+
 - Clear and redraw on each state change (awareness update or new activity event)
 - Truncate file paths and function names with ellipsis to fit width
 - Commits highlighted in amber/orange
@@ -504,14 +521,14 @@ The CLI renders plain text with ANSI escape codes. Target width: ~35 characters 
 
 ## 10. Activity Throttling
 
-| Event Type | Debounce | Rationale |
-|------------|----------|-----------|
-| file_save | 5 seconds | Collapses rapid Cmd+S without losing the "actively working" signal |
-| file_open | 2 seconds | Collapses rapid tab switching |
-| commit | None (instant) | High-signal intent marker, never throttle |
-| branch_switch | None (instant) | High-signal context change |
-| session_start | None (instant) | Only fires once per session |
-| session_end | None (instant) | Only fires once per session |
+| Event Type    | Debounce       | Rationale                                                          |
+| ------------- | -------------- | ------------------------------------------------------------------ |
+| file_save     | 5 seconds      | Collapses rapid Cmd+S without losing the "actively working" signal |
+| file_open     | 2 seconds      | Collapses rapid tab switching                                      |
+| commit        | None (instant) | High-signal intent marker, never throttle                          |
+| branch_switch | None (instant) | High-signal context change                                         |
+| session_start | None (instant) | Only fires once per session                                        |
+| session_end   | None (instant) | Only fires once per session                                        |
 
 Server-side safety valve: max 1 event per user per second, any events exceeding this are dropped silently. These values are config constants, not hardcoded — tunable based on dogfooding experience.
 
@@ -522,6 +539,7 @@ Server-side safety valve: max 1 event per user per second, any events exceeding 
 The onboarding must be fast enough that a dev can go from discovery to seeing teammates in under 5 minutes.
 
 **IDE path:**
+
 1. Install the Campfires extension from the VS Code marketplace (or .vsix sideload for internal use)
 2. Sign up with email or GitHub OAuth (inline in extension, no browser redirect)
 3. Create an org or join an existing one
@@ -531,6 +549,7 @@ The onboarding must be fast enough that a dev can go from discovery to seeing te
 7. Share the Reel URL (`campfires.app/org/{orgId}`) with PMs, execs, anyone who should see the summary view
 
 **CLI path:**
+
 1. Install via `npm install -g campfires` (or local dev install)
 2. Run `campfire watch` — prompted to log in or sign up on first run
 3. Join a team via invite code if not already on one
@@ -541,15 +560,15 @@ The onboarding must be fast enough that a dev can go from discovery to seeing te
 
 ## 12. Phased Roadmap
 
-| Phase | Timeline | Deliverables | Success Metric |
-|-------|----------|-------------|----------------|
-| 1a: IDE | Days 1-3 | VS Code extension with campfire panel, inline decorations, draft mode, status bar, cloud server, append-only log | 2 devs on one campfire, daily active usage while building |
-| 1b: CLI | Days 4-5 | `campfire watch` terminal client with three-tier layout, agent activity emission via git hooks + fs watcher | Terminal-first dev using campfire watch alongside Claude Code |
-| 1c: Reel | Days 6-9 | Web app with AI-summarized org feed, company context ingestion, team detail views | Non-dev stakeholder checks the Reel daily |
-| 1d: Polish | Days 10-12 | Iterate based on dogfooding, tune throttling, improve AI summaries | All three surfaces feel usable without friction |
-| 2: Intelligence | Weeks 3-6 | Intent inference from diffs, Reel notifications/follow, daily digest, agent identity config, interactive CLI commands, graphical TUI | PMs actively using Reel; AI summaries rated useful |
-| 3: Hive Mind | Weeks 7-12 | AI merge/conflict detection, agent doing visible work, co-editing (Yjs + Monaco), role-based views | Teams reporting measurable coordination improvement |
-| 4: Enterprise | Months 4-6 | Self-hosted option, SSO/SAML, audit logs, compliance, admin console | First external team using Campfires |
+| Phase           | Timeline   | Deliverables                                                                                                                         | Success Metric                                                |
+| --------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| 1a: IDE         | Days 1-3   | VS Code extension with campfire panel, inline decorations, draft mode, status bar, cloud server, append-only log                     | 2 devs on one campfire, daily active usage while building     |
+| 1b: CLI         | Days 4-5   | `campfire watch` terminal client with three-tier layout, agent activity emission via git hooks + fs watcher                          | Terminal-first dev using campfire watch alongside Claude Code |
+| 1c: Reel        | Days 6-9   | Web app with AI-summarized org feed, company context ingestion, team detail views                                                    | Non-dev stakeholder checks the Reel daily                     |
+| 1d: Polish      | Days 10-12 | Iterate based on dogfooding, tune throttling, improve AI summaries                                                                   | All three surfaces feel usable without friction               |
+| 2: Intelligence | Weeks 3-6  | Intent inference from diffs, Reel notifications/follow, daily digest, agent identity config, interactive CLI commands, graphical TUI | PMs actively using Reel; AI summaries rated useful            |
+| 3: Hive Mind    | Weeks 7-12 | AI merge/conflict detection, agent doing visible work, co-editing (Yjs + Monaco), role-based views                                   | Teams reporting measurable coordination improvement           |
+| 4: Enterprise   | Months 4-6 | Self-hosted option, SSO/SAML, audit logs, compliance, admin console                                                                  | First external team using Campfires                           |
 
 ---
 
@@ -557,28 +576,28 @@ The onboarding must be fast enough that a dev can go from discovery to seeing te
 
 Campfires occupies a new category. No existing tool provides both ambient dev awareness inside the editor AND AI-translated visibility for the rest of the org.
 
-| Tool | What It Does | How Campfires Differs |
-|------|-------------|----------------------|
-| VS Code Live Share | Real-time co-editing with shared cursors | Co-editing is a feature, not the product. Campfires is about awareness, not shared editing sessions. |
-| GitHub / GitLab | Async collaboration via PRs, issues, code review | Campfires is real-time and continuous. PRs are after-the-fact; Campfires is during-the-fact. |
-| Tuple / Pop | Pair programming with video/screen share | Campfires is ambient and always-on. Pair programming is synchronous and session-based. |
-| Linear / Jira | Project management and issue tracking | PM tools track planned work. Campfires shows actual work happening right now. |
-| Slack / Teams | Chat-based communication for teams | Chat is manual and interruptive. Campfires is automatic and ambient. |
-| GitHub Activity Feed | Shows commits, PRs, issues across repos | Raw and technical. The Reel translates activity into business-legible summaries with company context. |
+| Tool                 | What It Does                                     | How Campfires Differs                                                                                 |
+| -------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| VS Code Live Share   | Real-time co-editing with shared cursors         | Co-editing is a feature, not the product. Campfires is about awareness, not shared editing sessions.  |
+| GitHub / GitLab      | Async collaboration via PRs, issues, code review | Campfires is real-time and continuous. PRs are after-the-fact; Campfires is during-the-fact.          |
+| Tuple / Pop          | Pair programming with video/screen share         | Campfires is ambient and always-on. Pair programming is synchronous and session-based.                |
+| Linear / Jira        | Project management and issue tracking            | PM tools track planned work. Campfires shows actual work happening right now.                         |
+| Slack / Teams        | Chat-based communication for teams               | Chat is manual and interruptive. Campfires is automatic and ambient.                                  |
+| GitHub Activity Feed | Shows commits, PRs, issues across repos          | Raw and technical. The Reel translates activity into business-legible summaries with company context. |
 
 ---
 
 ## 14. Risks & Mitigations
 
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| Developers resist transparency ("surveillance") | High | Draft mode is prominent. Medium awareness only. Reel never exposes raw activity to non-devs. Messaging emphasizes team benefit. |
-| Reel AI summaries are low quality | High | Require good company context. Use commit messages as primary signal. Iterate on prompts. Allow human correction of summaries in Phase 2. |
-| Stream becomes too noisy at scale | Medium | Client-side filters from day one. Focus mode. Event throttling on saves/opens. Server-side rate limiting. |
-| WebSocket server scalability | Medium | Yjs is designed for scale. y-redis exists for multi-server. Start simple, shard by team later. |
-| Security concerns (code metadata in cloud) | Medium | Only file paths and function names transmitted, never code content. Enterprise self-hosted option in Phase 4. |
-| Low initial adoption / cold start | Low | Dogfooding from day one. Minimum viable campfire is 2 people. Reel creates org-level pull for adoption. |
-| Agent attribution accuracy | Medium | Git hooks are reliable for commits/branches. Filesystem watcher may misattribute saves — use heuristics (active agent session in the same workspace) and accept imperfection in MVP. |
+| Risk                                            | Severity | Mitigation                                                                                                                                                                           |
+| ----------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Developers resist transparency ("surveillance") | High     | Draft mode is prominent. Medium awareness only. Reel never exposes raw activity to non-devs. Messaging emphasizes team benefit.                                                      |
+| Reel AI summaries are low quality               | High     | Require good company context. Use commit messages as primary signal. Iterate on prompts. Allow human correction of summaries in Phase 2.                                             |
+| Stream becomes too noisy at scale               | Medium   | Client-side filters from day one. Focus mode. Event throttling on saves/opens. Server-side rate limiting.                                                                            |
+| WebSocket server scalability                    | Medium   | Yjs is designed for scale. y-redis exists for multi-server. Start simple, shard by team later.                                                                                       |
+| Security concerns (code metadata in cloud)      | Medium   | Only file paths and function names transmitted, never code content. Enterprise self-hosted option in Phase 4.                                                                        |
+| Low initial adoption / cold start               | Low      | Dogfooding from day one. Minimum viable campfire is 2 people. Reel creates org-level pull for adoption.                                                                              |
+| Agent attribution accuracy                      | Medium   | Git hooks are reliable for commits/branches. Filesystem watcher may misattribute saves — use heuristics (active agent session in the same workspace) and accept imperfection in MVP. |
 
 ---
 
@@ -601,4 +620,4 @@ These questions were open during the design phase and are now resolved:
 
 ---
 
-*Build the campfire. Gather the team. Start sculpting together.*
+_Build the campfire. Gather the team. Start sculpting together._

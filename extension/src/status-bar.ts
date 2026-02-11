@@ -9,10 +9,7 @@ export class StatusBar implements vscode.Disposable {
   private visitingTeamName: string | null = null;
 
   constructor() {
-    this.statusBarItem = vscode.window.createStatusBarItem(
-      vscode.StatusBarAlignment.Right,
-      100
-    );
+    this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     this.statusBarItem.command = 'campfires.toggleDraftMode';
     this.update();
     this.statusBarItem.show();
@@ -38,18 +35,14 @@ export class StatusBar implements vscode.Disposable {
     if (this.isReconnecting) {
       this.statusBarItem.text = '$(sync~spin) Campfires: Reconnecting...';
       this.statusBarItem.tooltip = 'Attempting to reconnect to your team campfire';
-      this.statusBarItem.backgroundColor = new vscode.ThemeColor(
-        'statusBarItem.warningBackground'
-      );
+      this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
       return;
     }
 
     if (!this.isConnected) {
       this.statusBarItem.text = '$(circle-slash) Campfires: Offline';
       this.statusBarItem.tooltip = 'Not connected to your team campfire';
-      this.statusBarItem.backgroundColor = new vscode.ThemeColor(
-        'statusBarItem.errorBackground'
-      );
+      this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
       return;
     }
 

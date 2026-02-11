@@ -57,10 +57,7 @@ describe('Teams API', () => {
     });
 
     it('returns 401 without auth', async () => {
-      await request(app)
-        .post('/api/teams')
-        .send({ orgId: 'org-1', name: 'Team' })
-        .expect(401);
+      await request(app).post('/api/teams').send({ orgId: 'org-1', name: 'Team' }).expect(401);
     });
 
     it('returns 400 when required fields are missing', async () => {

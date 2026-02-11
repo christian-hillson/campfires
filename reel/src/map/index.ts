@@ -1,7 +1,19 @@
 import type { Org, Team, Summary, User, AwarenessState } from '@campfires/shared';
 import { PIXEL_SCALE, drawCampfire, drawTeamLabel, drawVignette } from './renderer.js';
-import { drawGround, drawPath, drawTree, drawWorkstation, generateEnvironment, type EnvironmentData } from './environment.js';
-import { layoutCampfires, layoutSprites, type CampfirePosition, type SpriteData } from './layout.js';
+import {
+  drawGround,
+  drawPath,
+  drawTree,
+  drawWorkstation,
+  generateEnvironment,
+  type EnvironmentData,
+} from './environment.js';
+import {
+  layoutCampfires,
+  layoutSprites,
+  type CampfirePosition,
+  type SpriteData,
+} from './layout.js';
 import { drawHumanSprite, drawGolemSprite } from './sprites.js';
 
 export interface MapViewConfig {
@@ -191,13 +203,15 @@ export class MapView {
 
       if (this.hoveredSprite) {
         this.tooltip.style.display = 'block';
-        this.tooltip.style.left = (e.clientX - this.container.getBoundingClientRect().left + 16) + 'px';
-        this.tooltip.style.top = (e.clientY - this.container.getBoundingClientRect().top - 10) + 'px';
+        this.tooltip.style.left =
+          e.clientX - this.container.getBoundingClientRect().left + 16 + 'px';
+        this.tooltip.style.top = e.clientY - this.container.getBoundingClientRect().top - 10 + 'px';
 
         const s = this.hoveredSprite;
-        const typeLabel = s.type === 'agent'
-          ? `\u2699 Agent${s.parentName ? ` \u00b7 owned by ${s.parentName}` : ''}`
-          : `\u25C6 ${s.status}`;
+        const typeLabel =
+          s.type === 'agent'
+            ? `\u2699 Agent${s.parentName ? ` \u00b7 owned by ${s.parentName}` : ''}`
+            : `\u25C6 ${s.status}`;
 
         this.tooltip.innerHTML = `
           <div class="tt-name" style="color:${s.color}">${s.name}</div>
@@ -284,11 +298,17 @@ export class MapView {
       if (!this.overlayElement) return;
 
       const team = this.config.teams.find((t) => t.teamId === campfire.teamId);
-      const onlineCount = awareness.filter((a) => a.status === 'active' || a.status === 'idle').length;
+      const onlineCount = awareness.filter(
+        (a) => a.status === 'active' || a.status === 'idle',
+      ).length;
 
       const statusBadge = (status: string) => {
         const colors: Record<string, string> = {
-          active: '#3fb950', idle: '#d29922', draft: '#6e7681', visitor: '#58a6ff', offline: '#484f58',
+          active: '#3fb950',
+          idle: '#d29922',
+          draft: '#6e7681',
+          visitor: '#58a6ff',
+          offline: '#484f58',
         };
         return `<span class="overlay-status-dot" style="background:${colors[status] || '#484f58'}"></span>${status}`;
       };
@@ -299,14 +319,20 @@ export class MapView {
         ${teamSummary ? `<div class="overlay-summary">${teamSummary.oneLiner || 'Activity recorded'}</div>` : ''}
         <div class="overlay-stats">${members.length} member${members.length !== 1 ? 's' : ''} \u00b7 ${onlineCount} online</div>
         <div class="overlay-members">
-          ${members.map((m) => {
-            const a = awareness.find((s) => s.userId === m.userId);
-            const status = a?.status || 'offline';
-            return `<div class="overlay-member"><span class="overlay-member-dot" style="background:${m.avatarColor}"></span>${m.displayName} ${statusBadge(status)}</div>`;
-          }).join('')}
-          ${awareness.filter((a) => a.homeTeamId && !members.find((m) => m.userId === a.userId)).map((a) =>
-            `<div class="overlay-member"><span class="overlay-member-dot" style="background:${a.color}"></span>${a.displayName} ${statusBadge('visitor')}</div>`
-          ).join('')}
+          ${members
+            .map((m) => {
+              const a = awareness.find((s) => s.userId === m.userId);
+              const status = a?.status || 'offline';
+              return `<div class="overlay-member"><span class="overlay-member-dot" style="background:${m.avatarColor}"></span>${m.displayName} ${statusBadge(status)}</div>`;
+            })
+            .join('')}
+          ${awareness
+            .filter((a) => a.homeTeamId && !members.find((m) => m.userId === a.userId))
+            .map(
+              (a) =>
+                `<div class="overlay-member"><span class="overlay-member-dot" style="background:${a.color}"></span>${a.displayName} ${statusBadge('visitor')}</div>`,
+            )
+            .join('')}
         </div>
         <div class="overlay-actions">
           <button class="overlay-btn overlay-btn-detail">View Details</button>

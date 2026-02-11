@@ -20,7 +20,9 @@ declare global {
 
 // Legacy SHA256 hash (for migration from old passwords)
 function legacySha256Hash(password: string): string {
-  return createHash('sha256').update(password + JWT_SECRET).digest('hex');
+  return createHash('sha256')
+    .update(password + JWT_SECRET)
+    .digest('hex');
 }
 
 function isLegacyHash(hash: string): boolean {
@@ -54,7 +56,7 @@ export function verifyToken(token: string): JwtPayload | null {
 export async function signup(
   email: string,
   password: string,
-  displayName: string
+  displayName: string,
 ): Promise<{ user: User; token: string } | { error: string }> {
   const db = getPersistence();
 
@@ -84,7 +86,7 @@ export async function signup(
 
 export async function login(
   email: string,
-  password: string
+  password: string,
 ): Promise<{ user: User; token: string } | { error: string }> {
   const db = getPersistence();
 

@@ -23,7 +23,7 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
     _context: vscode.WebviewViewResolveContext,
-    _token: vscode.CancellationToken
+    _token: vscode.CancellationToken,
   ): void {
     this.view = webviewView;
 
@@ -118,7 +118,7 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
       // Apply directory filter
       if (this.filterConfig.directories.length > 0 && state.currentFile) {
         const matchesDir = this.filterConfig.directories.some((dir) =>
-          state.currentFile!.startsWith(dir)
+          state.currentFile!.startsWith(dir),
         );
         if (!matchesDir) return;
       }
@@ -128,7 +128,13 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
 
     // Sort by status (active first, then idle, then draft, visitor, offline)
     return teammates.sort((a, b) => {
-      const order: Record<string, number> = { active: 0, idle: 1, draft: 2, visitor: 3, offline: 4 };
+      const order: Record<string, number> = {
+        active: 0,
+        idle: 1,
+        draft: 2,
+        visitor: 3,
+        offline: 4,
+      };
       return (order[a.status] ?? 4) - (order[b.status] ?? 4);
     });
   }
@@ -155,9 +161,7 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
     }
 
     // Sort by timestamp descending
-    return events.sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
+    return events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }
 
   private async openFile(file: string): Promise<void> {

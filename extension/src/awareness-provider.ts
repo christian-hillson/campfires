@@ -77,14 +77,9 @@ export class AwarenessProvider implements vscode.Disposable {
     const wsUrl = this.serverUrl.replace(/^http/, 'ws');
     const roomName = `campfire:${this.teamId}`;
 
-    this.provider = new WebsocketProvider(
-      wsUrl,
-      roomName,
-      this.doc,
-      {
-        params: { token: this.token },
-      }
-    );
+    this.provider = new WebsocketProvider(wsUrl, roomName, this.doc, {
+      params: { token: this.token },
+    });
 
     this.provider.on('status', (event: { status: string }) => {
       const connected = event.status === 'connected';
@@ -132,9 +127,9 @@ export class AwarenessProvider implements vscode.Disposable {
       type: 'human',
       parentUserId: null,
       status: this.visitorMode ? 'visitor' : this.getStatus(),
-      currentFile: this.visitorMode ? null : (this.isDraftMode ? null : this.currentFile),
-      currentFunction: this.visitorMode ? null : (this.isDraftMode ? null : this.currentFunction),
-      currentBranch: this.visitorMode ? null : (this.isDraftMode ? null : this.currentBranch),
+      currentFile: this.visitorMode ? null : this.isDraftMode ? null : this.currentFile,
+      currentFunction: this.visitorMode ? null : this.isDraftMode ? null : this.currentFunction,
+      currentBranch: this.visitorMode ? null : this.isDraftMode ? null : this.currentBranch,
       lastActivity: new Date().toISOString(),
       color: this.color,
       ...(this.visitorMode && this.homeTeamId ? { homeTeamId: this.homeTeamId } : {}),
@@ -189,7 +184,7 @@ export class AwarenessProvider implements vscode.Disposable {
       branch?: string;
       message?: string;
       metadata?: Record<string, unknown>;
-    } = {}
+    } = {},
   ): void {
     if (this.visitorMode) {
       return; // Visitors don't emit activity events

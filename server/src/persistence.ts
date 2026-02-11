@@ -12,9 +12,18 @@ import type {
 } from '@campfires/shared';
 
 const AVATAR_COLORS = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
-  '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
-  '#BB8FCE', '#85C1E9', '#F8B500', '#00CED1',
+  '#FF6B6B',
+  '#4ECDC4',
+  '#45B7D1',
+  '#96CEB4',
+  '#FFEAA7',
+  '#DDA0DD',
+  '#98D8C8',
+  '#F7DC6F',
+  '#BB8FCE',
+  '#85C1E9',
+  '#F8B500',
+  '#00CED1',
 ];
 
 export class Persistence {
@@ -133,24 +142,35 @@ export class Persistence {
     const orgId = uuidv4();
     const createdAt = new Date().toISOString();
 
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO orgs (orgId, name, mission, roadmap, createdAt)
       VALUES (?, ?, ?, ?, ?)
-    `).run(orgId, name, mission, roadmap, createdAt);
+    `,
+      )
+      .run(orgId, name, mission, roadmap, createdAt);
 
     return { orgId, name, mission, roadmap, createdAt };
   }
 
   getOrg(orgId: string): Org | null {
-    const row = this.db.prepare(`
+    const row = this.db
+      .prepare(
+        `
       SELECT orgId, name, mission, roadmap, createdAt
       FROM orgs WHERE orgId = ?
-    `).get(orgId) as Org | undefined;
+    `,
+      )
+      .get(orgId) as Org | undefined;
 
     return row || null;
   }
 
-  updateOrg(orgId: string, updates: Partial<Pick<Org, 'name' | 'mission' | 'roadmap'>>): Org | null {
+  updateOrg(
+    orgId: string,
+    updates: Partial<Pick<Org, 'name' | 'mission' | 'roadmap'>>,
+  ): Org | null {
     const org = this.getOrg(orgId);
     if (!org) return null;
 
@@ -158,10 +178,14 @@ export class Persistence {
     const mission = updates.mission ?? org.mission;
     const roadmap = updates.roadmap ?? org.roadmap;
 
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       UPDATE orgs SET name = ?, mission = ?, roadmap = ?
       WHERE orgId = ?
-    `).run(name, mission, roadmap, orgId);
+    `,
+      )
+      .run(name, mission, roadmap, orgId);
 
     return { ...org, name, mission, roadmap };
   }
@@ -175,44 +199,64 @@ export class Persistence {
     const inviteCode = this.generateInviteCode();
     const createdAt = new Date().toISOString();
 
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO teams (teamId, orgId, name, description, inviteCode, createdAt)
       VALUES (?, ?, ?, ?, ?, ?)
-    `).run(teamId, orgId, name, description, inviteCode, createdAt);
+    `,
+      )
+      .run(teamId, orgId, name, description, inviteCode, createdAt);
 
     return { teamId, orgId, name, description, inviteCode, createdAt };
   }
 
   getTeam(teamId: string): Team | null {
-    const row = this.db.prepare(`
+    const row = this.db
+      .prepare(
+        `
       SELECT teamId, orgId, name, description, inviteCode, createdAt
       FROM teams WHERE teamId = ?
-    `).get(teamId) as Team | undefined;
+    `,
+      )
+      .get(teamId) as Team | undefined;
 
     return row || null;
   }
 
   getTeamByInviteCode(inviteCode: string): Team | null {
-    const row = this.db.prepare(`
+    const row = this.db
+      .prepare(
+        `
       SELECT teamId, orgId, name, description, inviteCode, createdAt
       FROM teams WHERE inviteCode = ?
-    `).get(inviteCode) as Team | undefined;
+    `,
+      )
+      .get(inviteCode) as Team | undefined;
 
     return row || null;
   }
 
   getTeamsByOrg(orgId: string): Team[] {
-    return this.db.prepare(`
+    return this.db
+      .prepare(
+        `
       SELECT teamId, orgId, name, description, inviteCode, createdAt
       FROM teams WHERE orgId = ?
-    `).all(orgId) as Team[];
+    `,
+      )
+      .all(orgId) as Team[];
   }
 
   getAllTeams(): Team[] {
-    return this.db.prepare(`
+    return this.db
+      .prepare(
+        `
       SELECT teamId, orgId, name, description, inviteCode, createdAt
       FROM teams
-    `).all() as Team[];
+    `,
+      )
+      .all() as Team[];
   }
 
   getTeamWithMembers(teamId: string): TeamWithMembers | null {
@@ -224,10 +268,14 @@ export class Persistence {
   }
 
   getTeamMembers(teamId: string): User[] {
-    return this.db.prepare(`
+    return this.db
+      .prepare(
+        `
       SELECT userId, email, displayName, avatarColor, teamId, orgId, type, parentUserId, createdAt
       FROM users WHERE teamId = ?
-    `).all(teamId) as User[];
+    `,
+      )
+      .all(teamId) as User[];
   }
 
   private generateInviteCode(): string {
@@ -247,16 +295,20 @@ export class Persistence {
     email: string,
     passwordHash: string,
     displayName: string,
-    type: UserType = 'human'
+    type: UserType = 'human',
   ): User {
     const userId = uuidv4();
     const avatarColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
     const createdAt = new Date().toISOString();
 
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO users (userId, email, passwordHash, displayName, avatarColor, type, createdAt)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(userId, email, passwordHash, displayName, avatarColor, type, createdAt);
+    `,
+      )
+      .run(userId, email, passwordHash, displayName, avatarColor, type, createdAt);
 
     return {
       userId,
@@ -272,10 +324,16 @@ export class Persistence {
   }
 
   getUser(userId: string): User | null {
-    const row = this.db.prepare(`
+    const row = this.db
+      .prepare(
+        `
       SELECT userId, email, displayName, avatarColor, teamId, orgId, type, parentUserId, createdAt
       FROM users WHERE userId = ?
-    `).get(userId) as (User & { teamId: string | null; orgId: string | null; parentUserId: string | null }) | undefined;
+    `,
+      )
+      .get(userId) as
+      | (User & { teamId: string | null; orgId: string | null; parentUserId: string | null })
+      | undefined;
 
     if (!row) return null;
     return {
@@ -287,10 +345,21 @@ export class Persistence {
   }
 
   getUserByEmail(email: string): (User & { passwordHash: string }) | null {
-    const row = this.db.prepare(`
+    const row = this.db
+      .prepare(
+        `
       SELECT userId, email, passwordHash, displayName, avatarColor, teamId, orgId, type, parentUserId, createdAt
       FROM users WHERE email = ?
-    `).get(email) as (User & { passwordHash: string; teamId: string | null; orgId: string | null; parentUserId: string | null }) | undefined;
+    `,
+      )
+      .get(email) as
+      | (User & {
+          passwordHash: string;
+          teamId: string | null;
+          orgId: string | null;
+          parentUserId: string | null;
+        })
+      | undefined;
 
     if (!row) return null;
     return {
@@ -302,34 +371,52 @@ export class Persistence {
   }
 
   updateUserPasswordHash(userId: string, newHash: string): void {
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       UPDATE users SET passwordHash = ?
       WHERE userId = ?
-    `).run(newHash, userId);
+    `,
+      )
+      .run(newHash, userId);
   }
 
   updateUserTeam(userId: string, teamId: string, orgId: string): void {
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       UPDATE users SET teamId = ?, orgId = ?
       WHERE userId = ?
-    `).run(teamId, orgId, userId);
+    `,
+      )
+      .run(teamId, orgId, userId);
   }
 
-  createAgentUser(
-    parentUserId: string,
-    displayName: string,
-    teamId: string,
-    orgId: string,
-  ): User {
+  createAgentUser(parentUserId: string, displayName: string, teamId: string, orgId: string): User {
     const userId = uuidv4();
     const email = `agent-${userId}@campfires.local`;
     const avatarColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
     const createdAt = new Date().toISOString();
 
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO users (userId, email, passwordHash, displayName, avatarColor, teamId, orgId, type, parentUserId, createdAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(userId, email, '', displayName, avatarColor, teamId, orgId, 'agent', parentUserId, createdAt);
+    `,
+      )
+      .run(
+        userId,
+        email,
+        '',
+        displayName,
+        avatarColor,
+        teamId,
+        orgId,
+        'agent',
+        parentUserId,
+        createdAt,
+      );
 
     return {
       userId,
@@ -353,22 +440,26 @@ export class Persistence {
     const timestamp = new Date().toISOString();
     const metadata = event.metadata ? JSON.stringify(event.metadata) : null;
 
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO activity_log (id, timestamp, userId, userType, parentUserId, teamId, type, file, branch, message, metadata)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      id,
-      timestamp,
-      event.userId,
-      event.userType,
-      event.parentUserId,
-      event.teamId,
-      event.type,
-      event.file,
-      event.branch,
-      event.message,
-      metadata
-    );
+    `,
+      )
+      .run(
+        id,
+        timestamp,
+        event.userId,
+        event.userType,
+        event.parentUserId,
+        event.teamId,
+        event.type,
+        event.file,
+        event.branch,
+        event.message,
+        metadata,
+      );
 
     return {
       id,
@@ -391,7 +482,7 @@ export class Persistence {
       since?: string;
       limit?: number;
       types?: ActivityEventType[];
-    } = {}
+    } = {},
   ): ActivityEvent[] {
     const { since, limit = 100, types } = options;
 
@@ -484,15 +575,19 @@ export class Persistence {
     periodEnd: string,
     content: string,
     oneLiner: string,
-    eventCount: number
+    eventCount: number,
   ): Summary {
     const id = uuidv4();
     const createdAt = new Date().toISOString();
 
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO summaries (id, orgId, teamId, periodStart, periodEnd, content, oneLiner, eventCount, createdAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, orgId, teamId, periodStart, periodEnd, content, oneLiner, eventCount, createdAt);
+    `,
+      )
+      .run(id, orgId, teamId, periodStart, periodEnd, content, oneLiner, eventCount, createdAt);
 
     return { id, orgId, teamId, periodStart, periodEnd, content, oneLiner, eventCount, createdAt };
   }
@@ -519,10 +614,14 @@ export class Persistence {
   }
 
   getLatestSummaryTime(teamId: string): string | null {
-    const row = this.db.prepare(`
+    const row = this.db
+      .prepare(
+        `
       SELECT MAX(periodEnd) as lastEnd
       FROM summaries WHERE teamId = ?
-    `).get(teamId) as { lastEnd: string | null } | undefined;
+    `,
+      )
+      .get(teamId) as { lastEnd: string | null } | undefined;
 
     return row?.lastEnd || null;
   }

@@ -4,7 +4,7 @@ import { renderDetailView } from './components/detail-view.js';
 import { renderHeader, type ViewMode } from './components/header.js';
 import { MapView } from './map/index.js';
 
-const SERVER_URL = '';  // Empty string = same origin (proxied by Vite in dev)
+const SERVER_URL = ''; // Empty string = same origin (proxied by Vite in dev)
 
 // Parse orgId from URL path (/org/{orgId}) or query param (?orgId=...)
 function getOrgId(): string | null {
@@ -157,9 +157,9 @@ async function fetchAllMembers(teams: Team[]): Promise<Map<string, User[]>> {
   const results = await Promise.all(
     teams.map((t) =>
       fetch(`${SERVER_URL}/api/teams/${t.teamId}/members`)
-        .then((r) => r.ok ? r.json() : [])
-        .then((m: User[]) => ({ teamId: t.teamId, members: m }))
-    )
+        .then((r) => (r.ok ? r.json() : []))
+        .then((m: User[]) => ({ teamId: t.teamId, members: m })),
+    ),
   );
   for (const r of results) {
     members.set(r.teamId, r.members);
@@ -172,9 +172,9 @@ async function fetchAllAwareness(teams: Team[]): Promise<Map<string, AwarenessSt
   const results = await Promise.all(
     teams.map((t) =>
       fetch(`${SERVER_URL}/api/teams/${t.teamId}/awareness`)
-        .then((r) => r.ok ? r.json() : [])
-        .then((a: AwarenessState[]) => ({ teamId: t.teamId, awareness: a }))
-    )
+        .then((r) => (r.ok ? r.json() : []))
+        .then((a: AwarenessState[]) => ({ teamId: t.teamId, awareness: a })),
+    ),
   );
   for (const r of results) {
     awareness.set(r.teamId, r.awareness);
@@ -207,7 +207,8 @@ async function init(): Promise<void> {
   const orgId = getOrgId();
 
   if (!orgId) {
-    app.innerHTML = '<div class="error">No orgId provided. Use <code>?orgId=...</code> or <code>/org/{orgId}</code> in the URL.</div>';
+    app.innerHTML =
+      '<div class="error">No orgId provided. Use <code>?orgId=...</code> or <code>/org/{orgId}</code> in the URL.</div>';
     return;
   }
 

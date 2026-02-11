@@ -1,4 +1,12 @@
-import type { Org, Team, Summary, User, RegisterAgentResponse, AgentActivityRequest, ActivityEvent } from '@campfires/shared';
+import type {
+  Org,
+  Team,
+  Summary,
+  User,
+  RegisterAgentResponse,
+  AgentActivityRequest,
+  ActivityEvent,
+} from '@campfires/shared';
 
 export class ApiClient {
   constructor(
@@ -12,7 +20,7 @@ export class ApiClient {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText })) as { error: string };
+      const err = (await res.json().catch(() => ({ error: res.statusText }))) as { error: string };
       throw new Error(err.error || `API error: ${res.status}`);
     }
 
@@ -30,7 +38,7 @@ export class ApiClient {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText })) as { error: string };
+      const err = (await res.json().catch(() => ({ error: res.statusText }))) as { error: string };
       throw new Error(err.error || `API error: ${res.status}`);
     }
 

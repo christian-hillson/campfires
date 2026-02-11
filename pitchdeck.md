@@ -37,7 +37,7 @@ Campfires captures what developers are working on — files, branches, commits �
 
 ## Slide 4: The Map — Hero Shot
 
-*[Screenshot: RPG-style pixel-art map showing an organization]*
+_[Screenshot: RPG-style pixel-art map showing an organization]_
 
 Each campfire on the map is a team. The fire's intensity shows how active they are. Human developers are sprites working at the fire — smithing, scribing, mining. AI agents are golems, color-matched to their human owner.
 
@@ -47,7 +47,7 @@ You can see at a glance: where the energy is, how many people are gathered, and 
 
 ## Slide 5: Zoom Into a Campfire
 
-*[Screenshot: Campfire detail view]*
+_[Screenshot: Campfire detail view]_
 
 Click any campfire to see:
 
@@ -73,11 +73,11 @@ They click **Visit** and join the campfire as an observer. They see the team's a
 
 ## Slide 7: Three Surfaces, One Pipeline
 
-| Surface | Who it's for | What they see |
-|---------|-------------|---------------|
-| **VS Code Extension** | Developers | Teammates in your campfire — who's in what file, real-time |
-| **Terminal CLI** | Terminal-first devs | Same awareness, split-pane alongside Claude Code or vim |
-| **The Reel (Web App)** | PMs, execs, designers, anyone | AI-summarized org-wide view — every campfire at a glance |
+| Surface                | Who it's for                  | What they see                                              |
+| ---------------------- | ----------------------------- | ---------------------------------------------------------- |
+| **VS Code Extension**  | Developers                    | Teammates in your campfire — who's in what file, real-time |
+| **Terminal CLI**       | Terminal-first devs           | Same awareness, split-pane alongside Claude Code or vim    |
+| **The Reel (Web App)** | PMs, execs, designers, anyone | AI-summarized org-wide view — every campfire at a glance   |
 
 All three surfaces read from the same real-time data pipeline. Install once, visible everywhere.
 
@@ -85,11 +85,12 @@ All three surfaces read from the same real-time data pipeline. Install once, vis
 
 ## Slide 8: The Reel
 
-*[Screenshot: Reel summary feed]*
+_[Screenshot: Reel summary feed]_
 
 The Reel is the org-wide view. Every team's campfire, summarized by AI every 15 minutes using your company's context — mission, roadmap, team descriptions.
 
 Summaries like:
+
 - "Payments: Building Stripe webhook receiver for the billing migration (3 active, 1 agent)"
 - "Platform: Quiet today — 1 engineer doing dependency upgrades"
 - "Growth: Shipping the onboarding redesign — 4 active across frontend and API"
@@ -152,14 +153,14 @@ Developers adopt it because it helps them. The org adopts it because it helps ev
 
 ## Slide 12: What's Built
 
-| Component | Status |
-|-----------|--------|
-| Core server (WebSocket, REST, SQLite, auth) | Done |
-| Terminal CLI with agent activity tracking | Done |
-| Reel web app with AI summaries and SSE | Done |
-| RPG-style pixel-art map view | Done |
-| VS Code extension (sidebar, decorations, status bar) | Done |
-| Cross-team campfire visits | Planned |
+| Component                                            | Status  |
+| ---------------------------------------------------- | ------- |
+| Core server (WebSocket, REST, SQLite, auth)          | Done    |
+| Terminal CLI with agent activity tracking            | Done    |
+| Reel web app with AI summaries and SSE               | Done    |
+| RPG-style pixel-art map view                         | Done    |
+| VS Code extension (sidebar, decorations, status bar) | Done    |
+| Cross-team campfire visits                           | Planned |
 
 Five sprints complete. Monorepo, TypeScript throughout, ready to dogfood.
 
@@ -182,4 +183,4 @@ Every organization has campfires burning. Work is happening right now — intere
 
 Walk over to any fire. See who's gathered. See what they're building. Sit down if it's interesting.
 
-*Build the campfire. Gather the team. Start sculpting together.*
+_Build the campfire. Gather the team. Start sculpting together._
