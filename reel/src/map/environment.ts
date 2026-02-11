@@ -62,7 +62,12 @@ export function generateEnvironment(
   }
 
   // Decorations around campfires
-  const decorationTypes: Array<'woodpile' | 'barrel' | 'crates' | 'torch'> = ['woodpile', 'barrel', 'crates', 'torch'];
+  const decorationTypes: Array<'woodpile' | 'barrel' | 'crates' | 'torch'> = [
+    'woodpile',
+    'barrel',
+    'crates',
+    'torch',
+  ];
   const decorations: Decoration[] = [];
   for (const cf of campfires) {
     const count = Math.min(2 + cf.fireSize, 5);
@@ -111,11 +116,7 @@ export function drawPath(
   }
 }
 
-export function drawTree(
-  ctx: CanvasRenderingContext2D,
-  tree: Tree,
-  time: number,
-): void {
+export function drawTree(ctx: CanvasRenderingContext2D, tree: Tree, time: number): void {
   const { x, y, size, leafColor, sway } = tree;
   const s = Math.sin(time * 0.8 + sway) * 0.3;
 

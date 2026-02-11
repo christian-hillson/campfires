@@ -34,7 +34,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Initialize and register campfire panel
   campfirePanel = new CampfirePanel(context.extensionUri);
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(CampfirePanel.viewType, campfirePanel)
+    vscode.window.registerWebviewViewProvider(CampfirePanel.viewType, campfirePanel),
   );
 
   // Register commands
@@ -75,16 +75,16 @@ function registerCommands(context: vscode.ExtensionContext): void {
       vscode.window.showInformationMessage(
         newMode
           ? 'Draft mode enabled. Your activity is now hidden.'
-          : 'Draft mode disabled. You are now visible to your team.'
+          : 'Draft mode disabled. You are now visible to your team.',
       );
-    })
+    }),
   );
 
   // Login
   context.subscriptions.push(
     vscode.commands.registerCommand('campfires.login', async () => {
       await showLoginFlow(context);
-    })
+    }),
   );
 
   // Logout
@@ -92,7 +92,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('campfires.logout', async () => {
       await disconnect(context);
       vscode.window.showInformationMessage('Signed out of Campfires');
-    })
+    }),
   );
 
   // Join team
@@ -124,11 +124,19 @@ function registerCommands(context: vscode.ExtensionContext): void {
         });
 
         if (!response.ok) {
-          const errorData = await response.json() as { error?: string };
+          const errorData = (await response.json()) as { error?: string };
           throw new Error(errorData.error || 'Failed to join team');
         }
 
-        const { team, user, token: newToken } = await response.json() as { team: { name: string }; user: { userId: string; displayName: string; teamId: string; avatarColor: string }; token: string };
+        const {
+          team,
+          user,
+          token: newToken,
+        } = (await response.json()) as {
+          team: { name: string };
+          user: { userId: string; displayName: string; teamId: string; avatarColor: string };
+          token: string;
+        };
         await context.secrets.store(SECRET_KEY_USER, JSON.stringify(user));
         await context.secrets.store(SECRET_KEY_TOKEN, newToken);
 
@@ -140,7 +148,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
       } catch (error) {
         vscode.window.showErrorMessage(`Failed to join team: ${error}`);
       }
-    })
+    }),
   );
 
   // Refresh
@@ -149,7 +157,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
       if (awarenessProvider) {
         awarenessProvider.updateAwareness();
       }
-    })
+    }),
   );
 
   // Visit another campfire
@@ -173,7 +181,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
 
       // Decode JWT to get orgId and teamId
       const payload = JSON.parse(
-        Buffer.from(token.split('.')[1], 'base64').toString()
+        Buffer.from(token.split('.')[1], 'base64').toString(),
       ) as JwtPayload;
 
       if (!payload.orgId || !payload.teamId) {
@@ -188,7 +196,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
         });
         if (!teamsRes.ok) throw new Error('Failed to fetch teams');
 
-        const teams: Team[] = await teamsRes.json() as Team[];
+        const teams: Team[] = (await teamsRes.json()) as Team[];
         const otherTeams = teams.filter((t) => t.teamId !== payload.teamId);
 
         if (otherTeams.length === 0) {
@@ -198,7 +206,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
 
         const pick = await vscode.window.showQuickPick(
           otherTeams.map((t) => ({ label: t.name, description: t.description, teamId: t.teamId })),
-          { placeHolder: 'Select a campfire to visit' }
+          { placeHolder: 'Select a campfire to visit' },
         );
         if (!pick) return;
 
@@ -244,7 +252,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
       } catch (error) {
         vscode.window.showErrorMessage(`Failed to visit campfire: ${error}`);
       }
-    })
+    }),
   );
 
   // Leave visited campfire
@@ -272,7 +280,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
       }
 
       vscode.window.showInformationMessage('Returned to your campfire');
-    })
+    }),
   );
 }
 
@@ -307,10 +315,7 @@ async function showLoginFlow(context: vscode.ExtensionContext): Promise<void> {
   try {
     const serverUrl = getServerUrl();
     const endpoint = action === 'Sign Up' ? '/api/auth/signup' : '/api/auth/login';
-    const body =
-      action === 'Sign Up'
-        ? { email, password, displayName }
-        : { email, password };
+    const body = action === 'Sign Up' ? { email, password, displayName } : { email, password };
 
     const response = await fetch(`${serverUrl}${endpoint}`, {
       method: 'POST',
@@ -319,11 +324,14 @@ async function showLoginFlow(context: vscode.ExtensionContext): Promise<void> {
     });
 
     if (!response.ok) {
-      const errorData = await response.json() as { error?: string };
+      const errorData = (await response.json()) as { error?: string };
       throw new Error(errorData.error || 'Authentication failed');
     }
 
-    const { token, user } = await response.json() as { token: string; user: { userId: string; displayName: string; teamId: string; avatarColor: string } };
+    const { token, user } = (await response.json()) as {
+      token: string;
+      user: { userId: string; displayName: string; teamId: string; avatarColor: string };
+    };
 
     // Store credentials
     await context.secrets.store(SECRET_KEY_TOKEN, token);
@@ -334,9 +342,7 @@ async function showLoginFlow(context: vscode.ExtensionContext): Promise<void> {
       vscode.window.showInformationMessage('Signed in to Campfires!');
     } else {
       statusBar?.showNotConnected();
-      vscode.window.showInformationMessage(
-        'Signed in! Use "Campfires: Join Team" to join a team.'
-      );
+      vscode.window.showInformationMessage('Signed in! Use "Campfires: Join Team" to join a team.');
     }
   } catch (error) {
     vscode.window.showErrorMessage(`Authentication failed: ${error}`);
@@ -346,7 +352,7 @@ async function showLoginFlow(context: vscode.ExtensionContext): Promise<void> {
 async function connect(
   context: vscode.ExtensionContext,
   token: string,
-  user: { userId: string; displayName: string; teamId: string; avatarColor: string }
+  user: { userId: string; displayName: string; teamId: string; avatarColor: string },
 ): Promise<void> {
   if (!user.teamId) {
     statusBar?.showNotConnected();
@@ -433,14 +439,14 @@ function setupFileWatchers(context: vscode.ExtensionContext): void {
 
       // Update current function
       updateCurrentFunction(editor);
-    })
+    }),
   );
 
   // Cursor position change (function detection)
   context.subscriptions.push(
     vscode.window.onDidChangeTextEditorSelection((event) => {
       updateCurrentFunction(event.textEditor);
-    })
+    }),
   );
 
   // File save
@@ -450,7 +456,7 @@ function setupFileWatchers(context: vscode.ExtensionContext): void {
 
       const relativePath = getRelativePath(document.uri);
       awarenessProvider.pushActivityEvent('file_save', { file: relativePath });
-    })
+    }),
   );
 
   // Initialize with current editor
@@ -468,7 +474,7 @@ async function updateCurrentFunction(editor: vscode.TextEditor): Promise<void> {
   try {
     const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
       'vscode.executeDocumentSymbolProvider',
-      editor.document.uri
+      editor.document.uri,
     );
 
     if (!symbols) {
@@ -486,7 +492,7 @@ async function updateCurrentFunction(editor: vscode.TextEditor): Promise<void> {
 
 function findContainingFunction(
   symbols: vscode.DocumentSymbol[],
-  position: vscode.Position
+  position: vscode.Position,
 ): vscode.DocumentSymbol | null {
   for (const symbol of symbols) {
     if (!symbol.range.contains(position)) continue;

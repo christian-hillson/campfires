@@ -46,12 +46,7 @@ interface ApiOrg {
   name: string;
 }
 
-async function api<T>(
-  method: string,
-  path: string,
-  body?: unknown,
-  token?: string,
-): Promise<T> {
+async function api<T>(method: string, path: string, body?: unknown, token?: string): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
@@ -111,7 +106,11 @@ const USERS = [
 const TEAMS = [
   { name: 'Frontend Forge', description: 'UI, design system, and web client', members: [0, 1] },
   { name: 'Backend Bastion', description: 'APIs, data layer, and infrastructure', members: [2, 3] },
-  { name: 'Platform Pyre', description: 'CI/CD, observability, and developer tools', members: [4, 5] },
+  {
+    name: 'Platform Pyre',
+    description: 'CI/CD, observability, and developer tools',
+    members: [4, 5],
+  },
 ];
 
 async function main() {
@@ -119,9 +118,7 @@ async function main() {
 
   // 1. Sign up all users
   console.log('  Creating users...');
-  const signups = await Promise.all(
-    USERS.map((u) => signup(u.email, u.password, u.name)),
-  );
+  const signups = await Promise.all(USERS.map((u) => signup(u.email, u.password, u.name)));
   const tokens = signups.map((s) => s.token);
   const users = signups.map((s) => s.user);
 
@@ -223,11 +220,15 @@ async function main() {
   console.log(`    (login as alice@test.campfires / test1234)\n`);
 
   console.log(`  CLI — Alice visits Backend Bastion:`);
-  console.log(`    node cli/dist/index.js watch --server-url ${SERVER_URL} --visit ${createdTeams[1].teamId}\n`);
+  console.log(
+    `    node cli/dist/index.js watch --server-url ${SERVER_URL} --visit ${createdTeams[1].teamId}\n`,
+  );
   console.log(`    (login as alice@test.campfires / test1234)\n`);
 
   console.log(`  CLI — Carol visits Frontend Forge:`);
-  console.log(`    node cli/dist/index.js watch --server-url ${SERVER_URL} --visit ${createdTeams[0].teamId}\n`);
+  console.log(
+    `    node cli/dist/index.js watch --server-url ${SERVER_URL} --visit ${createdTeams[0].teamId}\n`,
+  );
   console.log(`    (login as carol@test.campfires / test1234)\n`);
 
   console.log(`  Extension:`);
@@ -246,7 +247,10 @@ async function main() {
   const outPath = new URL('./test-seed-sprint6.json', import.meta.url);
   const { writeFileSync } = await import('node:fs');
   const { fileURLToPath } = await import('node:url');
-  writeFileSync(fileURLToPath(outPath), JSON.stringify({ org, teams: createdTeams, users: tokenData }, null, 2));
+  writeFileSync(
+    fileURLToPath(outPath),
+    JSON.stringify({ org, teams: createdTeams, users: tokenData }, null, 2),
+  );
   console.log(`  Tokens + IDs saved to: scripts/test-seed-sprint6.json\n`);
 }
 

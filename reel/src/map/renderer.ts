@@ -9,11 +9,24 @@ export const TREE_LEAVES = ['#2a4a22', '#1e3a18', '#325828'];
 
 // Team colors assigned by index
 export const TEAM_COLORS = [
-  '#f97316', '#60a5fa', '#a78bfa', '#4ade80',
-  '#f472b6', '#facc15', '#34d399', '#fb923c',
+  '#f97316',
+  '#60a5fa',
+  '#a78bfa',
+  '#4ade80',
+  '#f472b6',
+  '#facc15',
+  '#34d399',
+  '#fb923c',
 ];
 
-export function px(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string): void {
+export function px(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+): void {
   ctx.fillStyle = color;
   ctx.fillRect(
     Math.floor(x * PIXEL_SCALE),
@@ -68,7 +81,7 @@ export function drawCampfire(
   const fireHeight = size * 4 + 3;
   const flames = size * 2 + 2;
   for (let f = 0; f < flames; f++) {
-    const fx = cx - size + f * (size * 2 / flames);
+    const fx = cx - size + f * ((size * 2) / flames);
     for (let fy = 0; fy < fireHeight; fy++) {
       const t = fy / fireHeight;
       const flicker = Math.sin(time * 8 + f * 2 + fy * 0.5) * (1 + t * 2);
@@ -100,8 +113,12 @@ export function drawCampfire(
   const glowR = baseR + size * 4;
   ctx.save();
   const gradient = ctx.createRadialGradient(
-    cx * PIXEL_SCALE, cy * PIXEL_SCALE, 0,
-    cx * PIXEL_SCALE, cy * PIXEL_SCALE, glowR * PIXEL_SCALE,
+    cx * PIXEL_SCALE,
+    cy * PIXEL_SCALE,
+    0,
+    cx * PIXEL_SCALE,
+    cy * PIXEL_SCALE,
+    glowR * PIXEL_SCALE,
   );
   gradient.addColorStop(0, teamColor + '18');
   gradient.addColorStop(0.5, teamColor + '08');
@@ -134,8 +151,12 @@ export function drawTeamLabel(
 export function drawVignette(ctx: CanvasRenderingContext2D, width: number, height: number): void {
   ctx.save();
   const vignette = ctx.createRadialGradient(
-    width / 2, height / 2, width * 0.3,
-    width / 2, height / 2, width * 0.7,
+    width / 2,
+    height / 2,
+    width * 0.3,
+    width / 2,
+    height / 2,
+    width * 0.7,
   );
   vignette.addColorStop(0, 'transparent');
   vignette.addColorStop(1, '#0a0e0a88');

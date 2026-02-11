@@ -19,12 +19,18 @@ function timeAgo(isoString: string): string {
 }
 
 function getLatestSummaryForTeam(summaries: Summary[], teamId: string): Summary | null {
-  return summaries
-    .filter((s) => s.teamId === teamId)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] || null;
+  return (
+    summaries
+      .filter((s) => s.teamId === teamId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] || null
+  );
 }
 
-function createTeamCard(team: Team, summary: Summary | null, onTeamClick: (teamId: string) => void): HTMLElement {
+function createTeamCard(
+  team: Team,
+  summary: Summary | null,
+  onTeamClick: (teamId: string) => void,
+): HTMLElement {
   const card = document.createElement('div');
   card.className = summary ? 'team-card' : 'team-card empty';
   card.dataset.teamId = team.teamId;

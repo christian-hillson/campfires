@@ -296,47 +296,51 @@ export function createRouter(): Router {
     res.json(summaries);
   });
 
-  router.get('/orgs/:id/summaries/stream', optionalAuthMiddleware, (req: Request, res: Response) => {
-    const { id } = req.params;
-    const db = getPersistence();
+  router.get(
+    '/orgs/:id/summaries/stream',
+    optionalAuthMiddleware,
+    (req: Request, res: Response) => {
+      const { id } = req.params;
+      const db = getPersistence();
 
-    const org = db.getOrg(id);
-    if (!org) {
-      res.status(404).json({ error: 'Org not found' });
-      return;
-    }
-
-    // Set up SSE
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders();
-
-    // Send initial summaries
-    const summaries = db.getSummaries(id, { limit: 10 });
-    res.write(`data: ${JSON.stringify({ type: 'initial', summaries })}\n\n`);
-
-    // Poll for new summaries
-    let lastCheck = new Date().toISOString();
-    const interval = setInterval(() => {
-      const newSummaries = db.getSummaries(id, { since: lastCheck });
-      if (newSummaries.length > 0) {
-        res.write(`data: ${JSON.stringify({ type: 'update', summaries: newSummaries })}\n\n`);
-        lastCheck = new Date().toISOString();
+      const org = db.getOrg(id);
+      if (!org) {
+        res.status(404).json({ error: 'Org not found' });
+        return;
       }
-    }, CONFIG.SSE_POLL_INTERVAL);
 
-    // Send keep-alive ping
-    const pingInterval = setInterval(() => {
-      res.write(': ping\n\n');
-    }, CONFIG.SSE_PING_INTERVAL);
+      // Set up SSE
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.flushHeaders();
 
-    // Clean up on close
-    req.on('close', () => {
-      clearInterval(interval);
-      clearInterval(pingInterval);
-    });
-  });
+      // Send initial summaries
+      const summaries = db.getSummaries(id, { limit: 10 });
+      res.write(`data: ${JSON.stringify({ type: 'initial', summaries })}\n\n`);
+
+      // Poll for new summaries
+      let lastCheck = new Date().toISOString();
+      const interval = setInterval(() => {
+        const newSummaries = db.getSummaries(id, { since: lastCheck });
+        if (newSummaries.length > 0) {
+          res.write(`data: ${JSON.stringify({ type: 'update', summaries: newSummaries })}\n\n`);
+          lastCheck = new Date().toISOString();
+        }
+      }, CONFIG.SSE_POLL_INTERVAL);
+
+      // Send keep-alive ping
+      const pingInterval = setInterval(() => {
+        res.write(': ping\n\n');
+      }, CONFIG.SSE_PING_INTERVAL);
+
+      // Clean up on close
+      req.on('close', () => {
+        clearInterval(interval);
+        clearInterval(pingInterval);
+      });
+    },
+  );
 
   // ============================================
   // Agent Endpoints

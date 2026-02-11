@@ -100,10 +100,13 @@ function renderTier1(state: RenderState, width: number): string[] {
   lines.push(BOLD + '🔥 ' + tier1.orgName + ' Bonfire' + RESET);
   lines.push(
     DIM +
-      tier1.teamCount + ' campfire' + (tier1.teamCount !== 1 ? 's' : '') +
+      tier1.teamCount +
+      ' campfire' +
+      (tier1.teamCount !== 1 ? 's' : '') +
       ' · ' +
-      tier1.onlineCount + ' online' +
-      RESET
+      tier1.onlineCount +
+      ' online' +
+      RESET,
   );
   lines.push(divider(width));
 
@@ -172,7 +175,9 @@ function renderTier2(state: RenderState, width: number): string[] {
   }
 
   // Render orphaned agents (parentUserId set but parent not in awareness)
-  const nestedIds = new Set(agents.filter((a) => topLevel.some((t) => t.userId === a.parentUserId)).map((a) => a.userId));
+  const nestedIds = new Set(
+    agents.filter((a) => topLevel.some((t) => t.userId === a.parentUserId)).map((a) => a.userId),
+  );
   const orphanedAgents = agents.filter((a) => !nestedIds.has(a.userId));
   for (const agent of orphanedAgents) {
     lines.push(renderMember(agent, width, false));

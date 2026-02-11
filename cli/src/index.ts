@@ -16,7 +16,13 @@ import { installGitHooks } from './git-hooks.js';
 // Argument Parsing
 // ============================================
 
-function parseArgs(): { command: string; serverUrl: string; dir: string; agentMode: 'auto' | 'force' | 'off'; visitTeamId: string | null } {
+function parseArgs(): {
+  command: string;
+  serverUrl: string;
+  dir: string;
+  agentMode: 'auto' | 'force' | 'off';
+  visitTeamId: string | null;
+} {
   const args = process.argv.slice(2);
   let command = '';
   let serverUrl: string = CLI_CONFIG.DEFAULT_SERVER_URL;
@@ -52,7 +58,9 @@ function parseArgs(): { command: string; serverUrl: string; dir: string; agentMo
 
 function formatTime(isoTimestamp: string): string {
   const d = new Date(isoTimestamp);
-  return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+  return (
+    d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0')
+  );
 }
 
 function activityDescription(event: ActivityEvent): string {
@@ -160,7 +168,9 @@ async function main(): Promise<void> {
   const { command, serverUrl, dir, agentMode, visitTeamId } = parseArgs();
 
   if (command !== 'watch') {
-    console.error('Usage: campfire watch [--server-url <url>] [--dir <path>] [--agent | --no-agent] [--visit <teamId>]');
+    console.error(
+      'Usage: campfire watch [--server-url <url>] [--dir <path>] [--agent | --no-agent] [--visit <teamId>]',
+    );
     process.exit(1);
   }
 
@@ -175,7 +185,9 @@ async function main(): Promise<void> {
   }
 
   if (!payload.teamId || !payload.orgId) {
-    console.error('You need to join a team first. Use the VS Code extension or web app to join a team.');
+    console.error(
+      'You need to join a team first. Use the VS Code extension or web app to join a team.',
+    );
     process.exit(1);
   }
 
@@ -227,7 +239,8 @@ async function main(): Promise<void> {
   let agentDisplayName: string | null = null;
   let agentColor: string | null = null;
 
-  const shouldDetect = !isVisitMode && (agentMode === 'force' || (agentMode === 'auto' && detectAgent(dir).detected));
+  const shouldDetect =
+    !isVisitMode && (agentMode === 'force' || (agentMode === 'auto' && detectAgent(dir).detected));
 
   if (shouldDetect) {
     try {
@@ -273,7 +286,15 @@ async function main(): Promise<void> {
 
   // --- Connect ---
   const visitorCfg: VisitorConfig | undefined = isVisitMode ? { homeTeamId: teamId } : undefined;
-  const connection = new CampfireConnection(serverUrl, visitTargetTeamId, token, userId, displayName, color, visitorCfg);
+  const connection = new CampfireConnection(
+    serverUrl,
+    visitTargetTeamId,
+    token,
+    userId,
+    displayName,
+    color,
+    visitorCfg,
+  );
 
   // Configure agent identity on the connection
   if (agentActive && agentUserId && agentDisplayName && agentColor) {
@@ -305,8 +326,15 @@ async function main(): Promise<void> {
   enterAltScreen();
 
   const initialState = assembleRenderState(
-    org, teams, visitTargetTeam, currentSummaries, isVisitMode ? [] : members,
-    currentAwareness, currentActivity, isConnected, isReconnecting,
+    org,
+    teams,
+    visitTargetTeam,
+    currentSummaries,
+    isVisitMode ? [] : members,
+    currentAwareness,
+    currentActivity,
+    isConnected,
+    isReconnecting,
     isVisitMode ? visitTargetTeam?.name : undefined,
   );
   renderImmediate(initialState);
@@ -319,8 +347,10 @@ async function main(): Promise<void> {
 
   if (!isVisitMode) {
     const pushCommit = agentActive
-      ? (hash: string, message: string) => connection.pushAgentActivityEvent('commit', { message, metadata: { hash } })
-      : (hash: string, message: string) => connection.pushActivityEvent('commit', { message, metadata: { hash } });
+      ? (hash: string, message: string) =>
+          connection.pushAgentActivityEvent('commit', { message, metadata: { hash } })
+      : (hash: string, message: string) =>
+          connection.pushActivityEvent('commit', { message, metadata: { hash } });
 
     const pushBranchSwitch = agentActive
       ? (branch: string) => {
@@ -333,7 +363,8 @@ async function main(): Promise<void> {
         };
 
     const pushFileSave = agentActive
-      ? (relativePath: string) => connection.pushAgentActivityEvent('file_save', { file: relativePath })
+      ? (relativePath: string) =>
+          connection.pushAgentActivityEvent('file_save', { file: relativePath })
       : (relativePath: string) => connection.pushActivityEvent('file_save', { file: relativePath });
 
     gitWatcher = new GitWatcher(dir, {

@@ -19,7 +19,7 @@ export class DecorationManager implements vscode.Disposable {
     this.disposables.push(
       vscode.window.onDidChangeActiveTextEditor(() => {
         this.applyDecorations();
-      })
+      }),
     );
   }
 
