@@ -45,6 +45,9 @@ export class AwarenessProvider implements vscode.Disposable {
   private lastFileSave: Map<string, number> = new Map();
   private lastFileOpen: Map<string, number> = new Map();
 
+  private visitorMode: boolean;
+  private homeTeamId: string | null;
+
   constructor(options: {
     userId: string;
     displayName: string;
@@ -52,6 +55,8 @@ export class AwarenessProvider implements vscode.Disposable {
     token: string;
     serverUrl: string;
     color: string;
+    visitorMode?: boolean;
+    homeTeamId?: string;
   }) {
     this.userId = options.userId;
     this.displayName = options.displayName;
@@ -59,6 +64,8 @@ export class AwarenessProvider implements vscode.Disposable {
     this.token = options.token;
     this.serverUrl = options.serverUrl;
     this.color = options.color;
+    this.visitorMode = options.visitorMode || false;
+    this.homeTeamId = options.homeTeamId || null;
 
     this.doc = new Y.Doc();
     this.activityFeed = this.doc.getArray<ActivityEvent>('activityFeed');
@@ -124,12 +131,13 @@ export class AwarenessProvider implements vscode.Disposable {
       displayName: this.displayName,
       type: 'human',
       parentUserId: null,
-      status: this.getStatus(),
-      currentFile: this.isDraftMode ? null : this.currentFile,
-      currentFunction: this.isDraftMode ? null : this.currentFunction,
-      currentBranch: this.isDraftMode ? null : this.currentBranch,
+      status: this.visitorMode ? 'visitor' : this.getStatus(),
+      currentFile: this.visitorMode ? null : (this.isDraftMode ? null : this.currentFile),
+      currentFunction: this.visitorMode ? null : (this.isDraftMode ? null : this.currentFunction),
+      currentBranch: this.visitorMode ? null : (this.isDraftMode ? null : this.currentBranch),
       lastActivity: new Date().toISOString(),
       color: this.color,
+      ...(this.visitorMode && this.homeTeamId ? { homeTeamId: this.homeTeamId } : {}),
     };
 
     this.provider.awareness.setLocalState(state);
@@ -183,6 +191,10 @@ export class AwarenessProvider implements vscode.Disposable {
       metadata?: Record<string, unknown>;
     } = {}
   ): void {
+    if (this.visitorMode) {
+      return; // Visitors don't emit activity events
+    }
+
     if (this.isDraftMode && type !== 'session_start' && type !== 'session_end') {
       return; // Don't log activity in draft mode
     }

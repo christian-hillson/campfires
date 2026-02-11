@@ -510,3 +510,137 @@ body {
 .map-summary-line strong {
   color: #d0c0a0;
 }
+
+/* ============================================ */
+/* Map Campfire Overlay                         */
+/* ============================================ */
+
+.map-campfire-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #111a11ee;
+  border: 1px solid #2a4a2a;
+  border-radius: 8px;
+  padding: 16px 20px;
+  min-width: 280px;
+  max-width: 360px;
+  z-index: 30;
+  font-family: 'Silkscreen', monospace;
+  color: var(--map-text);
+  box-shadow: 0 8px 32px #00000088;
+  animation: overlayFadeIn 0.15s ease;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.overlay-team-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.overlay-close {
+  background: none;
+  border: none;
+  color: var(--map-text-dim);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.overlay-close:hover {
+  background: #2a4a2a;
+  color: var(--map-text);
+}
+
+.overlay-description {
+  font-size: 10px;
+  color: var(--map-text-muted);
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.overlay-summary {
+  font-size: 10px;
+  color: var(--accent);
+  margin-bottom: 8px;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.overlay-stats {
+  font-size: 9px;
+  color: var(--map-text-dim);
+  margin-bottom: 10px;
+}
+
+.overlay-members {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.overlay-member {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  padding: 3px 0;
+}
+
+.overlay-member-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.overlay-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: auto;
+  margin-right: 4px;
+}
+
+.overlay-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.overlay-btn {
+  font-family: 'Silkscreen', monospace;
+  font-size: 9px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid #2a4a2a;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.overlay-btn-detail {
+  background: #2a4a2a;
+  color: #a0d890;
+}
+
+.overlay-btn-detail:hover {
+  background: #3a5a3a;
+}

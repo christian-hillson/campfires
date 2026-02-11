@@ -84,12 +84,12 @@ Let people see into other campfires and temporarily visit them. The Map View alr
 
 | Feature | Status | Owner | Notes |
 |---------|--------|-------|-------|
-| Map: click campfire to open detail overlay | Not started | — | Team name, AI summary, member list with statuses, headcount |
-| Reel: campfire detail as entry point for visits | Not started | — | Existing detail drill-down gains a "Visit this campfire" action |
-| Server: cross-team read access for visitors | Not started | — | Read-only awareness + activity for any team in your org |
-| Server: visitor presence (lightweight) | Not started | — | Visitors appear in awareness with a distinct `visitor` status, don't emit activity events |
-| Extension: visit campfire command | Not started | — | Switch sidebar to observe a different team's campfire temporarily |
-| CLI: visit campfire flag | Not started | — | `campfire watch --visit <teamId>` to observe another team |
+| Map: click campfire to open detail overlay | Done | — | Team name, AI summary, member list with statuses, headcount |
+| Reel: campfire detail as entry point for visits | Done | — | Existing detail drill-down gains a "Visit this campfire" action |
+| Server: cross-team read access for visitors | Done | — | Read-only awareness + activity for any team in your org |
+| Server: visitor presence (lightweight) | Done | — | Visitors appear in awareness with a distinct `visitor` status, don't emit activity events |
+| Extension: visit campfire command | Done | — | Switch sidebar to observe a different team's campfire temporarily |
+| CLI: visit campfire flag | Done | — | `campfire watch --visit <teamId>` to observe another team |
 
 ## Sprint 7: Polish
 

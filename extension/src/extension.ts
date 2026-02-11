@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { JwtPayload } from '@campfires/shared';
+import type { JwtPayload, Team } from '@campfires/shared';
 import { AwarenessProvider } from './awareness-provider';
 import { IdleDetector } from './idle-detector';
 import { GitWatcher } from './git-watcher';
@@ -18,6 +18,8 @@ let gitWatcher: GitWatcher | null = null;
 let statusBar: StatusBar | null = null;
 let decorationManager: DecorationManager | null = null;
 let campfirePanel: CampfirePanel | null = null;
+let visitProvider: AwarenessProvider | null = null;
+let visitedTeamName: string | null = null;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   console.log('Campfires extension activating...');
@@ -148,6 +150,129 @@ function registerCommands(context: vscode.ExtensionContext): void {
       if (awarenessProvider) {
         awarenessProvider.updateAwareness();
       }
+    })
+  );
+
+  // Visit another campfire
+  context.subscriptions.push(
+    vscode.commands.registerCommand('campfires.visitCampfire', async () => {
+      if (!awarenessProvider) {
+        vscode.window.showWarningMessage('Please sign in first');
+        vscode.commands.executeCommand('campfires.login');
+        return;
+      }
+
+      const token = await context.secrets.get(SECRET_KEY_TOKEN);
+      const userJson = await context.secrets.get(SECRET_KEY_USER);
+      if (!token || !userJson) {
+        vscode.window.showWarningMessage('Please sign in first');
+        return;
+      }
+
+      const user = JSON.parse(userJson);
+      const serverUrl = getServerUrl();
+
+      // Decode JWT to get orgId and teamId
+      const payload = JSON.parse(
+        Buffer.from(token.split('.')[1], 'base64').toString()
+      ) as JwtPayload;
+
+      if (!payload.orgId || !payload.teamId) {
+        vscode.window.showWarningMessage('You need to join a team first');
+        return;
+      }
+
+      try {
+        // Fetch org teams
+        const teamsRes = await fetch(`${serverUrl}/api/orgs/${payload.orgId}/teams`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!teamsRes.ok) throw new Error('Failed to fetch teams');
+
+        const teams: Team[] = await teamsRes.json() as Team[];
+        const otherTeams = teams.filter((t) => t.teamId !== payload.teamId);
+
+        if (otherTeams.length === 0) {
+          vscode.window.showInformationMessage('No other teams in your organization');
+          return;
+        }
+
+        const pick = await vscode.window.showQuickPick(
+          otherTeams.map((t) => ({ label: t.name, description: t.description, teamId: t.teamId })),
+          { placeHolder: 'Select a campfire to visit' }
+        );
+        if (!pick) return;
+
+        // If already visiting, leave first
+        if (visitProvider) {
+          visitProvider.dispose();
+          visitProvider = null;
+        }
+
+        // Create visitor awareness provider
+        visitProvider = new AwarenessProvider({
+          userId: user.userId,
+          displayName: user.displayName,
+          teamId: pick.teamId,
+          token,
+          serverUrl,
+          color: user.avatarColor,
+          visitorMode: true,
+          homeTeamId: payload.teamId!,
+        });
+
+        visitedTeamName = pick.label;
+
+        visitProvider.onConnectionChange((state) => {
+          if (state.connected) {
+            statusBar?.setVisitMode(visitedTeamName!);
+          }
+        });
+
+        visitProvider.onAwarenessChange((states) => {
+          campfirePanel?.updateAwareness(states);
+        });
+
+        visitProvider.onActivityChange((events) => {
+          campfirePanel?.updateActivityFeed(events);
+        });
+
+        visitProvider.connect();
+        campfirePanel?.setVisitMode(pick.label);
+        statusBar?.setVisitMode(pick.label);
+
+        vscode.window.showInformationMessage(`Visiting ${pick.label} campfire`);
+      } catch (error) {
+        vscode.window.showErrorMessage(`Failed to visit campfire: ${error}`);
+      }
+    })
+  );
+
+  // Leave visited campfire
+  context.subscriptions.push(
+    vscode.commands.registerCommand('campfires.leaveVisit', () => {
+      if (!visitProvider) {
+        vscode.window.showInformationMessage('Not currently visiting any campfire');
+        return;
+      }
+
+      visitProvider.dispose();
+      visitProvider = null;
+      visitedTeamName = null;
+
+      // Restore home team data in panel
+      campfirePanel?.clearVisitMode();
+      statusBar?.clearVisitMode();
+
+      // Re-push home awareness to panel
+      if (awarenessProvider) {
+        const states = awarenessProvider.getAwarenessStates();
+        campfirePanel?.updateAwareness(states);
+        const events = awarenessProvider.getActivityFeed();
+        campfirePanel?.updateActivityFeed(events);
+      }
+
+      vscode.window.showInformationMessage('Returned to your campfire');
     })
   );
 }
@@ -423,6 +548,9 @@ async function disconnect(context: vscode.ExtensionContext): Promise<void> {
 }
 
 export function deactivate(): void {
+  if (visitProvider) {
+    visitProvider.dispose();
+  }
   if (awarenessProvider) {
     awarenessProvider.dispose();
   }
