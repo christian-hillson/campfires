@@ -20,6 +20,10 @@ export type ConnectionCallback = (state: ConnectionState) => void;
 export type AwarenessCallback = (states: Map<number, AwarenessState>) => void;
 export type ActivityCallback = (events: ActivityEvent[]) => void;
 
+export interface VisitorConfig {
+  homeTeamId: string;
+}
+
 export class CampfireConnection {
   private doc: Y.Doc;
   private provider: WebsocketProvider | null = null;
@@ -31,6 +35,7 @@ export class CampfireConnection {
   private activityCallbacks = new Set<ActivityCallback>();
   private throttleMap = new Map<string, number>();
   private agentConfig: AgentConfig | null = null;
+  private visitorConfig: VisitorConfig | null = null;
 
   constructor(
     private serverUrl: string,
@@ -39,7 +44,9 @@ export class CampfireConnection {
     private userId: string,
     private displayName: string,
     private color: string,
+    visitorConfig?: VisitorConfig,
   ) {
+    this.visitorConfig = visitorConfig || null;
     this.doc = new Y.Doc();
     this.activityFeed = this.doc.getArray<ActivityEvent>('activityFeed');
     this.setupActivityListener();
@@ -82,12 +89,13 @@ export class CampfireConnection {
       displayName: this.displayName,
       type: 'human',
       parentUserId: null,
-      status: 'active',
-      currentFile: null,
-      currentFunction: null,
-      currentBranch: null,
+      status: this.visitorConfig ? 'visitor' : 'active',
+      currentFile: this.visitorConfig ? null : null,
+      currentFunction: this.visitorConfig ? null : null,
+      currentBranch: this.visitorConfig ? null : null,
       lastActivity: new Date().toISOString(),
       color: this.color,
+      ...(this.visitorConfig ? { homeTeamId: this.visitorConfig.homeTeamId } : {}),
     };
 
     this.provider.awareness.setLocalState(state);
@@ -104,6 +112,7 @@ export class CampfireConnection {
     type: ActivityEventType,
     options: { file?: string; branch?: string; message?: string; metadata?: Record<string, unknown> } = {},
   ): void {
+    if (this.visitorConfig) return; // Visitors don't emit activity events
     if (!this.shouldEmitEvent(type, options.file)) return;
 
     const event: ActivityEvent = {
@@ -131,6 +140,7 @@ export class CampfireConnection {
     type: ActivityEventType,
     options: { file?: string; branch?: string; message?: string; metadata?: Record<string, unknown> } = {},
   ): void {
+    if (this.visitorConfig) return; // Visitors don't emit activity events
     if (!this.agentConfig) return;
     if (!this.shouldEmitEvent(type, options.file)) return;
 
@@ -192,7 +202,9 @@ export class CampfireConnection {
     }
 
     if (this.provider) {
-      this.pushActivityEvent('session_end');
+      if (!this.visitorConfig) {
+        this.pushActivityEvent('session_end');
+      }
       this.provider.awareness.setLocalState(null);
       this.provider.disconnect();
       this.provider = null;

@@ -10,6 +10,7 @@ interface AuthenticatedWebSocket extends WebSocket {
   userId?: string;
   teamId?: string;
   isAlive?: boolean;
+  isVisitor?: boolean;
 }
 
 // Rate limiting state
@@ -30,6 +31,9 @@ function isRateLimited(userId: string, maxEventsPerSecond: number): boolean {
   userEventTimestamps.set(userId, timestamps);
   return false;
 }
+
+// Track visitor userIds per room for activity filtering
+const roomVisitors: Map<string, Set<string>> = new Map();
 
 export function createWebSocketServer(server: http.Server): WebSocketServer {
   const wss = new WebSocketServer({ noServer: true });
@@ -62,12 +66,18 @@ export function createWebSocketServer(server: http.Server): WebSocketServer {
     }
 
     const teamId = pathname.slice('/campfire:'.length);
+    let isVisitor = false;
 
-    // Verify user belongs to this team
+    // Verify user belongs to this team or same org
     if (payload.teamId !== teamId) {
-      socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
-      socket.destroy();
-      return;
+      // Check if same org
+      const targetTeam = db.getTeam(teamId);
+      if (!targetTeam || targetTeam.orgId !== payload.orgId) {
+        socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+        socket.destroy();
+        return;
+      }
+      isVisitor = true;
     }
 
     wss.handleUpgrade(request, socket, head, (ws) => {
@@ -75,6 +85,7 @@ export function createWebSocketServer(server: http.Server): WebSocketServer {
       authWs.userId = payload.userId;
       authWs.teamId = teamId;
       authWs.isAlive = true;
+      authWs.isVisitor = isVisitor;
 
       wss.emit('connection', authWs, request);
     });
@@ -82,9 +93,24 @@ export function createWebSocketServer(server: http.Server): WebSocketServer {
 
   // Handle connections
   wss.on('connection', (ws: AuthenticatedWebSocket, request: http.IncomingMessage) => {
-    const url = new URL(request.url || '', `http://${request.headers.host}`);
     const teamId = ws.teamId!;
     const docName = `campfire:${teamId}`;
+
+    // Track visitors for activity filtering
+    if (ws.isVisitor && ws.userId) {
+      if (!roomVisitors.has(docName)) {
+        roomVisitors.set(docName, new Set());
+      }
+      roomVisitors.get(docName)!.add(ws.userId);
+
+      ws.on('close', () => {
+        const visitors = roomVisitors.get(docName);
+        if (visitors) {
+          visitors.delete(ws.userId!);
+          if (visitors.size === 0) roomVisitors.delete(docName);
+        }
+      });
+    }
 
     // Set up y-websocket connection
     setupWSConnection(ws, request, { docName });
@@ -100,7 +126,7 @@ export function createWebSocketServer(server: http.Server): WebSocketServer {
       ws.isAlive = true;
     });
 
-    console.log(`Client connected to campfire:${teamId}`);
+    console.log(`Client ${ws.isVisitor ? '(visitor) ' : ''}connected to campfire:${teamId}`);
   });
 
   // Ping interval to detect stale connections
@@ -152,6 +178,12 @@ function setupActivityLogging(
       if (item.content.type === Y.ContentAny) {
         const events = (item.content as Y.ContentAny).arr as ActivityEvent[];
         events.forEach((activityEvent) => {
+          // Skip persisting events from visitors
+          const visitors = roomVisitors.get(docName);
+          if (visitors && visitors.has(activityEvent.userId)) {
+            return;
+          }
+
           // Rate limiting check
           if (isRateLimited(activityEvent.userId, 1)) {
             console.log(`Rate limited event from user ${activityEvent.userId}`);

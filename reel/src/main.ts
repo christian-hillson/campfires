@@ -102,6 +102,7 @@ function showDetail(teamId: string): void {
     orgId: state.org.orgId,
     serverUrl: SERVER_URL,
     onBack: () => renderCurrentView(),
+    awareness: state.awareness.get(teamId),
   });
 }
 
@@ -116,6 +117,7 @@ function showMap(content: HTMLElement): void {
     members: state.members,
     awareness: state.awareness,
     serverUrl: SERVER_URL,
+    onTeamSelect: showDetail,
   });
   mapView.start();
 }

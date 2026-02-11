@@ -21,6 +21,17 @@ export function drawHumanSprite(
     return;
   }
 
+  if (status === 'visitor') {
+    // Sitting visitor sprite with walking stick
+    px(ctx, x, bY + 1, 3, 1, color);
+    px(ctx, x, bY, 2, 1, color);
+    px(ctx, x, bY - 1, 2, 1, '#e0d8c8');
+    // Walking stick
+    px(ctx, x + 3, bY - 2, 1, 4, '#8a7a5a');
+    px(ctx, x + 3, bY - 3, 1, 1, '#a09070');
+    return;
+  }
+
   if (status === 'idle') {
     // Sitting sprite
     px(ctx, x, bY + 1, 3, 1, color);

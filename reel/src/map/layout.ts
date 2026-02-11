@@ -9,7 +9,7 @@ export interface CampfirePosition {
   fireSize: number; // 1-3
 }
 
-export type SpriteStatus = 'active' | 'idle' | 'draft' | 'offline';
+export type SpriteStatus = 'active' | 'idle' | 'draft' | 'offline' | 'visitor';
 export type SpriteTask = 'smithing' | 'scribing' | 'mining' | 'chopping' | 'carrying' | 'sitting' | 'tent';
 
 export interface SpriteData {
@@ -117,18 +117,22 @@ export function layoutSprites(
     let file = '';
 
     if (awareness) {
-      status = awareness.status === 'draft' ? 'draft' : awareness.status === 'idle' ? 'idle' : 'active';
-      file = awareness.currentFile || '';
-
-      if (status === 'draft') {
-        task = 'tent';
-      } else if (status === 'idle') {
+      if (awareness.homeTeamId) {
+        status = 'visitor';
         task = 'sitting';
-      } else if (member.type === 'agent') {
-        task = TASK_FOR_AGENT[i % TASK_FOR_AGENT.length];
+      } else if (awareness.status === 'draft') {
+        status = 'draft';
+        task = 'tent';
+      } else if (awareness.status === 'idle') {
+        status = 'idle';
+        task = 'sitting';
       } else {
-        task = TASK_FOR_HUMAN[i % TASK_FOR_HUMAN.length];
+        status = 'active';
+        task = member.type === 'agent'
+          ? TASK_FOR_AGENT[i % TASK_FOR_AGENT.length]
+          : TASK_FOR_HUMAN[i % TASK_FOR_HUMAN.length];
       }
+      file = awareness.currentFile || '';
     } else {
       // No awareness data — show as offline (not rendered) or use a deterministic
       // "active" state based on member index so the map has life even without Yjs clients
@@ -152,6 +156,31 @@ export function layoutSprites(
       teamName: campfire.name,
       px: spriteX,
       py: spriteY,
+    });
+  }
+
+  // Add visitors from awareness who aren't in the members list
+  const memberIds = new Set(members.map((m) => m.userId));
+  const visitors = awarenessStates.filter((a) => a.homeTeamId && !memberIds.has(a.userId));
+  for (let v = 0; v < visitors.length; v++) {
+    const visitor = visitors[v];
+    const angle = ((members.length + v) / (members.length + visitors.length)) * Math.PI * 2 - Math.PI / 2;
+    const vRadius = radius + 8;
+    const vx = campfire.x + Math.cos(angle) * vRadius;
+    const vy = campfire.y + Math.sin(angle) * vRadius * 0.6;
+
+    sprites.push({
+      userId: visitor.userId,
+      name: visitor.displayName,
+      type: visitor.type,
+      color: visitor.color,
+      status: 'visitor',
+      task: 'sitting',
+      file: '',
+      parentName: null,
+      teamName: campfire.name,
+      px: vx,
+      py: vy,
     });
   }
 
