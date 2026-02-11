@@ -76,11 +76,7 @@ Build fixes, esbuild bundling, CSP, and configuration — extension compiles and
 | Extension: idle detection | Done | — | 5-min timer |
 | Extension: git watcher | Done | — | Commits + branch switches |
 
-## Sprint 6: Polish
-
-Iterate based on dogfooding. No fixed feature list — driven by real usage.
-
-## Sprint 7: Cross-Team Observation & Campfire Visits
+## Sprint 6: Cross-Team Observation & Campfire Visits
 
 Let people see into other campfires and temporarily visit them. The Map View already shows all campfires in the org — this sprint makes them interactive. Click a campfire to see who's there, what they're working on (via AI summary), and optionally join as a visitor.
 
@@ -94,6 +90,10 @@ Let people see into other campfires and temporarily visit them. The Map View alr
 | Server: visitor presence (lightweight) | Not started | — | Visitors appear in awareness with a distinct `visitor` status, don't emit activity events |
 | Extension: visit campfire command | Not started | — | Switch sidebar to observe a different team's campfire temporarily |
 | CLI: visit campfire flag | Not started | — | `campfire watch --visit <teamId>` to observe another team |
+
+## Sprint 7: Polish
+
+Iterate based on dogfooding. No fixed feature list — driven by real usage.
 
 ## Not in MVP
 
