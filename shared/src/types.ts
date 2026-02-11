@@ -5,7 +5,7 @@
 export type UserType = 'human' | 'agent';
 
 // User status in awareness
-export type UserStatus = 'active' | 'idle' | 'draft' | 'offline';
+export type UserStatus = 'active' | 'idle' | 'draft' | 'offline' | 'visitor';
 
 // Activity event types
 export type ActivityEventType =
@@ -121,6 +121,7 @@ export interface AwarenessState {
   currentBranch: string | null;
   lastActivity: string; // ISO timestamp
   color: string;
+  homeTeamId?: string; // Set only when visiting another team's campfire
 }
 
 // ============================================

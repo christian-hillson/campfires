@@ -129,6 +129,12 @@ router.put('/orgs/:id', authMiddleware, (req: Request, res: Response) => {
   const { id } = req.params;
   const updates = req.body as UpdateOrgRequest;
 
+  // Only members of this org can update it
+  if (req.user!.orgId !== id) {
+    res.status(403).json({ error: 'You do not belong to this organization' });
+    return;
+  }
+
   const db = getPersistence();
   const org = db.updateOrg(id, updates);
 
@@ -163,6 +169,12 @@ router.post('/teams', authMiddleware, (req: Request, res: Response) => {
 
   if (!orgId || !name) {
     res.status(400).json({ error: 'orgId and name are required' });
+    return;
+  }
+
+  // Only members of this org (or users with no org yet) can create teams in it
+  if (req.user!.orgId && req.user!.orgId !== orgId) {
+    res.status(403).json({ error: 'You do not belong to this organization' });
     return;
   }
 

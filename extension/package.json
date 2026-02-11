@@ -64,6 +64,14 @@
       {
         "command": "campfires.refresh",
         "title": "Campfires: Refresh"
+      },
+      {
+        "command": "campfires.visitCampfire",
+        "title": "Campfires: Visit Another Campfire"
+      },
+      {
+        "command": "campfires.leaveVisit",
+        "title": "Campfires: Leave Visited Campfire"
       }
     ]
   },
