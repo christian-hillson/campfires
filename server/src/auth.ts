@@ -1,11 +1,13 @@
 import jwt from 'jsonwebtoken';
 import { createHash } from 'crypto';
+import bcrypt from 'bcryptjs';
 import type { Request, Response, NextFunction } from 'express';
 import type { JwtPayload, User } from '@campfires/shared';
 import { getPersistence } from './persistence.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'campfires-dev-secret-change-in-production';
 const JWT_EXPIRES_IN = '7d';
+const BCRYPT_ROUNDS = 12;
 
 // Extend Express Request type
 declare global {
@@ -16,13 +18,25 @@ declare global {
   }
 }
 
-// Simple password hashing (use bcrypt in production)
-export function hashPassword(password: string): string {
+// Legacy SHA256 hash (for migration from old passwords)
+function legacySha256Hash(password: string): string {
   return createHash('sha256').update(password + JWT_SECRET).digest('hex');
 }
 
-export function verifyPassword(password: string, hash: string): boolean {
-  return hashPassword(password) === hash;
+function isLegacyHash(hash: string): boolean {
+  return /^[a-f0-9]{64}$/.test(hash);
+}
+
+export async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, BCRYPT_ROUNDS);
+}
+
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  // Migration path: check if this is an old SHA256 hash
+  if (isLegacyHash(hash)) {
+    return legacySha256Hash(password) === hash;
+  }
+  return bcrypt.compare(password, hash);
 }
 
 export function generateToken(payload: JwtPayload): string {
@@ -37,11 +51,11 @@ export function verifyToken(token: string): JwtPayload | null {
   }
 }
 
-export function signup(
+export async function signup(
   email: string,
   password: string,
   displayName: string
-): { user: User; token: string } | { error: string } {
+): Promise<{ user: User; token: string } | { error: string }> {
   const db = getPersistence();
 
   // Check if user exists
@@ -51,7 +65,7 @@ export function signup(
   }
 
   // Create user
-  const passwordHash = hashPassword(password);
+  const passwordHash = await hashPassword(password);
   const user = db.createUser(email, passwordHash, displayName, 'human');
 
   // Generate token
@@ -68,10 +82,10 @@ export function signup(
   return { user, token };
 }
 
-export function login(
+export async function login(
   email: string,
   password: string
-): { user: User; token: string } | { error: string } {
+): Promise<{ user: User; token: string } | { error: string }> {
   const db = getPersistence();
 
   // Find user
@@ -81,8 +95,14 @@ export function login(
   }
 
   // Verify password
-  if (!verifyPassword(password, userWithPassword.passwordHash)) {
+  if (!(await verifyPassword(password, userWithPassword.passwordHash))) {
     return { error: 'Invalid email or password' };
+  }
+
+  // Migration: upgrade legacy SHA256 hash to bcrypt on successful login
+  if (isLegacyHash(userWithPassword.passwordHash)) {
+    const newHash = await hashPassword(password);
+    db.updateUserPasswordHash(userWithPassword.userId, newHash);
   }
 
   // Get user without password hash
