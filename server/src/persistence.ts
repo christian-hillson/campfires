@@ -534,3 +534,10 @@ export function getPersistence(dbPath?: string): Persistence {
   }
   return instance;
 }
+
+export function resetPersistence(): void {
+  if (instance) {
+    instance.close();
+    instance = null;
+  }
+}
