@@ -1,16 +1,7 @@
 import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
-import {
-  CONFIG,
-  type SignupRequest,
-  type LoginRequest,
-  type CreateOrgRequest,
-  type UpdateOrgRequest,
-  type CreateTeamRequest,
-  type JoinTeamRequest,
-  type RegisterAgentRequest,
-  type AgentActivityRequest,
-} from '@campfires/shared';
+import { z } from 'zod';
+import { CONFIG } from '@campfires/shared';
 import { getPersistence } from './persistence.js';
 import { getTeamAwareness } from './ws-server.js';
 import {
@@ -21,6 +12,64 @@ import {
   optionalAuthMiddleware,
   generateToken,
 } from './auth.js';
+
+// ============================================
+// Zod Schemas
+// ============================================
+
+const SignupSchema = z.object({
+  email: z.string().email().max(255),
+  password: z.string().min(8).max(128),
+  displayName: z.string().min(1).max(100).trim(),
+});
+
+const LoginSchema = z.object({
+  email: z.string().email().max(255),
+  password: z.string().min(1).max(128),
+});
+
+const CreateOrgSchema = z.object({
+  name: z.string().min(1).max(200).trim(),
+  mission: z.string().max(2000).optional(),
+  roadmap: z.string().max(10000).optional(),
+});
+
+const UpdateOrgSchema = z.object({
+  name: z.string().min(1).max(200).trim().optional(),
+  mission: z.string().max(2000).optional(),
+  roadmap: z.string().max(10000).optional(),
+});
+
+const CreateTeamSchema = z.object({
+  orgId: z.string().uuid(),
+  name: z.string().min(1).max(200).trim(),
+  description: z.string().max(2000).optional(),
+});
+
+const JoinTeamSchema = z.object({
+  inviteCode: z.string().min(1).max(20),
+});
+
+const RegisterAgentSchema = z.object({
+  displayName: z.string().min(1).max(100).trim().optional(),
+});
+
+const ACTIVITY_TYPES = [
+  'file_open',
+  'file_save',
+  'commit',
+  'branch_switch',
+  'session_start',
+  'session_end',
+] as const;
+
+const AgentActivitySchema = z.object({
+  type: z.enum(ACTIVITY_TYPES),
+  file: z.string().max(500).optional(),
+  branch: z.string().max(200).optional(),
+  message: z.string().max(1000).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
 
 export function createRouter(): Router {
   const router = Router();
@@ -51,13 +100,13 @@ export function createRouter(): Router {
 
   router.post('/auth/signup', authLimiter, async (req: Request, res: Response) => {
     try {
-      const { email, password, displayName } = req.body as SignupRequest;
-
-      if (!email || !password || !displayName) {
-        res.status(400).json({ error: 'Email, password, and displayName are required' });
+      const parsed = SignupSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: parsed.error.issues[0].message });
         return;
       }
 
+      const { email, password, displayName } = parsed.data;
       const result = await signup(email, password, displayName);
 
       if ('error' in result) {
@@ -73,13 +122,13 @@ export function createRouter(): Router {
 
   router.post('/auth/login', authLimiter, async (req: Request, res: Response) => {
     try {
-      const { email, password } = req.body as LoginRequest;
-
-      if (!email || !password) {
-        res.status(400).json({ error: 'Email and password are required' });
+      const parsed = LoginSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: 'Invalid email or password' });
         return;
       }
 
+      const { email, password } = parsed.data;
       const result = await login(email, password);
 
       if ('error' in result) {
@@ -117,13 +166,13 @@ export function createRouter(): Router {
   // ============================================
 
   router.post('/orgs', authMiddleware, (req: Request, res: Response) => {
-    const { name, mission, roadmap } = req.body as CreateOrgRequest;
-
-    if (!name) {
-      res.status(400).json({ error: 'Org name is required' });
+    const parsed = CreateOrgSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0].message });
       return;
     }
 
+    const { name, mission, roadmap } = parsed.data;
     const db = getPersistence();
     const org = db.createOrg(name, mission || '', roadmap || '');
 
@@ -145,7 +194,12 @@ export function createRouter(): Router {
 
   router.put('/orgs/:id', authMiddleware, (req: Request, res: Response) => {
     const { id } = req.params;
-    const updates = req.body as UpdateOrgRequest;
+    const parsed = UpdateOrgSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0].message });
+      return;
+    }
+    const updates = parsed.data;
 
     // Only members of this org can update it
     if (req.user!.orgId !== id) {
@@ -183,12 +237,12 @@ export function createRouter(): Router {
   // ============================================
 
   router.post('/teams', authMiddleware, (req: Request, res: Response) => {
-    const { orgId, name, description } = req.body as CreateTeamRequest;
-
-    if (!orgId || !name) {
-      res.status(400).json({ error: 'orgId and name are required' });
+    const parsed = CreateTeamSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0].message });
       return;
     }
+    const { orgId, name, description } = parsed.data;
 
     // Only members of this org (or users with no org yet) can create teams in it
     if (req.user!.orgId && req.user!.orgId !== orgId) {
@@ -215,12 +269,12 @@ export function createRouter(): Router {
   });
 
   router.post('/teams/join', authMiddleware, (req: Request, res: Response) => {
-    const { inviteCode } = req.body as JoinTeamRequest;
-
-    if (!inviteCode) {
-      res.status(400).json({ error: 'inviteCode is required' });
+    const parsed = JoinTeamSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0].message });
       return;
     }
+    const { inviteCode } = parsed.data;
 
     const db = getPersistence();
     const team = db.getTeamByInviteCode(inviteCode);
@@ -360,7 +414,12 @@ export function createRouter(): Router {
       return;
     }
 
-    const { displayName } = (req.body || {}) as RegisterAgentRequest;
+    const parsed = RegisterAgentSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0].message });
+      return;
+    }
+    const { displayName } = parsed.data;
 
     const db = getPersistence();
     const parentUser = db.getUser(caller.userId);
@@ -382,12 +441,12 @@ export function createRouter(): Router {
 
   router.post('/agents/activity', authMiddleware, (req: Request, res: Response) => {
     const caller = req.user!;
-    const body = req.body as AgentActivityRequest;
-
-    if (!body.type) {
-      res.status(400).json({ error: 'Activity type is required' });
+    const parsed = AgentActivitySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0].message });
       return;
     }
+    const body = parsed.data;
 
     if (!caller.teamId) {
       res.status(400).json({ error: 'Agent must be on a team' });
@@ -422,7 +481,7 @@ export function createRouter(): Router {
   router.get('/teams/:id/activity', optionalAuthMiddleware, (req: Request, res: Response) => {
     const { id } = req.params;
     const since = req.query.since as string | undefined;
-    const limit = parseInt(req.query.limit as string) || 50;
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 500);
 
     const db = getPersistence();
 

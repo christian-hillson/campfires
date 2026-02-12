@@ -16,6 +16,12 @@ import {
 } from './layout.js';
 import { drawHumanSprite, drawGolemSprite } from './sprites.js';
 
+function esc(str: string): string {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 export interface MapViewConfig {
   org: Org;
   teams: Team[];
@@ -169,8 +175,8 @@ export class MapView {
       const line = document.createElement('div');
       line.className = 'map-summary-line';
       line.innerHTML = `
-        <span class="team-dot" style="background:${cf.color}"></span>
-        <span><strong>${cf.name}</strong> \u2014 ${latest.oneLiner || 'Activity recorded'}</span>
+        <span class="team-dot" style="background:${esc(cf.color)}"></span>
+        <span><strong>${esc(cf.name)}</strong> \u2014 ${esc(latest.oneLiner || 'Activity recorded')}</span>
       `;
       bar.appendChild(line);
     }
@@ -214,9 +220,9 @@ export class MapView {
             : `\u25C6 ${s.status}`;
 
         this.tooltip.innerHTML = `
-          <div class="tt-name" style="color:${s.color}">${s.name}</div>
-          <div class="tt-role">${typeLabel} \u00b7 ${s.teamName}</div>
-          <div class="tt-detail">${s.file || s.task}</div>
+          <div class="tt-name" style="color:${esc(s.color)}">${esc(s.name)}</div>
+          <div class="tt-role">${esc(typeLabel)} \u00b7 ${esc(s.teamName)}</div>
+          <div class="tt-detail">${esc(s.file || s.task)}</div>
         `;
       } else {
         this.tooltip.style.display = 'none';
@@ -260,7 +266,7 @@ export class MapView {
     // Loading state
     overlay.innerHTML = `
       <div class="overlay-header">
-        <span class="overlay-team-name" style="color:${campfire.color}">${campfire.name}</span>
+        <span class="overlay-team-name" style="color:${esc(campfire.color)}">${esc(campfire.name)}</span>
         <button class="overlay-close">\u2715</button>
       </div>
       <div class="overlay-body"><div class="loading">Loading...</div></div>
@@ -315,22 +321,22 @@ export class MapView {
 
       const body = this.overlayElement.querySelector('.overlay-body')!;
       body.innerHTML = `
-        ${team?.description ? `<div class="overlay-description">${team.description}</div>` : ''}
-        ${teamSummary ? `<div class="overlay-summary">${teamSummary.oneLiner || 'Activity recorded'}</div>` : ''}
+        ${team?.description ? `<div class="overlay-description">${esc(team.description)}</div>` : ''}
+        ${teamSummary ? `<div class="overlay-summary">${esc(teamSummary.oneLiner || 'Activity recorded')}</div>` : ''}
         <div class="overlay-stats">${members.length} member${members.length !== 1 ? 's' : ''} \u00b7 ${onlineCount} online</div>
         <div class="overlay-members">
           ${members
             .map((m) => {
               const a = awareness.find((s) => s.userId === m.userId);
               const status = a?.status || 'offline';
-              return `<div class="overlay-member"><span class="overlay-member-dot" style="background:${m.avatarColor}"></span>${m.displayName} ${statusBadge(status)}</div>`;
+              return `<div class="overlay-member"><span class="overlay-member-dot" style="background:${esc(m.avatarColor)}"></span>${esc(m.displayName)} ${statusBadge(status)}</div>`;
             })
             .join('')}
           ${awareness
             .filter((a) => a.homeTeamId && !members.find((m) => m.userId === a.userId))
             .map(
               (a) =>
-                `<div class="overlay-member"><span class="overlay-member-dot" style="background:${a.color}"></span>${a.displayName} ${statusBadge('visitor')}</div>`,
+                `<div class="overlay-member"><span class="overlay-member-dot" style="background:${esc(a.color)}"></span>${esc(a.displayName)} ${statusBadge('visitor')}</div>`,
             )
             .join('')}
         </div>

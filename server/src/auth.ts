@@ -5,6 +5,9 @@ import type { Request, Response, NextFunction } from 'express';
 import type { JwtPayload, User } from '@campfires/shared';
 import { getPersistence } from './persistence.js';
 
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required in production');
+}
 const JWT_SECRET = process.env.JWT_SECRET || 'campfires-dev-secret-change-in-production';
 const JWT_EXPIRES_IN = '7d';
 const BCRYPT_ROUNDS = 12;

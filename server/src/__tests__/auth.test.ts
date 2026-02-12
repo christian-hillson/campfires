@@ -17,7 +17,7 @@ describe('Auth API', () => {
     it('creates a new user and returns a token', async () => {
       const res = await request(app)
         .post('/api/auth/signup')
-        .send({ email: 'alice@example.com', password: 'pass123', displayName: 'Alice' })
+        .send({ email: 'alice@example.com', password: 'pass1234', displayName: 'Alice' })
         .expect(201);
 
       expect(res.body.token).toBeDefined();
@@ -31,7 +31,7 @@ describe('Auth API', () => {
 
       const res = await request(app)
         .post('/api/auth/signup')
-        .send({ email: 'dup@example.com', password: 'pass123', displayName: 'Dup' })
+        .send({ email: 'dup@example.com', password: 'pass1234', displayName: 'Dup' })
         .expect(400);
 
       expect(res.body.error).toMatch(/already registered/i);
@@ -49,11 +49,11 @@ describe('Auth API', () => {
 
   describe('POST /api/auth/login', () => {
     it('returns a token for valid credentials', async () => {
-      await signupAndGetToken(app, { email: 'bob@example.com', password: 'secret' });
+      await signupAndGetToken(app, { email: 'bob@example.com', password: 'secret12' });
 
       const res = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'bob@example.com', password: 'secret' })
+        .send({ email: 'bob@example.com', password: 'secret12' })
         .expect(200);
 
       expect(res.body.token).toBeDefined();
@@ -61,11 +61,11 @@ describe('Auth API', () => {
     });
 
     it('returns 401 for wrong password', async () => {
-      await signupAndGetToken(app, { email: 'bob@example.com', password: 'secret' });
+      await signupAndGetToken(app, { email: 'bob@example.com', password: 'secret12' });
 
       const res = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'bob@example.com', password: 'wrong' })
+        .send({ email: 'bob@example.com', password: 'wrongpwd' })
         .expect(401);
 
       expect(res.body.error).toMatch(/invalid/i);
@@ -112,20 +112,20 @@ describe('Auth API', () => {
 
   describe('Rate limiting', () => {
     it('returns 429 after exceeding max attempts on login', async () => {
-      await signupAndGetToken(app, { email: 'target@example.com', password: 'secret' });
+      await signupAndGetToken(app, { email: 'target@example.com', password: 'secret12' });
 
       // Signup used 1 of 5 allowed attempts. Make 4 more failed login attempts.
       for (let i = 0; i < 4; i++) {
         await request(app)
           .post('/api/auth/login')
-          .send({ email: 'target@example.com', password: 'wrong' })
+          .send({ email: 'target@example.com', password: 'wrongpwd' })
           .expect(401);
       }
 
       // Next attempt should be rate limited (6th total auth request)
       const res = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'target@example.com', password: 'wrong' })
+        .send({ email: 'target@example.com', password: 'wrongpwd' })
         .expect(429);
 
       expect(res.body.error).toMatch(/too many/i);

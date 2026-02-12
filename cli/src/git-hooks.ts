@@ -32,7 +32,7 @@ if [ -f "$CONFIG_FILE" ]; then
   SERVER_URL=$(cat "$CONFIG_FILE" | grep -o '"serverUrl"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"serverUrl"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/')
   AGENT_TOKEN=$(cat "$CONFIG_FILE" | grep -o '"agentToken"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"agentToken"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/')
   COMMIT_HASH=$(git rev-parse HEAD 2>/dev/null)
-  COMMIT_MSG=$(git log -1 --pretty=%s 2>/dev/null)
+  COMMIT_MSG=$(git log -1 --pretty=%s 2>/dev/null | sed -e 's/\\\\/\\\\\\\\/g' -e 's/"/\\\\"/g' | head -c 500)
   curl -s -X POST "$SERVER_URL/api/agents/activity" \\
     -H "Authorization: Bearer $AGENT_TOKEN" \\
     -H "Content-Type: application/json" \\
@@ -52,7 +52,7 @@ if [ -f "$CONFIG_FILE" ]; then
   if [ "$3" = "1" ]; then
     SERVER_URL=$(cat "$CONFIG_FILE" | grep -o '"serverUrl"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"serverUrl"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/')
     AGENT_TOKEN=$(cat "$CONFIG_FILE" | grep -o '"agentToken"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"agentToken"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/')
-    BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null)
+    BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null | sed -e 's/\\\\/\\\\\\\\/g' -e 's/"/\\\\"/g')
     curl -s -X POST "$SERVER_URL/api/agents/activity" \\
       -H "Authorization: Bearer $AGENT_TOKEN" \\
       -H "Content-Type: application/json" \\

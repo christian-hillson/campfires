@@ -8,3 +8,7 @@ dist
 *.db-wal
 scripts/test-seed-sprint6.json
 coverage
+.env
+.env.local
+.env.production
+.env.*.local
