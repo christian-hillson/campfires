@@ -111,26 +111,26 @@ The architectural pivot. Claude Code Plugin replaces the VS Code Extension and C
 
 The plugin captures developer activity ambiently and uploads session transcripts when sharing is enabled. Plugin design is in progress — details TBD.
 
-| Feature                                          | Status      | Owner | Notes                                                        |
-| ------------------------------------------------ | ----------- | ----- | ------------------------------------------------------------ |
-| Plugin: session lifecycle (start/end)            | Not started | —     | Heartbeats so the server knows who's active                  |
-| Plugin: Share toggle (on/off)                    | Not started | —     | Privacy control — nothing sent when Share is off             |
-| Plugin: session transcript upload on completion  | Not started | —     | Full conversation sent to server when Share = On             |
-| Plugin: git event detection (commits, branches)  | Not started | —     | Real-time signals for the map and activity log               |
-| Server: transcript ingestion endpoint + storage  | Not started | —     | New endpoint for receiving and storing session transcripts   |
-| Shared: new types (SessionTranscript, ShareMode) | Not started | —     | `shared/src/types.ts`                                        |
+| Feature                                          | Status      | Owner | Notes                                                      |
+| ------------------------------------------------ | ----------- | ----- | ---------------------------------------------------------- |
+| Plugin: session lifecycle (start/end)            | Not started | —     | Heartbeats so the server knows who's active                |
+| Plugin: Share toggle (on/off)                    | Not started | —     | Privacy control — nothing sent when Share is off           |
+| Plugin: session transcript upload on completion  | Not started | —     | Full conversation sent to server when Share = On           |
+| Plugin: git event detection (commits, branches)  | Not started | —     | Real-time signals for the map and activity log             |
+| Server: transcript ingestion endpoint + storage  | Not started | —     | New endpoint for receiving and storing session transcripts |
+| Shared: new types (SessionTranscript, ShareMode) | Not started | —     | `shared/src/types.ts`                                      |
 
 ## Sprint 8: AI Summarizer (Intelligence Layer)
 
 Replace the stubbed summarizer with real Claude API integration. Transcripts provide much richer context than raw file events.
 
-| Feature                                           | Status      | Owner | Notes                                                          |
-| ------------------------------------------------- | ----------- | ----- | -------------------------------------------------------------- |
-| Server: Claude API integration replacing stub     | Not started | —     | `server/src/summarizer.ts`                                     |
-| Server: transcript → summary pipeline             | Not started | —     | Process transcripts into business-legible team summaries       |
-| Server: summary quality tuning                    | Not started | —     | Prompt engineering, chunking for long sessions                 |
-| Reel: Fireside Panel branding for summary feed    | Not started | —     | Rename/restyle the existing summary feed view                  |
-| Reel: richer summary cards from transcript data   | Not started | —     | Summaries powered by "what was accomplished" vs raw file saves |
+| Feature                                         | Status      | Owner | Notes                                                          |
+| ----------------------------------------------- | ----------- | ----- | -------------------------------------------------------------- |
+| Server: Claude API integration replacing stub   | Not started | —     | `server/src/summarizer.ts`                                     |
+| Server: transcript → summary pipeline           | Not started | —     | Process transcripts into business-legible team summaries       |
+| Server: summary quality tuning                  | Not started | —     | Prompt engineering, chunking for long sessions                 |
+| Reel: Fireside Panel branding for summary feed  | Not started | —     | Rename/restyle the existing summary feed view                  |
+| Reel: richer summary cards from transcript data | Not started | —     | Summaries powered by "what was accomplished" vs raw file saves |
 
 ## Sprint 9: Integration & Polish
 
@@ -138,9 +138,9 @@ End-to-end flow: Claude Code Plugin → Server → AI Summarizer → Reel. Drive
 
 | Feature                                     | Status      | Owner | Notes                                               |
 | ------------------------------------------- | ----------- | ----- | --------------------------------------------------- |
-| End-to-end plugin → server → reel flow      | Not started | —     | Full pipeline working with real data                 |
-| Zero-config onboarding experience           | Not started | —     | Plugin captures activity with no setup beyond Share  |
-| Deprecate extension + CLI as primary inputs | Not started | —     | Keep as reference, remove from active development    |
+| End-to-end plugin → server → reel flow      | Not started | —     | Full pipeline working with real data                |
+| Zero-config onboarding experience           | Not started | —     | Plugin captures activity with no setup beyond Share |
+| Deprecate extension + CLI as primary inputs | Not started | —     | Keep as reference, remove from active development   |
 
 ## Not Yet Planned
 

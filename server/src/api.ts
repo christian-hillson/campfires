@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
-import { CONFIG } from '@campfires/shared';
+import { CONFIG, type ActivityEventType } from '@campfires/shared';
 import { getPersistence } from './persistence.js';
 import { getTeamAwareness } from './ws-server.js';
 import {
@@ -64,6 +64,38 @@ const ACTIVITY_TYPES = [
 ] as const;
 
 const AgentActivitySchema = z.object({
+  type: z.enum(ACTIVITY_TYPES),
+  file: z.string().max(500).optional(),
+  branch: z.string().max(200).optional(),
+  message: z.string().max(1000).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+// Session schemas
+const SessionStartSchema = z.object({
+  session_id: z.string().min(1).max(200),
+  repo: z.string().max(500).optional(),
+  branch: z.string().max(200).optional(),
+});
+
+const SessionHeartbeatSchema = z.object({
+  session_id: z.string().min(1).max(200),
+});
+
+const SessionEndSchema = z.object({
+  session_id: z.string().min(1).max(200),
+  reason: z.string().max(500).optional(),
+});
+
+const TranscriptDeltaSchema = z.object({
+  session_id: z.string().min(1).max(200),
+  offset: z.number().optional(),
+  delta: z.string().max(CONFIG.TRANSCRIPT_DELTA_MAX_SIZE),
+  is_final: z.boolean().optional(),
+  timestamp: z.string().max(50).optional(),
+});
+
+const ActivitySchema = z.object({
   type: z.enum(ACTIVITY_TYPES),
   file: z.string().max(500).optional(),
   branch: z.string().max(200).optional(),
@@ -458,6 +490,191 @@ export function createRouter(): Router {
     // Look up the agent user to get parentUserId
     const agentUser = db.getUser(caller.userId);
     const parentUserId = agentUser?.parentUserId || null;
+
+    const event = db.appendActivityEvent({
+      userId: caller.userId,
+      userType: caller.type,
+      parentUserId,
+      teamId: caller.teamId,
+      type: body.type,
+      file: body.file || null,
+      branch: body.branch || null,
+      message: body.message || null,
+      metadata: body.metadata || null,
+    });
+
+    res.status(201).json(event);
+  });
+
+  // ============================================
+  // Session Endpoints (Claude Code Plugin)
+  // ============================================
+
+  router.post('/sessions/start', authMiddleware, (req: Request, res: Response) => {
+    const parsed = SessionStartSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0].message });
+      return;
+    }
+
+    const caller = req.user!;
+    if (!caller.teamId) {
+      res.status(400).json({ error: 'You must be on a team to start a session' });
+      return;
+    }
+
+    const { session_id, repo, branch } = parsed.data;
+    const db = getPersistence();
+
+    // Idempotent: return 200 if session already exists
+    const existing = db.getSession(session_id);
+    if (existing) {
+      res.json(existing);
+      return;
+    }
+
+    const session = db.createSession(
+      session_id,
+      caller.userId,
+      caller.teamId,
+      repo || null,
+      branch || null,
+    );
+
+    // Log session_start activity
+    db.appendActivityEvent({
+      userId: caller.userId,
+      userType: caller.type,
+      parentUserId: null,
+      teamId: caller.teamId,
+      type: 'session_start' as ActivityEventType,
+      file: null,
+      branch: branch || null,
+      message: repo ? `Started session in ${repo}` : 'Started session',
+      metadata: { sessionId: session_id },
+    });
+
+    res.status(201).json(session);
+  });
+
+  router.post('/sessions/heartbeat', authMiddleware, (req: Request, res: Response) => {
+    const parsed = SessionHeartbeatSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0].message });
+      return;
+    }
+
+    const caller = req.user!;
+    const db = getPersistence();
+
+    // Verify session ownership
+    const session = db.getSession(parsed.data.session_id);
+    if (!session || session.isComplete) {
+      res.status(404).json({ error: 'Session not found or already ended' });
+      return;
+    }
+    if (session.userId !== caller.userId) {
+      res.status(403).json({ error: 'Not your session' });
+      return;
+    }
+
+    db.updateSessionHeartbeat(parsed.data.session_id);
+    res.json({ status: 'ok' });
+  });
+
+  router.post('/sessions/end', authMiddleware, (req: Request, res: Response) => {
+    const parsed = SessionEndSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0].message });
+      return;
+    }
+
+    const caller = req.user!;
+    const { session_id, reason } = parsed.data;
+    const db = getPersistence();
+
+    // Verify session ownership
+    const session = db.getSession(session_id);
+    if (!session || session.isComplete) {
+      res.status(404).json({ error: 'Session not found or already ended' });
+      return;
+    }
+    if (session.userId !== caller.userId) {
+      res.status(403).json({ error: 'Not your session' });
+      return;
+    }
+
+    db.endSession(session_id);
+
+    // Log session_end activity
+    if (caller.teamId) {
+      db.appendActivityEvent({
+        userId: caller.userId,
+        userType: caller.type,
+        parentUserId: null,
+        teamId: caller.teamId,
+        type: 'session_end' as ActivityEventType,
+        file: null,
+        branch: null,
+        message: reason || 'Session ended',
+        metadata: { sessionId: session_id },
+      });
+    }
+
+    res.json({ status: 'ok' });
+  });
+
+  router.post('/sessions/transcript-delta', authMiddleware, (req: Request, res: Response) => {
+    const parsed = TranscriptDeltaSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0].message });
+      return;
+    }
+
+    const caller = req.user!;
+    const { session_id, delta, is_final } = parsed.data;
+    const db = getPersistence();
+
+    // Verify session ownership
+    const session = db.getSession(session_id);
+    if (!session || session.isComplete) {
+      res.status(404).json({ error: 'Session not found or already ended' });
+      return;
+    }
+    if (session.userId !== caller.userId) {
+      res.status(403).json({ error: 'Not your session' });
+      return;
+    }
+
+    db.appendTranscriptDelta(session_id, delta);
+
+    // If this is the final delta, end the session
+    if (is_final) {
+      db.endSession(session_id);
+    }
+
+    res.json({ status: 'ok' });
+  });
+
+  router.post('/activity', authMiddleware, (req: Request, res: Response) => {
+    const caller = req.user!;
+    const parsed = ActivitySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0].message });
+      return;
+    }
+    const body = parsed.data;
+
+    if (!caller.teamId) {
+      res.status(400).json({ error: 'You must be on a team to log activity' });
+      return;
+    }
+
+    const db = getPersistence();
+
+    // Look up user to get parentUserId
+    const user = db.getUser(caller.userId);
+    const parentUserId = user?.parentUserId || null;
 
     const event = db.appendActivityEvent({
       userId: caller.userId,

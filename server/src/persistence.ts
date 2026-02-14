@@ -7,6 +7,7 @@ import type {
   TeamWithMembers,
   ActivityEvent,
   Summary,
+  SessionTranscript,
   UserType,
   ActivityEventType,
 } from '@campfires/shared';
@@ -113,6 +114,23 @@ export class Persistence {
         ON teams(inviteCode);
       CREATE INDEX IF NOT EXISTS idx_users_email
         ON users(email);
+
+      -- Session Transcripts
+      CREATE TABLE IF NOT EXISTS session_transcripts (
+        session_id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        team_id TEXT NOT NULL,
+        content TEXT DEFAULT '',
+        is_complete INTEGER DEFAULT 0,
+        repo TEXT,
+        branch TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_session_transcripts_user
+        ON session_transcripts(user_id, created_at);
+      CREATE INDEX IF NOT EXISTS idx_session_transcripts_incomplete
+        ON session_transcripts(is_complete, updated_at);
     `);
 
     // Migrations for parentUserId (idempotent)
@@ -624,6 +642,152 @@ export class Persistence {
       .get(teamId) as { lastEnd: string | null } | undefined;
 
     return row?.lastEnd || null;
+  }
+
+  // ============================================
+  // Session Transcript Operations
+  // ============================================
+
+  createSession(
+    sessionId: string,
+    userId: string,
+    teamId: string,
+    repo: string | null = null,
+    branch: string | null = null,
+  ): SessionTranscript {
+    const now = new Date().toISOString();
+
+    this.db
+      .prepare(
+        `
+      INSERT INTO session_transcripts (session_id, user_id, team_id, repo, branch, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `,
+      )
+      .run(sessionId, userId, teamId, repo, branch, now, now);
+
+    return {
+      sessionId,
+      userId,
+      teamId,
+      content: '',
+      isComplete: false,
+      repo,
+      branch,
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
+
+  updateSessionHeartbeat(sessionId: string): boolean {
+    const now = new Date().toISOString();
+    const result = this.db
+      .prepare(
+        `
+      UPDATE session_transcripts SET updated_at = ?
+      WHERE session_id = ? AND is_complete = 0
+    `,
+      )
+      .run(now, sessionId);
+
+    return result.changes > 0;
+  }
+
+  appendTranscriptDelta(sessionId: string, delta: string): boolean {
+    const result = this.db
+      .prepare(
+        `
+      UPDATE session_transcripts SET content = content || ?, updated_at = ?
+      WHERE session_id = ? AND is_complete = 0
+    `,
+      )
+      .run(delta, new Date().toISOString(), sessionId);
+
+    return result.changes > 0;
+  }
+
+  endSession(sessionId: string): boolean {
+    const now = new Date().toISOString();
+    const result = this.db
+      .prepare(
+        `
+      UPDATE session_transcripts SET is_complete = 1, updated_at = ?
+      WHERE session_id = ? AND is_complete = 0
+    `,
+      )
+      .run(now, sessionId);
+
+    return result.changes > 0;
+  }
+
+  getSession(sessionId: string): SessionTranscript | null {
+    const row = this.db
+      .prepare(
+        `
+      SELECT session_id, user_id, team_id, content, is_complete, repo, branch, created_at, updated_at
+      FROM session_transcripts WHERE session_id = ?
+    `,
+      )
+      .get(sessionId) as
+      | {
+          session_id: string;
+          user_id: string;
+          team_id: string;
+          content: string;
+          is_complete: number;
+          repo: string | null;
+          branch: string | null;
+          created_at: string;
+          updated_at: string;
+        }
+      | undefined;
+
+    if (!row) return null;
+    return {
+      sessionId: row.session_id,
+      userId: row.user_id,
+      teamId: row.team_id,
+      content: row.content,
+      isComplete: row.is_complete === 1,
+      repo: row.repo,
+      branch: row.branch,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  getIncompleteTranscripts(): SessionTranscript[] {
+    const rows = this.db
+      .prepare(
+        `
+      SELECT session_id, user_id, team_id, content, is_complete, repo, branch, created_at, updated_at
+      FROM session_transcripts WHERE is_complete = 0
+      ORDER BY updated_at DESC
+    `,
+      )
+      .all() as Array<{
+      session_id: string;
+      user_id: string;
+      team_id: string;
+      content: string;
+      is_complete: number;
+      repo: string | null;
+      branch: string | null;
+      created_at: string;
+      updated_at: string;
+    }>;
+
+    return rows.map((row) => ({
+      sessionId: row.session_id,
+      userId: row.user_id,
+      teamId: row.team_id,
+      content: row.content,
+      isComplete: false,
+      repo: row.repo,
+      branch: row.branch,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
   }
 
   close(): void {
