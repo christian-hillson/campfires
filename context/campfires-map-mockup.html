@@ -267,7 +267,7 @@
       <div class="tooltip" id="tooltip"></div>
 
       <div class="ai-summary-bar">
-        <div class="summary-title">✦ AI REEL</div>
+        <div class="summary-title">✦ FIRESIDE</div>
         <div class="ai-summary-line">
           <span class="team-dot" style="background: #f97316"></span>
           <span
@@ -332,114 +332,72 @@
       const PATH_COLOR = '#2a2820';
       const TREE_TRUNK = '#3a2a1a';
       const TREE_LEAVES = ['#2a4a22', '#1e3a18', '#325828'];
+      const MAP_W = 500;
+      const MAP_H = 280;
+
+      // ─── ANIMATION TIMING ───
+      const COMMIT_WALK_DURATION = 1.2;
+      const COMMIT_TOSS_DURATION = 0.4;
+      const FILE_SAVE_DURATION = 0.5;
+      const BRANCH_WALK_DURATION = 1.5;
+      const SESSION_ENTER_DURATION = 2.0;
+      const SESSION_EXIT_DURATION = 2.0;
+      const DRAFT_WALK_DURATION = 0.8;
+      const DRAFT_TRANSITION_DURATION = 0.3;
+      const FIRE_FLARE_DURATION = 0.3;
+      const FIRE_TRANSITION_DURATION = 1.0;
+      const FLOATING_TEXT_DURATION = 2.5;
+      const MILESTONE_JUMP_DURATION = 0.4;
+      const MILESTONE_PARTICLE_DURATION = 1.0;
+      const MILESTONE_GOLD_DURATION = 0.5;
+      const CYCLE_PAUSE = 5;
+
+      // ─── FIRE LEVEL CONFIG ───
+      const FIRE_LEVELS = {
+        high:   { height: 1.5, sparks: 2.0, flicker: 1.5, glow: 1.3, embers: 1.5, flames: 1.0 },
+        steady: { height: 1.0, sparks: 1.0, flicker: 1.0, glow: 1.0, embers: 1.0, flames: 1.0 },
+        low:    { height: 0.5, sparks: 0.3, flicker: 0.6, glow: 0.7, embers: 0.5, flames: 0.5 },
+      };
+      const PULSE_INTERVALS = { high: 2, steady: 5, low: 10 };
+      const PULSE_RADIUS_MULT = { high: 3, steady: 2, low: 1.5 };
+      const PULSE_DURATION = 2.0;
 
       // ─── TEAM DEFINITIONS ───
       const teams = [
         {
+          id: 'payments',
           name: 'Payments',
           description: 'Stripe webhooks · Q1 billing migration',
           color: '#f97316',
           x: 130,
           y: 80,
-          fireSize: 3, // large
+          fireSize: 3,
           members: [
-            {
-              name: 'Christian',
-              type: 'human',
-              color: '#e05040',
-              status: 'active',
-              task: 'smithing',
-              file: 'server/api.ts → handleAuth()',
-            },
-            {
-              name: 'JC',
-              type: 'human',
-              color: '#4080d0',
-              status: 'active',
-              task: 'scribing',
-              file: 'reel/app.ts → renderFeed()',
-            },
-            {
-              name: 'John',
-              type: 'human',
-              color: '#50b860',
-              status: 'idle',
-              task: 'sitting',
-              file: 'idle 12m',
-            },
-            {
-              name: 'Maria',
-              type: 'human',
-              color: '#c070d0',
-              status: 'draft',
-              task: 'tent',
-              file: 'draft mode',
-            },
-            {
-              name: 'Agent-C1',
-              type: 'agent',
-              color: '#e05040',
-              status: 'active',
-              task: 'chopping',
-              file: 'server/batch-job.ts',
-              owner: 'Christian',
-            },
-            {
-              name: 'Agent-C2',
-              type: 'agent',
-              color: '#e05040',
-              status: 'active',
-              task: 'carrying',
-              file: 'shared/types.ts',
-              owner: 'Christian',
-            },
-            {
-              name: 'Agent-JC1',
-              type: 'agent',
-              color: '#4080d0',
-              status: 'active',
-              task: 'mining',
-              file: 'reel/components/feed.ts',
-              owner: 'JC',
-            },
+            { id: 'christian', name: 'Christian', type: 'human', color: '#e05040', status: 'active', task: 'smithing', file: 'server/api.ts → handleAuth()', owner: null },
+            { id: 'jc', name: 'JC', type: 'human', color: '#4080d0', status: 'active', task: 'scribing', file: 'reel/app.ts → renderFeed()', owner: null },
+            { id: 'john', name: 'John', type: 'human', color: '#50b860', status: 'idle', task: 'sitting', file: 'idle 12m', owner: null },
+            { id: 'maria', name: 'Maria', type: 'human', color: '#c070d0', status: 'draft', task: 'tent', file: 'draft mode', owner: null },
+            { id: 'agent-c1', name: 'Agent-C1', type: 'agent', color: '#e05040', status: 'active', task: 'chopping', file: 'server/batch-job.ts', owner: 'Christian' },
+            { id: 'agent-c2', name: 'Agent-C2', type: 'agent', color: '#e05040', status: 'active', task: 'carrying', file: 'shared/types.ts', owner: 'Christian' },
+            { id: 'agent-jc1', name: 'Agent-JC1', type: 'agent', color: '#4080d0', status: 'active', task: 'mining', file: 'reel/components/feed.ts', owner: 'JC' },
           ],
         },
         {
+          id: 'platform',
           name: 'Platform',
           description: 'OAuth 2.1 migration · Auth service',
           color: '#60a5fa',
           x: 360,
           y: 60,
-          fireSize: 2, // medium
+          fireSize: 2,
           members: [
-            {
-              name: 'Alex',
-              type: 'human',
-              color: '#d09040',
-              status: 'active',
-              task: 'smithing',
-              file: 'auth/oauth.ts → validateToken()',
-            },
-            {
-              name: 'Sam',
-              type: 'human',
-              color: '#40b0a0',
-              status: 'active',
-              task: 'scribing',
-              file: 'auth/middleware.ts → checkScope()',
-            },
-            {
-              name: 'Agent-A1',
-              type: 'agent',
-              color: '#d09040',
-              status: 'active',
-              task: 'chopping',
-              file: 'auth/tests/oauth.test.ts',
-              owner: 'Alex',
-            },
+            { id: 'alex', name: 'Alex', type: 'human', color: '#d09040', status: 'active', task: 'smithing', file: 'auth/oauth.ts → validateToken()', owner: null },
+            { id: 'sam', name: 'Sam', type: 'human', color: '#40b0a0', status: 'active', task: 'scribing', file: 'auth/middleware.ts → checkScope()', owner: null },
+            { id: 'agent-a1', name: 'Agent-A1', type: 'agent', color: '#d09040', status: 'active', task: 'chopping', file: 'auth/tests/oauth.test.ts', owner: 'Alex' },
           ],
         },
         {
+          id: 'growth',
           name: 'Growth',
           description: 'SMB onboarding A/B test',
           color: '#a78bfa',
@@ -447,61 +405,235 @@
           y: 155,
           fireSize: 2,
           members: [
-            {
-              name: 'Priya',
-              type: 'human',
-              color: '#e07070',
-              status: 'active',
-              task: 'scribing',
-              file: 'onboarding/flow.tsx → StepTwo()',
-            },
-            {
-              name: 'Dev',
-              type: 'human',
-              color: '#70a0e0',
-              status: 'idle',
-              task: 'sitting',
-              file: 'idle 5m',
-            },
-            {
-              name: 'Agent-P1',
-              type: 'agent',
-              color: '#e07070',
-              status: 'active',
-              task: 'carrying',
-              file: 'onboarding/analytics.ts',
-              owner: 'Priya',
-            },
+            { id: 'priya', name: 'Priya', type: 'human', color: '#e07070', status: 'active', task: 'scribing', file: 'onboarding/flow.tsx → StepTwo()', owner: null },
+            { id: 'dev', name: 'Dev', type: 'human', color: '#70a0e0', status: 'idle', task: 'sitting', file: 'idle 5m', owner: null },
+            { id: 'agent-p1', name: 'Agent-P1', type: 'agent', color: '#e07070', status: 'active', task: 'carrying', file: 'onboarding/analytics.ts', owner: 'Priya' },
           ],
         },
         {
+          id: 'infra',
           name: 'Infra',
           description: 'DB pooling · Redis cluster',
           color: '#4ade80',
           x: 100,
           y: 170,
-          fireSize: 1, // small
+          fireSize: 1,
           members: [
-            {
-              name: 'Kai',
-              type: 'human',
-              color: '#b0a050',
-              status: 'active',
-              task: 'mining',
-              file: 'infra/redis.ts → connectCluster()',
-            },
-            {
-              name: 'Agent-K1',
-              type: 'agent',
-              color: '#b0a050',
-              status: 'active',
-              task: 'chopping',
-              file: 'infra/pool.ts',
-              owner: 'Kai',
-            },
+            { id: 'kai', name: 'Kai', type: 'human', color: '#b0a050', status: 'active', task: 'mining', file: 'infra/redis.ts → connectCluster()', owner: null },
+            { id: 'agent-k1', name: 'Agent-K1', type: 'agent', color: '#b0a050', status: 'active', task: 'chopping', file: 'infra/pool.ts', owner: 'Kai' },
           ],
         },
       ];
+
+      // Build lookup maps
+      const teamIndexById = {};
+      teams.forEach((t, i) => { teamIndexById[t.id] = i; });
+      const spriteTeamIndex = {};
+      teams.forEach((t, ti) => {
+        t.members.forEach(m => { spriteTeamIndex[m.id] = ti; });
+      });
+
+      // ─── MOCK SUMMARY DATA ───
+      const mockSummaryData = {
+        payments: { activityLevel: 'steady', milestone: false, mood: 'building', hotModules: ['server/api.ts', 'server/auth.ts'] },
+        platform: { activityLevel: 'steady', milestone: false, mood: 'fixing', hotModules: ['auth/oauth.ts'] },
+        growth:   { activityLevel: 'steady', milestone: false, mood: 'exploring', hotModules: ['onboarding/flow.tsx'] },
+        infra:    { activityLevel: 'steady', milestone: false, mood: 'building', hotModules: ['infra/redis.ts'] },
+      };
+
+      // ─── MOCK EVENT STREAM ───
+      const mainEvents = [
+        // Session & Presence
+        { time: 0,    type: 'session_start',  userId: 'christian', teamId: 'payments' },
+        { time: 2,    type: 'session_start',  userId: 'jc',        teamId: 'payments' },
+        // Basic file activity
+        { time: 5,    type: 'file_save',      userId: 'christian', file: 'server/api.ts' },
+        { time: 8,    type: 'file_save',      userId: 'christian', file: 'server/api.ts' },
+        { time: 10,   type: 'file_save',      userId: 'jc',        file: 'reel/app.ts' },
+        // Branch switch
+        { time: 14,   type: 'branch_switch',  userId: 'jc',        branch: 'feat/reel-ui' },
+        // Commit
+        { time: 28,   type: 'commit',         userId: 'christian', message: 'add JWT refresh endpoint' },
+        // Draft mode
+        { time: 36,   type: 'draft_mode_on',  userId: 'jc' },
+        { time: 44,   type: 'draft_mode_off', userId: 'jc' },
+        // Summary updates
+        { time: 48,   type: 'summary_update', teamId: 'payments',  activityLevel: 'high', milestone: false, mood: 'building' },
+        { time: 48,   type: 'summary_update', teamId: 'platform',  activityLevel: 'low',  milestone: false, mood: 'fixing' },
+        // Milestone
+        { time: 52,   type: 'summary_update', teamId: 'payments',  activityLevel: 'high', milestone: true, mood: 'building' },
+        // Session end
+        { time: 62,   type: 'session_end',    userId: 'jc',        teamId: 'payments' },
+        // Idle
+        { time: 68,   type: 'idle',           userId: 'christian' },
+        // Activity resumes
+        { time: 74,   type: 'file_save',      userId: 'christian', file: 'server/auth.ts' },
+        // Wind down
+        { time: 84,   type: 'summary_update', teamId: 'payments',  activityLevel: 'steady', milestone: false, mood: 'exploring' },
+        { time: 84,   type: 'summary_update', teamId: 'platform',  activityLevel: 'steady', milestone: false, mood: 'building' },
+      ];
+
+      // Background activity for other teams
+      const backgroundEvents = [
+        { time: 3,  type: 'file_save', userId: 'alex',  file: 'auth/oauth.ts' },
+        { time: 7,  type: 'file_save', userId: 'priya', file: 'onboarding/flow.tsx' },
+        { time: 12, type: 'file_save', userId: 'kai',   file: 'infra/redis.ts' },
+        { time: 15, type: 'file_save', userId: 'sam',   file: 'auth/middleware.ts' },
+        { time: 20, type: 'file_save', userId: 'alex',  file: 'auth/oauth.ts' },
+        { time: 25, type: 'file_save', userId: 'priya', file: 'onboarding/step2.tsx' },
+        { time: 30, type: 'commit',    userId: 'alex',  message: 'fix token refresh flow' },
+        { time: 35, type: 'file_save', userId: 'kai',   file: 'infra/pool.ts' },
+        { time: 42, type: 'commit',    userId: 'priya', message: 'wire up step 2 analytics' },
+        { time: 45, type: 'file_save', userId: 'sam',   file: 'auth/scopes.ts' },
+        { time: 55, type: 'commit',    userId: 'kai',   message: 'tune connection pool sizes' },
+        { time: 60, type: 'file_save', userId: 'alex',  file: 'auth/oauth.ts' },
+        { time: 65, type: 'file_save', userId: 'priya', file: 'onboarding/flow.tsx' },
+        { time: 70, type: 'file_save', userId: 'kai',   file: 'infra/redis.ts' },
+        { time: 75, type: 'commit',    userId: 'sam',   message: 'add scope validation' },
+        { time: 80, type: 'file_save', userId: 'alex',  file: 'auth/oauth.ts' },
+      ];
+
+      const allEvents = [...mainEvents, ...backgroundEvents].sort((a, b) => a.time - b.time);
+      const lastEventTime = allEvents[allEvents.length - 1].time;
+
+      // Which sprites arrive via session_start (start invisible)
+      const sessionStartIds = new Set(
+        allEvents.filter(e => e.type === 'session_start').map(e => e.userId)
+      );
+
+      // ─── STATE ───
+      const sprites = new Map();
+      const fireState = teams.map(() => ({
+        level: 'steady',
+        prevLevel: 'steady',
+        transitionProgress: 1.0,
+      }));
+      const fireFlares = teams.map(() => ({ active: false, startTime: 0, mult: 1.0 }));
+      const floatingTexts = [];
+      const milestoneState = teams.map((t) => ({
+        celebrating: false,
+        startTime: 0,
+        hasFlag: false,
+        flagX: t.x + t.fireSize * 5 + 8,
+        flagY: t.y - 2,
+        particles: [],
+        goldUntil: 0,
+      }));
+      const pulseState = teams.map(() => ({ lastPulse: 0, rings: [] }));
+
+      let streamTime = 0;
+      let streamIndex = 0;
+      let lastTimestamp = 0;
+      let cycleComplete = false;
+      let cycleEndTime = 0;
+
+      // ─── HELPERS ───
+      function lerp(a, b, t) { return a + (b - a) * Math.min(Math.max(t, 0), 1); }
+
+      function darken(hex, factor) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgb(${Math.floor(r * factor)},${Math.floor(g * factor)},${Math.floor(b * factor)})`;
+      }
+
+      function hexToRgba(hex, alpha) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r},${g},${b},${alpha})`;
+      }
+
+      function getMapEdgePosition(homeX, homeY) {
+        const edges = [
+          { x: homeX, y: -10 },
+          { x: homeX, y: MAP_H + 10 },
+          { x: -10,   y: homeY },
+          { x: MAP_W + 10, y: homeY },
+        ];
+        let best = edges[0];
+        let bestDist = Infinity;
+        for (const e of edges) {
+          const d = Math.hypot(e.x - homeX, e.y - homeY);
+          if (d < bestDist) { bestDist = d; best = e; }
+        }
+        return best;
+      }
+
+      function getFireMultipliers(teamIndex) {
+        const fs = fireState[teamIndex];
+        if (fs.transitionProgress >= 1) return FIRE_LEVELS[fs.level];
+        const from = FIRE_LEVELS[fs.prevLevel];
+        const to = FIRE_LEVELS[fs.level];
+        const t = fs.transitionProgress;
+        return {
+          height: lerp(from.height, to.height, t),
+          sparks: lerp(from.sparks, to.sparks, t),
+          flicker: lerp(from.flicker, to.flicker, t),
+          glow: lerp(from.glow, to.glow, t),
+          embers: lerp(from.embers, to.embers, t),
+          flames: lerp(from.flames, to.flames, t),
+        };
+      }
+
+      // ─── SPRITE REGISTRY ───
+      function computeHomePosition(team, memberIndex, memberCount, member) {
+        const angle = (memberIndex / memberCount) * Math.PI * 2 - Math.PI / 2;
+        const radius = team.fireSize * 8 + 14 + (member.type === 'agent' ? 5 : 0) + (member.status === 'draft' ? 8 : 0);
+        return {
+          x: team.x + Math.cos(angle) * radius,
+          y: team.y + Math.sin(angle) * radius * 0.6,
+        };
+      }
+
+      function initSprites() {
+        sprites.clear();
+        teams.forEach((team, teamIndex) => {
+          const count = team.members.length;
+          team.members.forEach((member, i) => {
+            const home = computeHomePosition(team, i, count, member);
+            const startsHidden = sessionStartIds.has(member.id);
+            sprites.set(member.id, {
+              ...member,
+              teamIndex,
+              homeX: home.x,
+              homeY: home.y,
+              defaultTask: member.task,
+              originalStatus: member.status,
+              visible: !startsHidden,
+              opacity: startsHidden ? 0 : 1,
+              inDraftMode: member.status === 'draft',
+              tentX: home.x + 4,
+              tentY: home.y,
+              animQueue: [],
+              currentAnim: null,
+              jumpUntil: 0,
+              teamName: team.name,
+            });
+          });
+        });
+      }
+
+      function resetAllState() {
+        initSprites();
+        streamTime = 0;
+        streamIndex = 0;
+        cycleComplete = false;
+        cycleEndTime = 0;
+        floatingTexts.length = 0;
+        for (let i = 0; i < teams.length; i++) {
+          fireState[i].level = 'steady';
+          fireState[i].prevLevel = 'steady';
+          fireState[i].transitionProgress = 1.0;
+          fireFlares[i].active = false;
+          milestoneState[i].celebrating = false;
+          milestoneState[i].hasFlag = false;
+          milestoneState[i].particles.length = 0;
+          milestoneState[i].goldUntil = 0;
+          pulseState[i].lastPulse = 0;
+          pulseState[i].rings.length = 0;
+        }
+      }
 
       // ─── CANVAS SETUP ───
       const canvas = document.getElementById('map');
@@ -526,28 +658,25 @@
         );
       }
 
-      // ─── DRAW GROUND ───
+      // ─── ENVIRONMENT SETUP ───
       const grassMap = [];
       for (let i = 0; i < 300; i++) {
         grassMap.push({
-          x: Math.random() * 500,
-          y: Math.random() * 280,
+          x: Math.random() * MAP_W,
+          y: Math.random() * MAP_H,
           color: GRASS_COLORS[Math.floor(Math.random() * GRASS_COLORS.length)],
           size: Math.random() > 0.7 ? 2 : 1,
         });
       }
 
-      // ─── TREES ───
       const trees = [];
       for (let i = 0; i < 25; i++) {
         let tx = Math.random() * 480 + 10;
         let ty = Math.random() * 260 + 10;
-        // keep trees away from campfire centers
         let tooClose = teams.some((t) => Math.hypot(tx - t.x, ty - t.y) < 60);
         if (!tooClose) {
           trees.push({
-            x: tx,
-            y: ty,
+            x: tx, y: ty,
             size: Math.random() * 2 + 2,
             leafColor: TREE_LEAVES[Math.floor(Math.random() * TREE_LEAVES.length)],
             sway: Math.random() * Math.PI * 2,
@@ -555,7 +684,20 @@
         }
       }
 
-      // ─── PATHS between campfires ───
+      const decorations = [
+        { team: 0, type: 'woodpile', ox: -30, oy: 15 },
+        { team: 0, type: 'barrel', ox: 25, oy: 18 },
+        { team: 0, type: 'crates', ox: -25, oy: -12 },
+        { team: 0, type: 'torch', ox: -18, oy: -20 },
+        { team: 0, type: 'torch', ox: 20, oy: -18 },
+        { team: 1, type: 'crates', ox: -20, oy: 12 },
+        { team: 1, type: 'torch', ox: 15, oy: -14 },
+        { team: 2, type: 'barrel', ox: 18, oy: 10 },
+        { team: 2, type: 'woodpile', ox: -22, oy: 8 },
+        { team: 3, type: 'crates', ox: -15, oy: 8 },
+      ];
+
+      // ─── DRAWING: PATHS ───
       function drawPath(x1, y1, x2, y2) {
         const steps = 40;
         for (let i = 0; i < steps; i++) {
@@ -567,24 +709,27 @@
         }
       }
 
-      // ─── DRAW TREE ───
+      // ─── DRAWING: TREES ───
       function drawTree(tree, time) {
         const { x, y, size, leafColor, sway } = tree;
         const s = Math.sin(time * 0.8 + sway) * 0.3;
-        // trunk
         px(x, y - size * 2, 1, size * 3, TREE_TRUNK);
         px(x + 1, y - size * 2, 1, size * 3, '#4a3a2a');
-        // canopy
         for (let dy = -size * 2 - 3; dy < -size; dy++) {
           const w = Math.max(1, size * 2 - Math.abs(dy + size * 2));
           px(x - w / 2 + s, y + dy, w, 1, leafColor);
         }
-        // highlight
         px(x - 1 + s, y - size * 2 - 2, 2, 1, '#3a6830');
       }
 
-      // ─── DRAW CAMPFIRE ───
-      function drawCampfire(cx, cy, size, teamColor, time) {
+      // ─── DRAWING: CAMPFIRE (with activity level reactivity) ───
+      function drawCampfire(cx, cy, size, teamColor, time, teamIndex) {
+        const fm = getFireMultipliers(teamIndex);
+        const flare = fireFlares[teamIndex];
+        const flareMult = flare.active ? flare.mult : 1.0;
+        const ms = milestoneState[teamIndex];
+        const useGold = ms.goldUntil > time;
+        const effectiveColor = useGold ? '#f0e8a0' : teamColor;
         const baseR = size * 5 + 4;
 
         // stone ring
@@ -602,7 +747,7 @@
         }
 
         // embers
-        const emberCount = size * 3 + 2;
+        const emberCount = Math.floor((size * 3 + 2) * fm.embers);
         for (let i = 0; i < emberCount; i++) {
           const angle = (i / emberCount) * Math.PI * 2 + time * 0.5;
           const r = 2 + Math.sin(time * 3 + i) * 1.5;
@@ -612,31 +757,34 @@
         }
 
         // fire
-        const fireHeight = size * 4 + 3;
-        const flames = size * 2 + 2;
+        const fireHeight = Math.floor((size * 4 + 3) * fm.height * flareMult);
+        const flames = Math.max(1, Math.floor((size * 2 + 2) * fm.flames));
+        const flickerSpeed = 8 * fm.flicker;
         for (let f = 0; f < flames; f++) {
           const fx = cx - size + f * ((size * 2) / flames);
           for (let fy = 0; fy < fireHeight; fy++) {
             const t = fy / fireHeight;
-            const flicker = Math.sin(time * 8 + f * 2 + fy * 0.5) * (1 + t * 2);
+            const flicker = Math.sin(time * flickerSpeed + f * 2 + fy * 0.5) * (1 + t * 2);
             const width = (1 - t) * (size + 1) + flicker * 0.3;
             if (width > 0.3) {
               let color;
-              if (t < 0.3) color = '#f0e8a0';
-              else if (t < 0.5) color = '#f0c040';
-              else if (t < 0.7) color = '#f08020';
-              else color = teamColor;
+              if (t < 0.3) color = useGold ? '#fffff0' : '#f0e8a0';
+              else if (t < 0.5) color = useGold ? '#f0e8a0' : '#f0c040';
+              else if (t < 0.7) color = useGold ? '#f0c040' : '#f08020';
+              else color = effectiveColor;
               px(fx + flicker * 0.5, cy - fy - 2, Math.max(1, width), 1, color);
             }
           }
         }
 
-        // sparks (larger fires have more)
-        if (size >= 2) {
-          for (let s = 0; s < size; s++) {
+        // sparks
+        const sparkCount = Math.max(0, Math.floor(size * fm.sparks));
+        const sparkSpread = fm.sparks > 1 ? 1.3 : 1.0;
+        if (sparkCount >= 1) {
+          for (let s = 0; s < sparkCount; s++) {
             const sparkT = (time * 2 + s * 1.7) % 3;
             if (sparkT < 2) {
-              const sx = cx + Math.sin(time * 3 + s * 5) * (3 + size);
+              const sx = cx + Math.sin(time * 3 + s * 5) * (3 + size) * sparkSpread;
               const sy = cy - fireHeight - sparkT * 8;
               px(sx, sy, 1, 1, Math.random() > 0.5 ? '#f0c040' : '#f0e8a0');
             }
@@ -644,30 +792,24 @@
         }
 
         // glow on ground
-        const glowR = baseR + size * 4;
+        const glowR = (baseR + size * 4) * fm.glow;
         ctx.save();
         const gradient = ctx.createRadialGradient(
-          cx * PIXEL_SCALE,
-          cy * PIXEL_SCALE,
-          0,
-          cx * PIXEL_SCALE,
-          cy * PIXEL_SCALE,
-          glowR * PIXEL_SCALE,
+          cx * PIXEL_SCALE, cy * PIXEL_SCALE, 0,
+          cx * PIXEL_SCALE, cy * PIXEL_SCALE, glowR * PIXEL_SCALE,
         );
-        gradient.addColorStop(0, teamColor + '18');
-        gradient.addColorStop(0.5, teamColor + '08');
+        gradient.addColorStop(0, effectiveColor + '18');
+        gradient.addColorStop(0.5, effectiveColor + '08');
         gradient.addColorStop(1, 'transparent');
         ctx.fillStyle = gradient;
         ctx.fillRect(
-          (cx - glowR) * PIXEL_SCALE,
-          (cy - glowR) * PIXEL_SCALE,
-          glowR * 2 * PIXEL_SCALE,
-          glowR * 2 * PIXEL_SCALE,
+          (cx - glowR) * PIXEL_SCALE, (cy - glowR) * PIXEL_SCALE,
+          glowR * 2 * PIXEL_SCALE, glowR * 2 * PIXEL_SCALE,
         );
         ctx.restore();
       }
 
-      // ─── DRAW TEAM LABEL ───
+      // ─── DRAWING: TEAM LABEL ───
       function drawTeamLabel(cx, cy, name, fireSize) {
         ctx.save();
         ctx.font = `${10}px 'Silkscreen', monospace`;
@@ -677,7 +819,7 @@
         ctx.restore();
       }
 
-      // ─── SPRITE DRAWING ───
+      // ─── DRAWING: HUMAN SPRITE ───
       function drawHumanSprite(x, y, color, status, task, time, name) {
         const bobY = status === 'active' ? Math.sin(time * 4) * 0.5 : 0;
         const bY = y + bobY;
@@ -687,18 +829,15 @@
           px(x - 3, bY - 1, 7, 4, '#3a3830');
           px(x - 2, bY - 3, 5, 2, '#4a4840');
           px(x, bY - 4, 1, 1, '#5a5850');
-          // person peeking
           px(x, bY, 2, 1, color);
           px(x, bY - 1, 2, 1, '#e0d8c8');
           return;
         }
 
         if (status === 'idle') {
-          // sitting sprite
-          px(x, bY + 1, 3, 1, color); // legs stretched
-          px(x, bY, 2, 1, color); // body
-          px(x, bY - 1, 2, 1, '#e0d8c8'); // head
-          // zzz
+          px(x, bY + 1, 3, 1, color);
+          px(x, bY, 2, 1, color);
+          px(x, bY - 1, 2, 1, '#e0d8c8');
           const zOff = Math.sin(time * 2) * 0.5;
           ctx.save();
           ctx.font = `${6}px 'Press Start 2P', monospace`;
@@ -710,106 +849,75 @@
         }
 
         // active sprite base
-        // legs
-        const legPhase = Math.sin(time * 5) * 0.5;
-        px(x, bY + 2, 1, 1, '#2a2020'); // left foot
-        px(x + 1, bY + 2, 1, 1, '#2a2020'); // right foot
-        // body
+        px(x, bY + 2, 1, 1, '#2a2020');
+        px(x + 1, bY + 2, 1, 1, '#2a2020');
         px(x, bY, 2, 2, color);
-        // head
         px(x, bY - 1, 2, 1, '#e0d8c8');
-        // eyes
         px(x, bY - 1, 1, 1, '#e0d8c8');
 
-        // task-specific animations
         if (task === 'walking') {
-          // walking — just the sprite with swinging arms, no workstation
           const armSwing = Math.sin(time * 6) * 1.5;
-          px(x - 1, bY + armSwing, 1, 1, color); // left arm
-          px(x + 2, bY - armSwing, 1, 1, color); // right arm
+          px(x - 1, bY + armSwing, 1, 1, color);
+          px(x + 2, bY - armSwing, 1, 1, color);
         } else if (task === 'smithing') {
-          // arm with hammer
           const hammerUp = Math.sin(time * 6) > 0;
-          px(x + 2, bY + (hammerUp ? -1 : 1), 1, 1, '#888'); // hammer head
-          px(x + 2, bY, 1, 1, '#5a4030'); // handle
-          // anvil nearby
+          px(x + 2, bY + (hammerUp ? -1 : 1), 1, 1, '#888');
+          px(x + 2, bY, 1, 1, '#5a4030');
           px(x + 4, bY + 1, 3, 2, '#555');
           px(x + 4, bY, 3, 1, '#666');
-          // sparks when hitting
           if (!hammerUp) {
             px(x + 4 + Math.random() * 3, bY - 1 - Math.random() * 2, 1, 1, '#f0c040');
             px(x + 5 + Math.random() * 2, bY - Math.random() * 2, 1, 1, '#f08020');
           }
         } else if (task === 'scribing') {
-          // desk
           px(x + 3, bY + 1, 4, 1, '#4a3828');
           px(x + 3, bY + 2, 1, 2, '#3a2818');
           px(x + 6, bY + 2, 1, 2, '#3a2818');
-          // paper
           px(x + 3, bY, 3, 1, '#e8e0d0');
-          // quill moving
           const qx = x + 4 + Math.sin(time * 5) * 0.8;
           px(qx, bY - 1, 1, 1, '#2a2020');
-          // ink marks appearing
           if (Math.sin(time * 3) > 0) {
             px(x + 3 + ((time * 2) % 3), bY, 1, 1, '#3a3020');
           }
         } else if (task === 'mining') {
-          // pickaxe swing
           const swingAngle = Math.sin(time * 5);
           px(x - 2 + swingAngle, bY - 1 + Math.abs(swingAngle), 1, 1, '#888');
           px(x - 1, bY, 1, 1, '#5a4030');
-          // rock
           px(x - 4, bY + 1, 3, 2, '#5a5a60');
           px(x - 3, bY, 2, 1, '#6a6a70');
-          // debris when hitting
           if (swingAngle < -0.5) {
             px(x - 4 + Math.random() * 2, bY - 1 - Math.random() * 2, 1, 1, '#8a8a90');
           }
         }
       }
 
+      // ─── DRAWING: GOLEM SPRITE ───
       function drawGolemSprite(x, y, color, task, time) {
         const bobY = y + Math.sin(time * 3 + 1) * 0.3;
-
-        // golem body - blockier, slightly larger
-        // feet
         px(x, bobY + 3, 1, 1, '#3a3a40');
         px(x + 2, bobY + 3, 1, 1, '#3a3a40');
-        // legs
         px(x, bobY + 2, 1, 1, darken(color, 0.5));
         px(x + 2, bobY + 2, 1, 1, darken(color, 0.5));
-        // body - wider
         px(x - 1, bobY, 4, 2, darken(color, 0.7));
-        // color stripe
         px(x, bobY, 2, 1, color);
-        // head - square, glowing eyes
         px(x, bobY - 1, 2, 1, '#6a6a70');
-        // glowing eyes
         const eyeGlow = Math.sin(time * 4) > 0 ? '#80f0f0' : '#50c0c0';
         px(x, bobY - 1, 1, 1, eyeGlow);
         px(x + 1, bobY - 1, 1, 1, eyeGlow);
-        // rune mark
         px(x + 0.5, bobY + 1, 1, 1, color);
 
-        // task animations
         if (task === 'chopping') {
-          // axe swing
           const swing = Math.sin(time * 6);
           px(x + 3, bobY + (swing > 0 ? -1 : 1), 1, 1, '#aaa');
           px(x + 3, bobY, 1, 1, '#5a4030');
-          // log
           px(x + 5, bobY + 2, 2, 2, '#5a3820');
           px(x + 5, bobY + 1, 2, 1, '#6a4830');
-          // wood chips
           if (swing < -0.5) {
             px(x + 5 + Math.random() * 3, bobY - Math.random() * 2, 1, 1, '#8a6840');
           }
         } else if (task === 'carrying') {
-          // carrying blocks/crates
           px(x, bobY - 3, 3, 2, '#6a5830');
           px(x, bobY - 2, 3, 1, '#7a6840');
-          // movement trail dots
           const trail = Math.floor(time * 3) % 3;
           px(x - 2 - trail, bobY + 3, 1, 1, '#2a2820');
         } else if (task === 'mining') {
@@ -823,37 +931,57 @@
         }
       }
 
-      function darken(hex, factor) {
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        return `rgb(${Math.floor(r * factor)},${Math.floor(g * factor)},${Math.floor(b * factor)})`;
+      // ─── DRAWING: FILE SAVE STRIKE ───
+      function drawStrikeSprite(x, y, color, progress, time) {
+        const bY = y;
+        px(x, bY + 2, 1, 1, '#2a2020');
+        px(x + 1, bY + 2, 1, 1, '#2a2020');
+        px(x, bY, 2, 2, color);
+        px(x, bY - 1, 2, 1, '#e0d8c8');
+        if (progress < 0.5) {
+          // arm up
+          px(x + 2, bY - 2, 1, 1, color);
+          px(x + 2, bY - 3, 1, 1, '#888');
+        } else {
+          // arm down + sparks
+          px(x + 2, bY + 1, 1, 1, color);
+          px(x + 2, bY + 2, 1, 1, '#888');
+          px(x + 3 + Math.random() * 2, bY - Math.random() * 2, 1, 1, '#f0c040');
+          px(x + 2 + Math.random(), bY - 1 - Math.random(), 1, 1, '#f08020');
+        }
       }
 
-      // ─── POSITION MEMBERS AROUND FIRE ───
-      function getMemberPositions(team) {
-        const positions = [];
-        const count = team.members.length;
-        const radius = team.fireSize * 8 + 14;
-
-        team.members.forEach((member, i) => {
-          // skip members who are currently traveling
-          if (isTraveling(member.name)) return;
-          const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
-          const r =
-            radius + (member.type === 'agent' ? 5 : 0) + (member.status === 'draft' ? 8 : 0);
-          positions.push({
-            ...member,
-            px: team.x + Math.cos(angle) * r,
-            py: team.y + Math.sin(angle) * r * 0.6, // squash for isometric feel
-            teamName: team.name,
-          });
-        });
-
-        return positions;
+      // ─── DRAWING: COMMIT TOSS ───
+      function drawTossSprite(x, y, color, progress, time) {
+        const bY = y;
+        px(x, bY + 2, 1, 1, '#2a2020');
+        px(x + 1, bY + 2, 1, 1, '#2a2020');
+        px(x, bY, 2, 2, color);
+        px(x, bY - 1, 2, 1, '#e0d8c8');
+        if (progress < 0.4) {
+          // arm raised with offering
+          px(x + 1, bY - 2, 1, 1, color);
+          px(x + 1, bY - 3, 1, 1, '#f0c040');
+        } else if (progress < 0.7) {
+          // arm extended, releasing
+          px(x + 1, bY - 2, 1, 1, color);
+        } else {
+          // follow through
+          px(x, bY - 1, 1, 1, color);
+        }
       }
 
-      // ─── DECORATION: workbenches, resource piles ───
+      // ─── DRAWING: TENT (standalone for draft mode) ───
+      function drawTent(x, y, flapOpen) {
+        px(x - 3, y - 1, 7, 4, '#3a3830');
+        px(x - 2, y - 3, 5, 2, '#4a4840');
+        px(x, y - 4, 1, 1, '#5a5850');
+        if (flapOpen) {
+          px(x + 2, y, 2, 2, '#2a2820');
+        }
+      }
+
+      // ─── DRAWING: WORKSTATION ───
       function drawWorkstation(x, y, type, time) {
         if (type === 'woodpile') {
           for (let i = 0; i < 3; i++) {
@@ -877,129 +1005,571 @@
         }
       }
 
-      // ─── DECORATIONS per campfire ───
-      const decorations = [
-        // Payments - big camp with lots of infrastructure
-        { team: 0, type: 'woodpile', ox: -30, oy: 15 },
-        { team: 0, type: 'barrel', ox: 25, oy: 18 },
-        { team: 0, type: 'crates', ox: -25, oy: -12 },
-        { team: 0, type: 'torch', ox: -18, oy: -20 },
-        { team: 0, type: 'torch', ox: 20, oy: -18 },
-        // Platform
-        { team: 1, type: 'crates', ox: -20, oy: 12 },
-        { team: 1, type: 'torch', ox: 15, oy: -14 },
-        // Growth
-        { team: 2, type: 'barrel', ox: 18, oy: 10 },
-        { team: 2, type: 'woodpile', ox: -22, oy: 8 },
-        // Infra - small, minimal
-        { team: 3, type: 'crates', ox: -15, oy: 8 },
-      ];
-
-      // ─── TRAVELERS (sprites moving between campfires) ───
-      const travelers = [];
-      const TRAVEL_DURATION = 8; // seconds to walk between campfires
-      const VISIT_DURATION = 25; // seconds spent visiting
-      const TRAVEL_INTERVAL = 35; // seconds between new travelers
-      let lastTravelTime = -10; // start first travel soon
-
-      function startTravel(time) {
-        // pick a random active human who isn't already traveling
-        const travelingNames = new Set(travelers.map((t) => t.member.name));
-        const candidates = [];
-        teams.forEach((team, ti) => {
-          team.members.forEach((m) => {
-            if (m.type === 'human' && m.status === 'active' && !travelingNames.has(m.name)) {
-              candidates.push({ teamIndex: ti, member: m });
-            }
-          });
-        });
-        if (candidates.length === 0) return;
-
-        const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-        // pick a different team to visit
-        const otherTeams = teams.map((_, i) => i).filter((i) => i !== chosen.teamIndex);
-        const destIndex = otherTeams[Math.floor(Math.random() * otherTeams.length)];
-
-        travelers.push({
-          member: chosen.member,
-          sourceTeam: chosen.teamIndex,
-          destTeam: destIndex,
-          phase: 'going', // 'going' | 'visiting' | 'returning'
-          startTime: time,
-          teamName: teams[destIndex].name,
-        });
+      // ─── DRAWING: FLOATING TEXT ───
+      function drawFloatingText(ft, time) {
+        const elapsed = time - ft.startTime;
+        if (elapsed > FLOATING_TEXT_DURATION) return;
+        const progress = elapsed / FLOATING_TEXT_DURATION;
+        const alpha = 1.0 - progress;
+        const yOffset = progress * 20;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.font = `${8}px 'Silkscreen', monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#f0e8c0';
+        ctx.fillText(ft.text, ft.x * PIXEL_SCALE, (ft.y - yOffset) * PIXEL_SCALE);
+        ctx.restore();
       }
 
-      function updateTravelers(time) {
-        // maybe start a new traveler
-        if (time - lastTravelTime > TRAVEL_INTERVAL + Math.random() * 10) {
-          startTravel(time);
-          lastTravelTime = time;
+      // ─── DRAWING: PULSE RING ───
+      function drawPulseRing(ring, time, teamColor, teamIndex) {
+        const elapsed = time - ring.startTime;
+        if (elapsed > PULSE_DURATION) return;
+        const progress = elapsed / PULSE_DURATION;
+        const level = fireState[teamIndex].level;
+        const maxRadius = (teams[teamIndex].fireSize * 5 + 4) * PULSE_RADIUS_MULT[level];
+        const radius = maxRadius * progress;
+        const alpha = (1.0 - progress) * 0.1;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(
+          ring.x * PIXEL_SCALE, ring.y * PIXEL_SCALE,
+          radius * PIXEL_SCALE, 0, Math.PI * 2,
+        );
+        ctx.strokeStyle = hexToRgba(teamColor, alpha);
+        ctx.lineWidth = 2 * PIXEL_SCALE;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // ─── DRAWING: MILESTONE FLAG ───
+      function drawMilestoneFlag(x, y, teamColor) {
+        // pole
+        px(x, y, 1, 6, '#5a4a3a');
+        // flag (2x4)
+        px(x + 1, y, 4, 2, teamColor);
+        px(x + 1, y + 1, 3, 1, darken(teamColor, 0.8));
+      }
+
+      // ─── DRAWING: MILESTONE PARTICLES ───
+      function drawMilestoneParticles(particles, time) {
+        for (const p of particles) {
+          const elapsed = time - p.startTime;
+          if (elapsed > MILESTONE_PARTICLE_DURATION) continue;
+          const progress = elapsed / MILESTONE_PARTICLE_DURATION;
+          const alpha = 1.0 - progress;
+          const x = p.x + p.vx * elapsed;
+          const y = p.y + p.vy * elapsed + 20 * elapsed * elapsed; // gravity
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          px(x, y, 1, 1, p.color);
+          ctx.restore();
         }
+      }
 
-        // update existing travelers
-        for (let i = travelers.length - 1; i >= 0; i--) {
-          const t = travelers[i];
-          const elapsed = time - t.startTime;
-
-          if (t.phase === 'going') {
-            if (elapsed >= TRAVEL_DURATION) {
-              t.phase = 'visiting';
-              t.startTime = time;
-            }
-          } else if (t.phase === 'visiting') {
-            if (elapsed >= VISIT_DURATION) {
-              t.phase = 'returning';
-              t.startTime = time;
-            }
-          } else if (t.phase === 'returning') {
-            if (elapsed >= TRAVEL_DURATION) {
-              travelers.splice(i, 1); // journey complete
+      // ─── ANIMATION SYSTEM ───
+      function tickSprite(sprite, dt) {
+        if (!sprite.currentAnim && sprite.animQueue.length > 0) {
+          const anim = sprite.animQueue.shift();
+          sprite.currentAnim = anim;
+          anim.elapsed = 0;
+          if (anim.onStart) anim.onStart();
+        }
+        if (sprite.currentAnim) {
+          sprite.currentAnim.elapsed += dt;
+          if (sprite.currentAnim.elapsed >= sprite.currentAnim.duration) {
+            if (sprite.currentAnim.onComplete) sprite.currentAnim.onComplete();
+            sprite.currentAnim = null;
+            // Chain next immediately
+            if (sprite.animQueue.length > 0) {
+              const anim = sprite.animQueue.shift();
+              sprite.currentAnim = anim;
+              anim.elapsed = 0;
+              if (anim.onStart) anim.onStart();
             }
           }
         }
       }
 
-      function getTravelerPosition(t, time) {
-        const src = teams[t.sourceTeam];
-        const dst = teams[t.destTeam];
-        const elapsed = time - t.startTime;
+      function getSpriteRenderState(sprite, time) {
+        const anim = sprite.currentAnim;
+        const base = {
+          x: sprite.homeX,
+          y: sprite.homeY,
+          opacity: sprite.visible ? 1 : 0,
+          task: sprite.inDraftMode ? 'tent' : sprite.defaultTask,
+          status: sprite.inDraftMode ? 'draft' : sprite.status,
+          renderType: 'default',
+        };
 
-        if (t.phase === 'going') {
-          const progress = Math.min(elapsed / TRAVEL_DURATION, 1);
-          // ease in-out
-          const ease =
-            progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-          return {
-            x: src.x + (dst.x - src.x) * ease + Math.sin(progress * 12) * 3,
-            y: src.y + (dst.y - src.y) * ease + Math.cos(progress * 8) * 2,
-          };
-        } else if (t.phase === 'visiting') {
-          // sit near the destination campfire, offset slightly so they don't overlap members
-          const angle = Math.PI * 0.8 + travelers.indexOf(t) * 0.4;
-          const radius = dst.fireSize * 8 + 22;
-          return {
-            x: dst.x + Math.cos(angle) * radius,
-            y: dst.y + Math.sin(angle) * radius * 0.6,
-          };
-        } else {
-          // returning
-          const progress = Math.min(elapsed / TRAVEL_DURATION, 1);
-          const ease =
-            progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-          return {
-            x: dst.x + (src.x - dst.x) * ease + Math.sin(progress * 12) * 3,
-            y: dst.y + (src.y - dst.y) * ease + Math.cos(progress * 8) * 2,
-          };
+        // Apply jump offset from milestones
+        let jumpOffset = 0;
+        if (sprite.jumpUntil > time) {
+          const jumpElapsed = (sprite.jumpUntil - MILESTONE_JUMP_DURATION) > 0
+            ? time - (sprite.jumpUntil - MILESTONE_JUMP_DURATION) : 0;
+          const jp = jumpElapsed / MILESTONE_JUMP_DURATION;
+          if (jp < 0.3) jumpOffset = -2;
+          else if (jp < 0.7) jumpOffset = -2;
+          else jumpOffset = 0;
+        }
+
+        if (!anim) {
+          base.y += jumpOffset;
+          return base;
+        }
+
+        const p = Math.min(anim.elapsed / anim.duration, 1);
+
+        switch (anim.type) {
+          case 'walk':
+            return {
+              x: lerp(anim.startX, anim.endX, p),
+              y: lerp(anim.startY, anim.endY, p) + jumpOffset,
+              opacity: anim.fadeIn ? p : anim.fadeOut ? (1 - p) : 1,
+              task: 'walking',
+              status: 'active',
+              renderType: 'default',
+            };
+          case 'file_save_strike':
+            return {
+              x: sprite.homeX,
+              y: sprite.homeY + jumpOffset,
+              opacity: 1,
+              task: 'strike',
+              status: 'active',
+              renderType: 'strike',
+              strikeProgress: p,
+            };
+          case 'commit_toss':
+            return {
+              x: anim.x,
+              y: anim.y + jumpOffset,
+              opacity: 1,
+              task: 'toss',
+              status: 'active',
+              renderType: 'toss',
+              tossProgress: p,
+            };
+          case 'draft_enter':
+            if (p < 0.5) {
+              // sprite shrinking into tent
+              return {
+                x: sprite.tentX,
+                y: sprite.tentY + jumpOffset,
+                opacity: 1.0 - p,
+                task: sprite.defaultTask,
+                status: 'active',
+                renderType: 'default',
+              };
+            }
+            return {
+              x: sprite.tentX,
+              y: sprite.tentY + jumpOffset,
+              opacity: 0,
+              task: 'tent',
+              status: 'draft',
+              renderType: 'tent',
+              flapOpen: false,
+            };
+          case 'draft_exit':
+            if (p < 0.5) {
+              return {
+                x: sprite.tentX,
+                y: sprite.tentY + jumpOffset,
+                opacity: 0,
+                task: 'tent',
+                status: 'draft',
+                renderType: 'tent',
+                flapOpen: true,
+              };
+            }
+            return {
+              x: sprite.tentX,
+              y: sprite.tentY + jumpOffset,
+              opacity: p,
+              task: sprite.defaultTask,
+              status: 'active',
+              renderType: 'default',
+            };
+          default:
+            base.y += jumpOffset;
+            return base;
         }
       }
 
+      function renderSprite(sprite, time) {
+        const rs = getSpriteRenderState(sprite, time);
+        if (rs.opacity <= 0 && rs.renderType !== 'tent') return;
+
+        const prevAlpha = ctx.globalAlpha;
+        if (rs.opacity < 1 && rs.opacity > 0) {
+          ctx.globalAlpha = rs.opacity;
+        }
+
+        if (sprite.inDraftMode && !sprite.currentAnim) {
+          // Standing tent
+          drawTent(sprite.tentX, sprite.tentY, false);
+          // Show person peeking
+          px(sprite.tentX, sprite.tentY, 2, 1, sprite.color);
+          px(sprite.tentX, sprite.tentY - 1, 2, 1, '#e0d8c8');
+        } else if (rs.renderType === 'tent') {
+          drawTent(sprite.tentX, sprite.tentY, rs.flapOpen || false);
+          if (rs.flapOpen) {
+            // Person emerging
+            ctx.globalAlpha = rs.opacity || 0.5;
+            px(sprite.tentX + 3, sprite.tentY, 2, 2, sprite.color);
+            px(sprite.tentX + 3, sprite.tentY - 1, 2, 1, '#e0d8c8');
+          }
+        } else if (rs.renderType === 'strike') {
+          drawStrikeSprite(rs.x, rs.y, sprite.color, rs.strikeProgress, time);
+        } else if (rs.renderType === 'toss') {
+          drawTossSprite(rs.x, rs.y, sprite.color, rs.tossProgress, time);
+        } else if (sprite.type === 'agent') {
+          drawGolemSprite(rs.x, rs.y, sprite.color, rs.task === 'walking' ? 'carrying' : sprite.defaultTask, time);
+        } else {
+          drawHumanSprite(rs.x, rs.y, sprite.color, rs.status, rs.task, time, sprite.name);
+        }
+
+        ctx.globalAlpha = prevAlpha;
+      }
+
+      // ─── EVENT HANDLERS ───
+      function handleEvent(event) {
+        switch (event.type) {
+          case 'session_start': handleSessionStart(event); break;
+          case 'session_end': handleSessionEnd(event); break;
+          case 'file_save': handleFileSave(event); break;
+          case 'file_open': break; // visual acknowledgment not needed
+          case 'commit': handleCommit(event); break;
+          case 'branch_switch': handleBranchSwitch(event); break;
+          case 'draft_mode_on': handleDraftModeOn(event); break;
+          case 'draft_mode_off': handleDraftModeOff(event); break;
+          case 'idle': handleIdle(event); break;
+          case 'summary_update': handleSummaryUpdate(event); break;
+        }
+      }
+
+      function handleSessionStart(event) {
+        const sprite = sprites.get(event.userId);
+        if (!sprite) return;
+        sprite.visible = true;
+        sprite.status = 'active';
+        const edge = getMapEdgePosition(sprite.homeX, sprite.homeY);
+        sprite.animQueue.push({
+          type: 'walk',
+          duration: SESSION_ENTER_DURATION,
+          startX: edge.x,
+          startY: edge.y,
+          endX: sprite.homeX,
+          endY: sprite.homeY,
+          fadeIn: true,
+        });
+      }
+
+      function handleSessionEnd(event) {
+        const sprite = sprites.get(event.userId);
+        if (!sprite) return;
+        const edge = getMapEdgePosition(sprite.homeX, sprite.homeY);
+        sprite.animQueue.push({
+          type: 'walk',
+          duration: SESSION_EXIT_DURATION,
+          startX: sprite.homeX,
+          startY: sprite.homeY,
+          endX: edge.x,
+          endY: edge.y,
+          fadeOut: true,
+          onComplete: () => { sprite.visible = false; sprite.opacity = 0; },
+        });
+      }
+
+      function handleFileSave(event) {
+        const sprite = sprites.get(event.userId);
+        if (!sprite || !sprite.visible) return;
+        // If idle, resume active
+        if (sprite.status === 'idle') {
+          sprite.status = 'active';
+        }
+        if (event.file) sprite.file = event.file;
+        sprite.animQueue.push({
+          type: 'file_save_strike',
+          duration: FILE_SAVE_DURATION,
+        });
+      }
+
+      function handleCommit(event) {
+        const sprite = sprites.get(event.userId);
+        if (!sprite || !sprite.visible) return;
+        if (sprite.status === 'idle') {
+          sprite.status = 'active';
+        }
+        const team = teams[sprite.teamIndex];
+        // Walk to fire edge
+        const angle = Math.atan2(sprite.homeY - team.y, sprite.homeX - team.x);
+        const commitDist = 8;
+        const commitX = team.x + Math.cos(angle) * commitDist;
+        const commitY = team.y + Math.sin(angle) * commitDist * 0.6;
+
+        sprite.animQueue.push({
+          type: 'walk',
+          duration: COMMIT_WALK_DURATION,
+          startX: sprite.homeX,
+          startY: sprite.homeY,
+          endX: commitX,
+          endY: commitY,
+        });
+        sprite.animQueue.push({
+          type: 'commit_toss',
+          duration: COMMIT_TOSS_DURATION,
+          x: commitX,
+          y: commitY,
+          onStart: () => {
+            // Fire flare
+            triggerFireFlare(sprite.teamIndex, 1.2);
+            // Floating text
+            if (event.message) {
+              const msg = event.message.length > 28 ? event.message.slice(0, 28) + '…' : event.message;
+              floatingTexts.push({
+                text: msg,
+                x: team.x,
+                y: team.y - (team.fireSize * 4 + 3) * getFireMultipliers(sprite.teamIndex).height - 8,
+                startTime: lastRenderTime,
+              });
+            }
+          },
+        });
+        sprite.animQueue.push({
+          type: 'walk',
+          duration: COMMIT_WALK_DURATION,
+          startX: commitX,
+          startY: commitY,
+          endX: sprite.homeX,
+          endY: sprite.homeY,
+        });
+      }
+
+      function handleBranchSwitch(event) {
+        const sprite = sprites.get(event.userId);
+        if (!sprite || !sprite.visible) return;
+        const team = teams[sprite.teamIndex];
+        // Compute new position around the ring
+        const currentAngle = Math.atan2(
+          (sprite.homeY - team.y) / 0.6,
+          sprite.homeX - team.x,
+        );
+        const newAngle = currentAngle + Math.PI * (0.3 + Math.random() * 0.4);
+        const radius = team.fireSize * 8 + 14 + (sprite.type === 'agent' ? 5 : 0);
+        const newHomeX = team.x + Math.cos(newAngle) * radius;
+        const newHomeY = team.y + Math.sin(newAngle) * radius * 0.6;
+
+        sprite.animQueue.push({
+          type: 'walk',
+          duration: BRANCH_WALK_DURATION,
+          startX: sprite.homeX,
+          startY: sprite.homeY,
+          endX: newHomeX,
+          endY: newHomeY,
+          onComplete: () => {
+            sprite.homeX = newHomeX;
+            sprite.homeY = newHomeY;
+          },
+        });
+      }
+
+      function handleDraftModeOn(event) {
+        const sprite = sprites.get(event.userId);
+        if (!sprite || !sprite.visible) return;
+        sprite.tentX = sprite.homeX + 4;
+        sprite.tentY = sprite.homeY;
+        // Walk to tent
+        sprite.animQueue.push({
+          type: 'walk',
+          duration: DRAFT_WALK_DURATION,
+          startX: sprite.homeX,
+          startY: sprite.homeY,
+          endX: sprite.tentX,
+          endY: sprite.tentY,
+        });
+        // Enter tent
+        sprite.animQueue.push({
+          type: 'draft_enter',
+          duration: DRAFT_TRANSITION_DURATION,
+          onComplete: () => {
+            sprite.inDraftMode = true;
+            sprite.status = 'draft';
+          },
+        });
+      }
+
+      function handleDraftModeOff(event) {
+        const sprite = sprites.get(event.userId);
+        if (!sprite) return;
+        sprite.animQueue.push({
+          type: 'draft_exit',
+          duration: DRAFT_TRANSITION_DURATION,
+          onStart: () => {
+            sprite.inDraftMode = false;
+            sprite.status = 'active';
+          },
+        });
+        // Walk back to home
+        sprite.animQueue.push({
+          type: 'walk',
+          duration: DRAFT_WALK_DURATION,
+          startX: sprite.tentX,
+          startY: sprite.tentY,
+          endX: sprite.homeX,
+          endY: sprite.homeY,
+        });
+      }
+
+      function handleIdle(event) {
+        const sprite = sprites.get(event.userId);
+        if (!sprite || !sprite.visible) return;
+        sprite.status = 'idle';
+      }
+
+      function handleSummaryUpdate(event) {
+        const teamIndex = teamIndexById[event.teamId];
+        if (teamIndex === undefined) return;
+
+        // Update fire state
+        if (event.activityLevel && event.activityLevel !== fireState[teamIndex].level) {
+          fireState[teamIndex].prevLevel = fireState[teamIndex].level;
+          fireState[teamIndex].level = event.activityLevel;
+          fireState[teamIndex].transitionProgress = 0;
+        }
+
+        // Update mock summary data
+        if (mockSummaryData[event.teamId]) {
+          if (event.activityLevel) mockSummaryData[event.teamId].activityLevel = event.activityLevel;
+          if (event.mood) mockSummaryData[event.teamId].mood = event.mood;
+          if (event.milestone !== undefined) mockSummaryData[event.teamId].milestone = event.milestone;
+        }
+
+        // Milestone celebration
+        if (event.milestone) {
+          triggerMilestone(teamIndex);
+        }
+      }
+
+      // ─── FIRE FLARE ───
+      function triggerFireFlare(teamIndex, mult) {
+        fireFlares[teamIndex].active = true;
+        fireFlares[teamIndex].startTime = lastRenderTime;
+        fireFlares[teamIndex].mult = mult || 1.2;
+      }
+
+      // ─── MILESTONE ───
+      function triggerMilestone(teamIndex) {
+        const ms = milestoneState[teamIndex];
+        const team = teams[teamIndex];
+        ms.celebrating = true;
+        ms.startTime = lastRenderTime;
+        ms.hasFlag = true;
+        ms.goldUntil = lastRenderTime + MILESTONE_GOLD_DURATION;
+
+        // Jump all sprites at this campfire
+        sprites.forEach(sprite => {
+          if (sprite.teamIndex === teamIndex && sprite.visible) {
+            sprite.jumpUntil = lastRenderTime + MILESTONE_JUMP_DURATION;
+          }
+        });
+
+        // Spawn particles (8-12 gold/white sparks)
+        ms.particles = [];
+        const count = 8 + Math.floor(Math.random() * 5);
+        for (let i = 0; i < count; i++) {
+          const angle = (i / count) * Math.PI * 2;
+          ms.particles.push({
+            x: team.x,
+            y: team.y - 10,
+            vx: Math.cos(angle) * (15 + Math.random() * 10),
+            vy: -20 - Math.random() * 15,
+            startTime: lastRenderTime,
+            color: Math.random() > 0.5 ? '#f0e8a0' : '#ffffff',
+          });
+        }
+
+        // Fire flare
+        triggerFireFlare(teamIndex, 1.3);
+      }
+
+      // ─── EVENT STREAM ENGINE ───
+      function tickEventStream(dt) {
+        if (cycleComplete) {
+          cycleEndTime += dt;
+          if (cycleEndTime >= CYCLE_PAUSE) {
+            resetAllState();
+          }
+          return;
+        }
+
+        streamTime += dt;
+
+        // Process events
+        while (streamIndex < allEvents.length && allEvents[streamIndex].time <= streamTime) {
+          handleEvent(allEvents[streamIndex]);
+          streamIndex++;
+        }
+
+        // Check cycle end
+        if (streamIndex >= allEvents.length && streamTime >= lastEventTime + 1) {
+          cycleComplete = true;
+          cycleEndTime = 0;
+        }
+      }
+
+      // ─── FIRE STATE TICK ───
+      function tickFireState(dt) {
+        for (let i = 0; i < teams.length; i++) {
+          const fs = fireState[i];
+          if (fs.transitionProgress < 1) {
+            fs.transitionProgress = Math.min(1, fs.transitionProgress + dt / FIRE_TRANSITION_DURATION);
+          }
+          // Decay flares
+          const flare = fireFlares[i];
+          if (flare.active && lastRenderTime - flare.startTime > FIRE_FLARE_DURATION) {
+            flare.active = false;
+          }
+        }
+      }
+
+      // ─── PULSE TICK ───
+      function tickPulses(time) {
+        for (let i = 0; i < teams.length; i++) {
+          const ps = pulseState[i];
+          const level = fireState[i].level;
+          const interval = PULSE_INTERVALS[level];
+
+          if (time - ps.lastPulse >= interval) {
+            ps.lastPulse = time;
+            ps.rings.push({
+              startTime: time,
+              x: teams[i].x,
+              y: teams[i].y,
+            });
+          }
+
+          // Clean up expired rings
+          ps.rings = ps.rings.filter(r => time - r.startTime < PULSE_DURATION);
+        }
+      }
+
+      // ─── TRAVELERS (kept but disabled — event stream provides motion) ───
+      const travelers = [];
+      const TRAVEL_INTERVAL = Infinity;
+      let lastTravelTime = -10;
+
+      function updateTravelers(time) {
+        // Disabled for event-driven mode
+      }
+
       function isTraveling(memberName) {
-        return travelers.some((t) => t.member.name === memberName);
+        return false;
       }
 
       // ─── HOVER DETECTION ───
-      let allSprites = [];
+      let allSpritePositions = [];
       let hoveredSprite = null;
 
       canvas.addEventListener('mousemove', (e) => {
@@ -1008,12 +1578,12 @@
         const my = e.clientY - rect.top;
 
         hoveredSprite = null;
-        for (const sprite of allSprites) {
-          const sx = sprite.px * PIXEL_SCALE;
-          const sy = sprite.py * PIXEL_SCALE;
+        for (const sp of allSpritePositions) {
+          const sx = sp.rx * PIXEL_SCALE;
+          const sy = sp.ry * PIXEL_SCALE;
           const dist = Math.hypot(mx - sx, my - sy);
           if (dist < 20) {
-            hoveredSprite = sprite;
+            hoveredSprite = sp;
             break;
           }
         }
@@ -1029,78 +1599,87 @@
               : `◆ ${hoveredSprite.status}`;
 
           tooltip.innerHTML = `
-      <div class="tt-name" style="color:${hoveredSprite.color}">${hoveredSprite.name}</div>
-      <div class="tt-role">${typeLabel} · ${hoveredSprite.teamName}</div>
-      <div class="tt-detail">${hoveredSprite.file}</div>
-    `;
+            <div class="tt-name" style="color:${hoveredSprite.color}">${hoveredSprite.name}</div>
+            <div class="tt-role">${typeLabel} · ${hoveredSprite.teamName}</div>
+            <div class="tt-detail">${hoveredSprite.file}</div>
+          `;
         } else {
           tooltip.style.display = 'none';
         }
       });
 
       // ─── MAIN RENDER LOOP ───
+      let lastRenderTime = 0;
+
       function render(timestamp) {
         const time = timestamp / 1000;
+        const dt = lastTimestamp > 0 ? Math.min(time - lastTimestamp, 0.1) : 0.016;
+        lastTimestamp = time;
+        lastRenderTime = time;
+
+        // Tick systems
+        tickEventStream(dt);
+        tickFireState(dt);
+        tickPulses(time);
+
+        // Tick all sprite animations
+        sprites.forEach(sprite => tickSprite(sprite, dt));
+
+        // Clean up expired floating texts
+        for (let i = floatingTexts.length - 1; i >= 0; i--) {
+          if (time - floatingTexts[i].startTime > FLOATING_TEXT_DURATION) {
+            floatingTexts.splice(i, 1);
+          }
+        }
+
+        // Clean up expired milestone particles
+        for (let i = 0; i < milestoneState.length; i++) {
+          milestoneState[i].particles = milestoneState[i].particles.filter(
+            p => time - p.startTime < MILESTONE_PARTICLE_DURATION
+          );
+          if (milestoneState[i].celebrating && time - milestoneState[i].startTime > MILESTONE_PARTICLE_DURATION) {
+            milestoneState[i].celebrating = false;
+          }
+        }
+
+        // ─── DRAW ───
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // ground fill
+        // Ground
         ctx.fillStyle = GROUND_COLOR;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // grass patches
         for (const g of grassMap) {
           px(g.x, g.y, g.size, g.size, g.color);
         }
 
-        // paths between campfires
+        // Paths
         drawPath(teams[0].x, teams[0].y, teams[1].x, teams[1].y);
         drawPath(teams[0].x, teams[0].y, teams[3].x, teams[3].y);
         drawPath(teams[1].x, teams[1].y, teams[2].x, teams[2].y);
         drawPath(teams[2].x, teams[2].y, teams[3].x, teams[3].y);
 
-        // trees (behind everything)
+        // Pulse rings (behind everything)
+        for (let i = 0; i < teams.length; i++) {
+          for (const ring of pulseState[i].rings) {
+            drawPulseRing(ring, time, teams[i].color, i);
+          }
+        }
+
+        // Background trees
         const sortedTrees = [...trees].sort((a, b) => a.y - b.y);
         for (const tree of sortedTrees) {
           if (tree.y < 120) drawTree(tree, time);
         }
 
-        // update travelers
-        updateTravelers(time);
-
-        // collect all sprites for sorting
-        allSprites = [];
-        for (const team of teams) {
-          allSprites.push(...getMemberPositions(team));
-        }
-
-        // add traveler sprites
-        for (const t of travelers) {
-          const pos = getTravelerPosition(t, time);
-          const isWalking = t.phase !== 'visiting';
-          allSprites.push({
-            ...t.member,
-            px: pos.x,
-            py: pos.y,
-            teamName:
-              t.phase === 'visiting'
-                ? `${teams[t.destTeam].name} (visiting)`
-                : teams[t.sourceTeam].name,
-            status: t.phase === 'visiting' ? 'idle' : 'active',
-            task: t.phase === 'visiting' ? 'sitting' : 'walking',
-            _isTraveler: true,
-            _phase: t.phase,
-          });
-        }
-
-        // sort everything by y for depth
+        // Build render order
         const renderOrder = [];
 
-        // add campfires to render order
-        for (const team of teams) {
-          renderOrder.push({ type: 'fire', data: team, y: team.y });
+        // Campfires
+        for (let i = 0; i < teams.length; i++) {
+          renderOrder.push({ type: 'fire', teamIndex: i, y: teams[i].y });
         }
 
-        // add decorations
+        // Decorations
         for (const dec of decorations) {
           const team = teams[dec.team];
           renderOrder.push({
@@ -1111,45 +1690,87 @@
           });
         }
 
-        // add sprites
-        for (const sprite of allSprites) {
-          renderOrder.push({ type: 'sprite', data: sprite, y: sprite.py });
-        }
-
-        // sort by y
-        renderOrder.sort((a, b) => a.y - b.y);
-
-        // render in order
-        for (const item of renderOrder) {
-          if (item.type === 'fire') {
-            drawCampfire(item.data.x, item.data.y, item.data.fireSize, item.data.color, time);
-            drawTeamLabel(item.data.x, item.data.y, item.data.name, item.data.fireSize);
-          } else if (item.type === 'decoration') {
-            drawWorkstation(item.x, item.y, item.data.type, time);
-          } else if (item.type === 'sprite') {
-            const s = item.data;
-            if (s.type === 'agent') {
-              drawGolemSprite(s.px, s.py, s.color, s.task, time);
-            } else {
-              drawHumanSprite(s.px, s.py, s.color, s.status, s.task, time, s.name);
-            }
+        // Milestone flags
+        for (let i = 0; i < teams.length; i++) {
+          if (milestoneState[i].hasFlag) {
+            renderOrder.push({
+              type: 'flag',
+              teamIndex: i,
+              y: milestoneState[i].flagY,
+            });
           }
         }
 
-        // trees in front
+        // Sprites — build position list for hover detection too
+        allSpritePositions = [];
+        sprites.forEach(sprite => {
+          if (!sprite.visible && !sprite.currentAnim) return;
+          const rs = getSpriteRenderState(sprite, time);
+          if (rs.opacity <= 0 && rs.renderType !== 'tent' && !sprite.inDraftMode) return;
+
+          const renderY = sprite.inDraftMode && !sprite.currentAnim ? sprite.tentY : rs.y;
+          const renderX = sprite.inDraftMode && !sprite.currentAnim ? sprite.tentX : rs.x;
+
+          renderOrder.push({
+            type: 'sprite',
+            sprite: sprite,
+            y: renderY,
+          });
+
+          allSpritePositions.push({
+            rx: renderX,
+            ry: renderY,
+            name: sprite.name,
+            type: sprite.type,
+            color: sprite.color,
+            status: sprite.status,
+            file: sprite.file,
+            owner: sprite.owner,
+            teamName: sprite.teamName,
+          });
+        });
+
+        // Sort by y
+        renderOrder.sort((a, b) => a.y - b.y);
+
+        // Render
+        for (const item of renderOrder) {
+          if (item.type === 'fire') {
+            const team = teams[item.teamIndex];
+            drawCampfire(team.x, team.y, team.fireSize, team.color, time, item.teamIndex);
+            drawTeamLabel(team.x, team.y, team.name, team.fireSize);
+          } else if (item.type === 'decoration') {
+            drawWorkstation(item.x, item.y, item.data.type, time);
+          } else if (item.type === 'flag') {
+            const ms = milestoneState[item.teamIndex];
+            drawMilestoneFlag(ms.flagX, ms.flagY, teams[item.teamIndex].color);
+          } else if (item.type === 'sprite') {
+            renderSprite(item.sprite, time);
+          }
+        }
+
+        // Foreground trees
         for (const tree of sortedTrees) {
           if (tree.y >= 120) drawTree(tree, time);
         }
 
-        // vignette
+        // Milestone particles (above trees)
+        for (const ms of milestoneState) {
+          if (ms.particles.length > 0) {
+            drawMilestoneParticles(ms.particles, time);
+          }
+        }
+
+        // Floating text (above everything)
+        for (const ft of floatingTexts) {
+          drawFloatingText(ft, time);
+        }
+
+        // Vignette
         ctx.save();
         const vignette = ctx.createRadialGradient(
-          canvas.width / 2,
-          canvas.height / 2,
-          canvas.width * 0.3,
-          canvas.width / 2,
-          canvas.height / 2,
-          canvas.width * 0.7,
+          canvas.width / 2, canvas.height / 2, canvas.width * 0.3,
+          canvas.width / 2, canvas.height / 2, canvas.width * 0.7,
         );
         vignette.addColorStop(0, 'transparent');
         vignette.addColorStop(1, '#0a0e0a88');
@@ -1160,6 +1781,8 @@
         requestAnimationFrame(render);
       }
 
+      // ─── INIT & START ───
+      initSprites();
       requestAnimationFrame(render);
     </script>
   </body>
