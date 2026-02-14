@@ -23,6 +23,7 @@ Campfires has three layers:
 ## Structure
 
 Core packages: shared/, server/, reel/
+Plugin: campfires-plugin/ (Claude Code hooks, commands, skills)
 Reference docs: context/
 Legacy (v1 prototype): extension/, cli/
 

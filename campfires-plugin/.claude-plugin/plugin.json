@@ -1,0 +1,12 @@
+{
+  "name": "campfires",
+  "description": "Real-time team awareness for developers. See what your team is building, share your work automatically, and stay coordinated without interruptions.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Christian & JC",
+    "url": "https://github.com/christian-hillson/campfires"
+  },
+  "homepage": "https://github.com/christian-hillson/campfires",
+  "repository": "https://github.com/christian-hillson/campfires",
+  "license": "MIT"
+}

@@ -102,6 +102,22 @@ export interface Summary {
   createdAt: string; // ISO timestamp
 }
 
+/**
+ * Session Transcript (Persisted)
+ * Claude Code plugin session data
+ */
+export interface SessionTranscript {
+  sessionId: string;
+  userId: string;
+  teamId: string;
+  content: string;
+  isComplete: boolean;
+  repo: string | null;
+  branch: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ============================================
 // Real-Time Models (In-Memory via Yjs)
 // ============================================
@@ -244,4 +260,8 @@ export const CONFIG = {
   // Auth rate limiting
   AUTH_RATE_LIMIT_WINDOW_MS: 15 * 60 * 1000, // 15 minutes
   AUTH_RATE_LIMIT_MAX_ATTEMPTS: 5,
+
+  // Session tracking
+  SESSION_STALE_TIMEOUT: 10 * 60 * 1000, // 10 min without heartbeat = stale
+  TRANSCRIPT_DELTA_MAX_SIZE: 500_000, // 500KB per delta
 } as const;
