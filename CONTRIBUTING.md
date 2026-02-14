@@ -4,7 +4,6 @@
 
 - Node.js (ES2022+ target)
 - npm (workspaces used for monorepo)
-- VS Code (for extension development)
 
 ## Setup
 
@@ -20,31 +19,36 @@ npm run build        # build everything
 ```
 campfires/
   shared/     @campfires/shared   — types and protocol (build this first)
-  server/     @campfires/server   — Node.js + Express + y-websocket
-  extension/  campfires (vscode)  — VS Code extension
-  cli/        @campfires/cli      — campfire watch terminal client
-  reel/       @campfires/reel     — Vite web app for AI-summarized feed
+  server/     @campfires/server   — Node.js + Express + SQLite
+  reel/       @campfires/reel     — Vite web app (Organization Map, Fireside Panel, Activity Log)
   context/                        — specs, research, reference docs (read-only)
+  extension/  (legacy v1)         — VS Code extension prototype
+  cli/        (legacy v1)         — campfire watch terminal client prototype
 ```
 
 All packages import types from `@campfires/shared`. If you change `shared/src/types.ts`, rebuild shared before building dependents.
 
 ## Development
 
-| Task                  | Command                                                                         |
-| --------------------- | ------------------------------------------------------------------------------- |
-| Build everything      | `npm run build`                                                                 |
-| Build shared types    | `npm run build:shared`                                                          |
-| Build server          | `npm run build:server`                                                          |
-| Build CLI             | `npm run build:cli`                                                             |
-| Run server (dev)      | `npm run dev:server`                                                            |
-| Run CLI (dev)         | `npm run dev:cli -- watch` (or `npx tsx cli/src/index.ts watch` from repo root) |
-| Run CLI with agent    | `npx tsx cli/src/index.ts watch --agent` (force agent mode)                     |
-| Run CLI without agent | `npx tsx cli/src/index.ts watch --no-agent`                                     |
-| Run extension         | Open `extension/` in VS Code, press F5 (launch config included)                 |
-| Run reel (dev)        | `cd reel && npm run dev`                                                        |
+| Task               | Command            |
+| ------------------ | ------------------ |
+| Build everything   | `npm run build`    |
+| Build shared types | `npm run build:shared` |
+| Build server       | `npm run build:server` |
+| Run server (dev)   | `npm run dev:server`   |
+| Run reel (dev)     | `cd reel && npm run dev` |
 
 The server uses `tsx watch` for hot reload in dev mode.
+
+### Legacy v1 packages (extension, cli)
+
+These packages were the original prototype clients. The Claude Code Plugin is replacing them as the primary data source. They remain in the repo for reference but are not under active development.
+
+| Task              | Command                                                                         |
+| ----------------- | ------------------------------------------------------------------------------- |
+| Build CLI         | `npm run build:cli`                                                             |
+| Run CLI (dev)     | `npm run dev:cli -- watch` (or `npx tsx cli/src/index.ts watch` from repo root) |
+| Run extension     | Open `extension/` in VS Code, press F5 (launch config included)                 |
 
 ## Branch Conventions
 
@@ -62,10 +66,10 @@ Personal prefixes like `jc/scaffolding` are also fine. Open a PR against `main` 
 These are non-negotiable across all packages:
 
 1. **`shared/types.ts` is the source of truth** for all data types. Don't duplicate type definitions in other packages.
-2. **Extension webview is a renderer only.** No Yjs state in the webview — the extension host owns the connection and pushes state via `postMessage`.
-3. **Activity log is append-only.** Never update or delete rows in the `activity_log` table.
-4. **Throttling values are config constants.** No hardcoded timing values — use named constants that can be tuned.
-5. **TypeScript strict mode.** All packages extend `tsconfig.base.json` with `"strict": true`.
+2. **Activity log is append-only.** Never update or delete rows in the `activity_log` table.
+3. **Throttling values are config constants.** No hardcoded timing values — use named constants that can be tuned.
+4. **TypeScript strict mode.** All packages extend `tsconfig.base.json` with `"strict": true`.
+5. **The Reel never exposes raw dev activity to non-devs.** Only AI-summarized project-level information.
 
 ## What Goes Where
 
@@ -73,18 +77,13 @@ These are non-negotiable across all packages:
 | --------------------------- | --------------------------------------------------------------------- |
 | New data type or event type | `shared/src/types.ts`                                                 |
 | New REST endpoint           | `server/src/api.ts`                                                   |
-| New WebSocket behavior      | `server/src/ws-server.ts`                                             |
-| New sidebar UI              | `extension/src/campfire-panel.ts`                                     |
-| New editor decoration       | `extension/src/decorations.ts`                                        |
-| Agent detection signals     | `cli/src/agent-detect.ts`                                             |
-| Git hook install/uninstall  | `cli/src/git-hooks.ts`                                                |
-| Agent API endpoints         | `server/src/api.ts` (`POST /api/agents`, `POST /api/agents/activity`) |
 | AI summarization changes    | `server/src/summarizer.ts`                                            |
-| Reel UI components          | `reel/components/`                                                    |
+| Reel UI components          | `reel/src/components/`                                                |
+| Reel map view               | `reel/src/map/`                                                       |
 
 ## Spec Reference
 
-The full technical spec lives at `context/campfires-build-spec-v3.md`. It covers architecture, data model, API surface, throttling rules, and design decisions. Read it before making structural changes.
+The original v1 technical spec lives at `context/campfires-build-spec-v3.md`. It covers the prototype architecture (VS Code extension + CLI + web app). The README reflects the current vision: Claude Code Plugin as source, Campfires Server as system, Campfires Web App as surface.
 
 `CLAUDE.md` contains the same rules in a format optimized for AI coding assistants (Claude Code, Copilot, etc.). Keep it in sync if you update conventions.
 

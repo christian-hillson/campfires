@@ -1,6 +1,8 @@
-# Campfires — Future State Sketch
+# Campfires — Future State Sketch (v1 — Superseded)
 
 **As of February 8, 2026**
+
+> **Note:** This sketch describes the v1 prototype architecture (three clients: VS Code Extension, Terminal CLI, Web App). The current vision has pivoted to: Claude Code Plugin (source) → Campfires Server (system) → Campfires Web App (surface). See the README for the current architecture.
 
 ---
 

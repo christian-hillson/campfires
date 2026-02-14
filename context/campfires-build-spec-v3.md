@@ -6,6 +6,8 @@
 
 Authors: Christian + JC
 
+> **Note:** This is the v1 prototype spec. It describes the original three-client architecture (VS Code Extension + Terminal CLI + Web App). The current vision has pivoted to: Claude Code Plugin (source) → Campfires Server (system) → Campfires Web App (surface). See the README for the current architecture and ROADMAP.md for the active sprint plan.
+
 > Two products. One data pipeline. One CLI. The campfire everyone gathers around.
 
 ---

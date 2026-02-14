@@ -1,6 +1,8 @@
-# Campfires — Infrastructure Diagrams
+# Campfires — Infrastructure Diagrams (v1 — Superseded)
 
 **February 8, 2026**
+
+> **Note:** These diagrams describe the v1 prototype architecture (VS Code Extension + Terminal CLI + Web App). The current vision has pivoted to: Claude Code Plugin (source) → Campfires Server (system) → Campfires Web App (surface). See the README for the current architecture.
 
 ---
 
