@@ -75,34 +75,34 @@ Two-pass enhancement to the map mockup (`context/campfires-map-mockup.html`), ma
 
 **Pass 1 — Event System, Fire Reactivity, Sprite Animations:**
 
-| Feature                                              | Status | Owner | Notes                                                                                  |
-| ---------------------------------------------------- | ------ | ----- | -------------------------------------------------------------------------------------- |
-| Mock event stream with looping ~90s cycle            | Done   | —     | Drives all sprite behavior, resets after 5s pause                                      |
-| Campfire reacts to activity level (high/steady/low)  | Done   | —     | Fire height, spark count, flicker rate, glow radius — smooth 1s transitions            |
-| Event-driven sprite micro-animations                 | Done   | —     | file_save → strike, commit → walk + toss + floating text, branch_switch → reposition   |
-| Session start/end (walk in from edge / walk off)     | Done   | —     | Fade in/out opacity during walk                                                        |
-| Draft mode (enter/exit tent)                         | Done   | —     | Tent drawn at sprite position, flap open/close animation                               |
-| Animation queue per sprite                           | Done   | —     | FIFO queue with onStart/onComplete callbacks, no overlapping animations                |
-| Mutable sprite registry                              | Done   | —     | Replaces static team member arrays for animation state tracking                        |
-| Milestone celebrations                               | Done   | —     | Jumping sprites, gold/white particle burst, team-color flag, fire shifts to gold        |
-| Ambient org pulse                                    | Done   | —     | Radial light rings at intervals based on activity level (2s/5s/10s)                    |
-| Background team activity                             | Done   | —     | Other teams have ambient file_save/commit events so the map is never frozen             |
+| Feature                                             | Status | Owner | Notes                                                                                |
+| --------------------------------------------------- | ------ | ----- | ------------------------------------------------------------------------------------ |
+| Mock event stream with looping ~90s cycle           | Done   | —     | Drives all sprite behavior, resets after 5s pause                                    |
+| Campfire reacts to activity level (high/steady/low) | Done   | —     | Fire height, spark count, flicker rate, glow radius — smooth 1s transitions          |
+| Event-driven sprite micro-animations                | Done   | —     | file_save → strike, commit → walk + toss + floating text, branch_switch → reposition |
+| Session start/end (walk in from edge / walk off)    | Done   | —     | Fade in/out opacity during walk                                                      |
+| Draft mode (enter/exit tent)                        | Done   | —     | Tent drawn at sprite position, flap open/close animation                             |
+| Animation queue per sprite                          | Done   | —     | FIFO queue with onStart/onComplete callbacks, no overlapping animations              |
+| Mutable sprite registry                             | Done   | —     | Replaces static team member arrays for animation state tracking                      |
+| Milestone celebrations                              | Done   | —     | Jumping sprites, gold/white particle burst, team-color flag, fire shifts to gold     |
+| Ambient org pulse                                   | Done   | —     | Radial light rings at intervals based on activity level (2s/5s/10s)                  |
+| Background team activity                            | Done   | —     | Other teams have ambient file_save/commit events so the map is never frozen          |
 
 **Pass 2 — Golem Enhancements & Spark-to-Golem Spawn/Despawn:**
 
-| Feature                                              | Status | Owner | Notes                                                                                  |
-| ---------------------------------------------------- | ------ | ----- | -------------------------------------------------------------------------------------- |
-| Spark-to-golem spawn animation (5 phases)            | Done   | —     | Spark detach → casting → descent → formation → activation (~2.5s total)                |
-| Human casting pose during spawn                      | Done   | —     | Arm raised, particle line connecting hand to spark                                     |
-| Golem despawn (dissolve back into fire)              | Done   | —     | Walk to fire at 2x, dissolve to particles, fire flares 1.3x                           |
-| Staggered multi-spawn                                | Done   | —     | Multiple spawns offset by 0.5s for pop-pop-pop effect                                  |
-| Golem 2x movement speed                              | Done   | —     | All walk animations run at double speed                                                |
-| Golem afterimage trail                               | Done   | —     | Previous position at 25% opacity during movement                                       |
-| Golem activity glow                                  | Done   | —     | Warm amber aura scaling with recent event frequency (30s window)                       |
-| Golem carrying orb                                   | Done   | —     | Glowing orb grows brighter with file_saves, deposits into fire on commit               |
-| Golem idle standby                                   | Done   | —     | Standing still, dimmed eyes (30% opacity), darkened body — not sitting like humans      |
-| Dynamic golem spawning (static agents removed)       | Done   | —     | All golems spawn via agent_spawn events, cleared on cycle reset                        |
-| S/D keyboard shortcuts                               | Done   | —     | Manual spawn/despawn for development and demos                                         |
+| Feature                                        | Status | Owner | Notes                                                                              |
+| ---------------------------------------------- | ------ | ----- | ---------------------------------------------------------------------------------- |
+| Spark-to-golem spawn animation (5 phases)      | Done   | —     | Spark detach → casting → descent → formation → activation (~2.5s total)            |
+| Human casting pose during spawn                | Done   | —     | Arm raised, particle line connecting hand to spark                                 |
+| Golem despawn (dissolve back into fire)        | Done   | —     | Walk to fire at 2x, dissolve to particles, fire flares 1.3x                        |
+| Staggered multi-spawn                          | Done   | —     | Multiple spawns offset by 0.5s for pop-pop-pop effect                              |
+| Golem 2x movement speed                        | Done   | —     | All walk animations run at double speed                                            |
+| Golem afterimage trail                         | Done   | —     | Previous position at 25% opacity during movement                                   |
+| Golem activity glow                            | Done   | —     | Warm amber aura scaling with recent event frequency (30s window)                   |
+| Golem carrying orb                             | Done   | —     | Glowing orb grows brighter with file_saves, deposits into fire on commit           |
+| Golem idle standby                             | Done   | —     | Standing still, dimmed eyes (30% opacity), darkened body — not sitting like humans |
+| Dynamic golem spawning (static agents removed) | Done   | —     | All golems spawn via agent_spawn events, cleared on cycle reset                    |
+| S/D keyboard shortcuts                         | Done   | —     | Manual spawn/despawn for development and demos                                     |
 
 ## Sprint 5: Campfires IDE (VS Code Extension)
 
@@ -146,14 +146,14 @@ The architectural pivot. Claude Code Plugin replaces the VS Code Extension and C
 
 The plugin captures developer activity ambiently via Claude Code hooks and uploads session transcripts incrementally when sharing is enabled. Implemented in `campfires-plugin/` using bash scripts (jq + curl), config at `~/.campfires/config.json`.
 
-| Feature                                          | Status | Owner | Notes                                                                                  |
-| ------------------------------------------------ | ------ | ----- | -------------------------------------------------------------------------------------- |
-| Plugin: session lifecycle (start/end)            | Done   | —     | SessionStart/SessionEnd hooks, heartbeat on UserPromptSubmit, stale cleanup at 10m     |
-| Plugin: Share toggle (full/heartbeat/off)        | Done   | —     | `/share` command cycles modes, scripts exit silently when off                          |
-| Plugin: incremental transcript upload            | Done   | —     | Byte-offset delta streaming via `/api/sessions/transcript-delta`, 500KB max per delta  |
-| Plugin: git event detection (commits, branches)  | Done   | —     | PostToolUse hook on Bash/Write/Edit, detects git commit/checkout/switch + file saves   |
-| Server: session + transcript endpoints           | Done   | —     | `/api/sessions/start`, `/heartbeat`, `/end`, `/transcript-delta`, `/api/activity`      |
-| Shared: SessionTranscript type                   | Done   | —     | `shared/src/types.ts` — sessionId, content, isComplete, repo, branch                  |
+| Feature                                         | Status | Owner | Notes                                                                                 |
+| ----------------------------------------------- | ------ | ----- | ------------------------------------------------------------------------------------- |
+| Plugin: session lifecycle (start/end)           | Done   | —     | SessionStart/SessionEnd hooks, heartbeat on UserPromptSubmit, stale cleanup at 10m    |
+| Plugin: Share toggle (full/heartbeat/off)       | Done   | —     | `/share` command cycles modes, scripts exit silently when off                         |
+| Plugin: incremental transcript upload           | Done   | —     | Byte-offset delta streaming via `/api/sessions/transcript-delta`, 500KB max per delta |
+| Plugin: git event detection (commits, branches) | Done   | —     | PostToolUse hook on Bash/Write/Edit, detects git commit/checkout/switch + file saves  |
+| Server: session + transcript endpoints          | Done   | —     | `/api/sessions/start`, `/heartbeat`, `/end`, `/transcript-delta`, `/api/activity`     |
+| Shared: SessionTranscript type                  | Done   | —     | `shared/src/types.ts` — sessionId, content, isComplete, repo, branch                  |
 
 ## Sprint 8: AI Summarizer (Intelligence Layer)
 

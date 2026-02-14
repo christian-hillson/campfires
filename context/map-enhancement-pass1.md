@@ -14,10 +14,10 @@ Extend the AI summarizer output (or mock it for now) to include structured field
 
 ```typescript
 interface SummaryMetadata {
-  activityLevel: "high" | "steady" | "low";   // based on event count in the period
-  milestone: boolean;                           // true if significant commit/merge happened
-  mood: "building" | "fixing" | "exploring" | "blocked"; // inferred from commit messages/file patterns
-  hotModules: string[];                         // which areas of the codebase are active
+  activityLevel: 'high' | 'steady' | 'low'; // based on event count in the period
+  milestone: boolean; // true if significant commit/merge happened
+  mood: 'building' | 'fixing' | 'exploring' | 'blocked'; // inferred from commit messages/file patterns
+  hotModules: string[]; // which areas of the codebase are active
 }
 ```
 
@@ -28,45 +28,80 @@ The mock event stream must cover **every visual state and animation** in this pa
 ```typescript
 const mockEventStream = [
   // --- Session & Presence ---
-  { time: 0,    type: "session_start",  userId: "christian", teamId: "payments" },
-  { time: 2,    type: "session_start",  userId: "jc",        teamId: "payments" },
+  { time: 0, type: 'session_start', userId: 'christian', teamId: 'payments' },
+  { time: 2, type: 'session_start', userId: 'jc', teamId: 'payments' },
 
   // --- Basic file activity ---
-  { time: 5,    type: "file_open",      userId: "christian", file: "server/api.ts" },
-  { time: 8,    type: "file_save",      userId: "christian", file: "server/api.ts" },
-  { time: 10,   type: "file_save",      userId: "jc",        file: "reel/app.ts" },
+  { time: 5, type: 'file_open', userId: 'christian', file: 'server/api.ts' },
+  { time: 8, type: 'file_save', userId: 'christian', file: 'server/api.ts' },
+  { time: 10, type: 'file_save', userId: 'jc', file: 'reel/app.ts' },
 
   // --- Branch switch (sprite repositions around fire) ---
-  { time: 14,   type: "branch_switch",  userId: "jc",        branch: "feat/reel-ui" },
+  { time: 14, type: 'branch_switch', userId: 'jc', branch: 'feat/reel-ui' },
 
   // --- Commit (sprite walks to fire, tosses, message floats) ---
-  { time: 28,   type: "commit",         userId: "christian", message: "add JWT refresh endpoint" },
+  { time: 28, type: 'commit', userId: 'christian', message: 'add JWT refresh endpoint' },
 
   // --- Draft mode toggle (sprite enters tent) ---
-  { time: 36,   type: "draft_mode_on",  userId: "jc" },
+  { time: 36, type: 'draft_mode_on', userId: 'jc' },
 
   // --- Draft mode exit (sprite leaves tent) ---
-  { time: 44,   type: "draft_mode_off", userId: "jc" },
+  { time: 44, type: 'draft_mode_off', userId: 'jc' },
 
   // --- Summary update: activity level shift (fire intensity change) ---
-  { time: 48,   type: "summary_update", teamId: "payments",  activityLevel: "high", milestone: false, mood: "building" },
-  { time: 48,   type: "summary_update", teamId: "platform",  activityLevel: "low",  milestone: false, mood: "fixing" },
+  {
+    time: 48,
+    type: 'summary_update',
+    teamId: 'payments',
+    activityLevel: 'high',
+    milestone: false,
+    mood: 'building',
+  },
+  {
+    time: 48,
+    type: 'summary_update',
+    teamId: 'platform',
+    activityLevel: 'low',
+    milestone: false,
+    mood: 'fixing',
+  },
 
   // --- Milestone event (celebration: jump, particles, flag) ---
-  { time: 52,   type: "summary_update", teamId: "payments",  activityLevel: "high", milestone: true, mood: "building" },
+  {
+    time: 52,
+    type: 'summary_update',
+    teamId: 'payments',
+    activityLevel: 'high',
+    milestone: true,
+    mood: 'building',
+  },
 
   // --- Session end (sprite walks off map) ---
-  { time: 62,   type: "session_end",    userId: "jc",        teamId: "payments" },
+  { time: 62, type: 'session_end', userId: 'jc', teamId: 'payments' },
 
   // --- Idle state (human goes idle after no events) ---
-  { time: 68,   type: "idle",           userId: "christian" },
+  { time: 68, type: 'idle', userId: 'christian' },
 
   // --- Activity resumes (idle resets) ---
-  { time: 74,   type: "file_save",      userId: "christian", file: "server/auth.ts" },
+  { time: 74, type: 'file_save', userId: 'christian', file: 'server/auth.ts' },
 
   // --- Wind down: activity drops ---
-  { time: 84,   type: "summary_update", teamId: "payments",  activityLevel: "steady", milestone: false, mood: "exploring" },
-  { time: 84,   type: "summary_update", teamId: "platform",  activityLevel: "steady", milestone: false, mood: "building" },
+  {
+    time: 84,
+    type: 'summary_update',
+    teamId: 'payments',
+    activityLevel: 'steady',
+    milestone: false,
+    mood: 'exploring',
+  },
+  {
+    time: 84,
+    type: 'summary_update',
+    teamId: 'platform',
+    activityLevel: 'steady',
+    milestone: false,
+    mood: 'building',
+  },
 ];
 ```
 

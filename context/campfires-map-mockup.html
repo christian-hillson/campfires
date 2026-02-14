@@ -359,7 +359,8 @@
       const SPAWN_DESCENT = 0.3;
       const SPAWN_FORMATION = 1.0;
       const SPAWN_ACTIVATION = 0.3;
-      const SPAWN_TOTAL = SPAWN_SPARK_DETACH + SPAWN_CASTING + SPAWN_DESCENT + SPAWN_FORMATION + SPAWN_ACTIVATION;
+      const SPAWN_TOTAL =
+        SPAWN_SPARK_DETACH + SPAWN_CASTING + SPAWN_DESCENT + SPAWN_FORMATION + SPAWN_ACTIVATION;
       const DESPAWN_WALK_DURATION = 0.6;
       const DESPAWN_DISSOLVE_DURATION = 0.5;
       const DESPAWN_FLARE_DURATION = 0.5;
@@ -369,9 +370,9 @@
 
       // ─── FIRE LEVEL CONFIG ───
       const FIRE_LEVELS = {
-        high:   { height: 1.5, sparks: 2.0, flicker: 1.5, glow: 1.3, embers: 1.5, flames: 1.0 },
+        high: { height: 1.5, sparks: 2.0, flicker: 1.5, glow: 1.3, embers: 1.5, flames: 1.0 },
         steady: { height: 1.0, sparks: 1.0, flicker: 1.0, glow: 1.0, embers: 1.0, flames: 1.0 },
-        low:    { height: 0.5, sparks: 0.3, flicker: 0.6, glow: 0.7, embers: 0.5, flames: 0.5 },
+        low: { height: 0.5, sparks: 0.3, flicker: 0.6, glow: 0.7, embers: 0.5, flames: 0.5 },
       };
       const PULSE_INTERVALS = { high: 2, steady: 5, low: 10 };
       const PULSE_RADIUS_MULT = { high: 3, steady: 2, low: 1.5 };
@@ -388,10 +389,46 @@
           y: 80,
           fireSize: 3,
           members: [
-            { id: 'christian', name: 'Christian', type: 'human', color: '#e05040', status: 'active', task: 'smithing', file: 'server/api.ts → handleAuth()', owner: null },
-            { id: 'jc', name: 'JC', type: 'human', color: '#4080d0', status: 'active', task: 'scribing', file: 'reel/app.ts → renderFeed()', owner: null },
-            { id: 'john', name: 'John', type: 'human', color: '#50b860', status: 'idle', task: 'sitting', file: 'idle 12m', owner: null },
-            { id: 'maria', name: 'Maria', type: 'human', color: '#c070d0', status: 'draft', task: 'tent', file: 'draft mode', owner: null },
+            {
+              id: 'christian',
+              name: 'Christian',
+              type: 'human',
+              color: '#e05040',
+              status: 'active',
+              task: 'smithing',
+              file: 'server/api.ts → handleAuth()',
+              owner: null,
+            },
+            {
+              id: 'jc',
+              name: 'JC',
+              type: 'human',
+              color: '#4080d0',
+              status: 'active',
+              task: 'scribing',
+              file: 'reel/app.ts → renderFeed()',
+              owner: null,
+            },
+            {
+              id: 'john',
+              name: 'John',
+              type: 'human',
+              color: '#50b860',
+              status: 'idle',
+              task: 'sitting',
+              file: 'idle 12m',
+              owner: null,
+            },
+            {
+              id: 'maria',
+              name: 'Maria',
+              type: 'human',
+              color: '#c070d0',
+              status: 'draft',
+              task: 'tent',
+              file: 'draft mode',
+              owner: null,
+            },
           ],
         },
         {
@@ -403,8 +440,26 @@
           y: 60,
           fireSize: 2,
           members: [
-            { id: 'alex', name: 'Alex', type: 'human', color: '#d09040', status: 'active', task: 'smithing', file: 'auth/oauth.ts → validateToken()', owner: null },
-            { id: 'sam', name: 'Sam', type: 'human', color: '#40b0a0', status: 'active', task: 'scribing', file: 'auth/middleware.ts → checkScope()', owner: null },
+            {
+              id: 'alex',
+              name: 'Alex',
+              type: 'human',
+              color: '#d09040',
+              status: 'active',
+              task: 'smithing',
+              file: 'auth/oauth.ts → validateToken()',
+              owner: null,
+            },
+            {
+              id: 'sam',
+              name: 'Sam',
+              type: 'human',
+              color: '#40b0a0',
+              status: 'active',
+              task: 'scribing',
+              file: 'auth/middleware.ts → checkScope()',
+              owner: null,
+            },
           ],
         },
         {
@@ -416,8 +471,26 @@
           y: 155,
           fireSize: 2,
           members: [
-            { id: 'priya', name: 'Priya', type: 'human', color: '#e07070', status: 'active', task: 'scribing', file: 'onboarding/flow.tsx → StepTwo()', owner: null },
-            { id: 'dev', name: 'Dev', type: 'human', color: '#70a0e0', status: 'idle', task: 'sitting', file: 'idle 5m', owner: null },
+            {
+              id: 'priya',
+              name: 'Priya',
+              type: 'human',
+              color: '#e07070',
+              status: 'active',
+              task: 'scribing',
+              file: 'onboarding/flow.tsx → StepTwo()',
+              owner: null,
+            },
+            {
+              id: 'dev',
+              name: 'Dev',
+              type: 'human',
+              color: '#70a0e0',
+              status: 'idle',
+              task: 'sitting',
+              file: 'idle 5m',
+              owner: null,
+            },
           ],
         },
         {
@@ -429,93 +502,203 @@
           y: 170,
           fireSize: 1,
           members: [
-            { id: 'kai', name: 'Kai', type: 'human', color: '#b0a050', status: 'active', task: 'mining', file: 'infra/redis.ts → connectCluster()', owner: null },
+            {
+              id: 'kai',
+              name: 'Kai',
+              type: 'human',
+              color: '#b0a050',
+              status: 'active',
+              task: 'mining',
+              file: 'infra/redis.ts → connectCluster()',
+              owner: null,
+            },
           ],
         },
       ];
 
       // Build lookup maps
       const teamIndexById = {};
-      teams.forEach((t, i) => { teamIndexById[t.id] = i; });
+      teams.forEach((t, i) => {
+        teamIndexById[t.id] = i;
+      });
       const spriteTeamIndex = {};
       teams.forEach((t, ti) => {
-        t.members.forEach(m => { spriteTeamIndex[m.id] = ti; });
+        t.members.forEach((m) => {
+          spriteTeamIndex[m.id] = ti;
+        });
       });
 
       // ─── MOCK SUMMARY DATA ───
       const mockSummaryData = {
-        payments: { activityLevel: 'steady', milestone: false, mood: 'building', hotModules: ['server/api.ts', 'server/auth.ts'] },
-        platform: { activityLevel: 'steady', milestone: false, mood: 'fixing', hotModules: ['auth/oauth.ts'] },
-        growth:   { activityLevel: 'steady', milestone: false, mood: 'exploring', hotModules: ['onboarding/flow.tsx'] },
-        infra:    { activityLevel: 'steady', milestone: false, mood: 'building', hotModules: ['infra/redis.ts'] },
+        payments: {
+          activityLevel: 'steady',
+          milestone: false,
+          mood: 'building',
+          hotModules: ['server/api.ts', 'server/auth.ts'],
+        },
+        platform: {
+          activityLevel: 'steady',
+          milestone: false,
+          mood: 'fixing',
+          hotModules: ['auth/oauth.ts'],
+        },
+        growth: {
+          activityLevel: 'steady',
+          milestone: false,
+          mood: 'exploring',
+          hotModules: ['onboarding/flow.tsx'],
+        },
+        infra: {
+          activityLevel: 'steady',
+          milestone: false,
+          mood: 'building',
+          hotModules: ['infra/redis.ts'],
+        },
       };
 
       // ─── MOCK EVENT STREAM ───
       const mainEvents = [
         // Session & Presence
-        { time: 0,    type: 'session_start',  userId: 'christian', teamId: 'payments' },
-        { time: 2,    type: 'session_start',  userId: 'jc',        teamId: 'payments' },
+        { time: 0, type: 'session_start', userId: 'christian', teamId: 'payments' },
+        { time: 2, type: 'session_start', userId: 'jc', teamId: 'payments' },
         // Basic file activity
-        { time: 5,    type: 'file_save',      userId: 'christian', file: 'server/api.ts' },
-        { time: 8,    type: 'file_save',      userId: 'christian', file: 'server/api.ts' },
-        { time: 10,   type: 'file_save',      userId: 'jc',        file: 'reel/app.ts' },
+        { time: 5, type: 'file_save', userId: 'christian', file: 'server/api.ts' },
+        { time: 8, type: 'file_save', userId: 'christian', file: 'server/api.ts' },
+        { time: 10, type: 'file_save', userId: 'jc', file: 'reel/app.ts' },
         // Branch switch
-        { time: 14,   type: 'branch_switch',  userId: 'jc',        branch: 'feat/reel-ui' },
+        { time: 14, type: 'branch_switch', userId: 'jc', branch: 'feat/reel-ui' },
         // --- Agent spawning (spark-to-golem sequence) ---
-        { time: 18,   type: 'agent_spawn',    userId: 'christian', agentId: 'golem-1', teamId: 'payments' },
+        {
+          time: 18,
+          type: 'agent_spawn',
+          userId: 'christian',
+          agentId: 'golem-1',
+          teamId: 'payments',
+        },
         // --- Agent working (golem file saves, orb grows) ---
-        { time: 21,   type: 'file_save',      userId: 'golem-1',   file: 'server/summarizer.ts', userType: 'agent' },
-        { time: 23,   type: 'file_save',      userId: 'golem-1',   file: 'server/summarizer.ts', userType: 'agent' },
-        { time: 25,   type: 'file_save',      userId: 'golem-1',   file: 'server/batch-job.ts',  userType: 'agent' },
+        {
+          time: 21,
+          type: 'file_save',
+          userId: 'golem-1',
+          file: 'server/summarizer.ts',
+          userType: 'agent',
+        },
+        {
+          time: 23,
+          type: 'file_save',
+          userId: 'golem-1',
+          file: 'server/summarizer.ts',
+          userType: 'agent',
+        },
+        {
+          time: 25,
+          type: 'file_save',
+          userId: 'golem-1',
+          file: 'server/batch-job.ts',
+          userType: 'agent',
+        },
         // Commit
-        { time: 28,   type: 'commit',         userId: 'christian', message: 'add JWT refresh endpoint' },
+        { time: 28, type: 'commit', userId: 'christian', message: 'add JWT refresh endpoint' },
         // --- Agent commit (golem deposits orb, fire flares) ---
-        { time: 32,   type: 'commit',         userId: 'golem-1',   message: 'wire up batch summarizer', userType: 'agent' },
+        {
+          time: 32,
+          type: 'commit',
+          userId: 'golem-1',
+          message: 'wire up batch summarizer',
+          userType: 'agent',
+        },
         // Draft mode
-        { time: 36,   type: 'draft_mode_on',  userId: 'jc' },
+        { time: 36, type: 'draft_mode_on', userId: 'jc' },
         // --- Multiple rapid agent spawns (staggered pop-pop-pop) ---
-        { time: 40,   type: 'agent_spawn',    userId: 'christian', agentId: 'golem-2', teamId: 'payments' },
-        { time: 40.5, type: 'agent_spawn',    userId: 'christian', agentId: 'golem-3', teamId: 'payments' },
-        { time: 44,   type: 'draft_mode_off', userId: 'jc' },
+        {
+          time: 40,
+          type: 'agent_spawn',
+          userId: 'christian',
+          agentId: 'golem-2',
+          teamId: 'payments',
+        },
+        {
+          time: 40.5,
+          type: 'agent_spawn',
+          userId: 'christian',
+          agentId: 'golem-3',
+          teamId: 'payments',
+        },
+        { time: 44, type: 'draft_mode_off', userId: 'jc' },
         // Summary updates
-        { time: 48,   type: 'summary_update', teamId: 'payments',  activityLevel: 'high', milestone: false, mood: 'building' },
-        { time: 48,   type: 'summary_update', teamId: 'platform',  activityLevel: 'low',  milestone: false, mood: 'fixing' },
+        {
+          time: 48,
+          type: 'summary_update',
+          teamId: 'payments',
+          activityLevel: 'high',
+          milestone: false,
+          mood: 'building',
+        },
+        {
+          time: 48,
+          type: 'summary_update',
+          teamId: 'platform',
+          activityLevel: 'low',
+          milestone: false,
+          mood: 'fixing',
+        },
         // Milestone
-        { time: 52,   type: 'summary_update', teamId: 'payments',  activityLevel: 'high', milestone: true, mood: 'building' },
+        {
+          time: 52,
+          type: 'summary_update',
+          teamId: 'payments',
+          activityLevel: 'high',
+          milestone: true,
+          mood: 'building',
+        },
         // --- Agent despawn (golem dissolves back into fire) ---
-        { time: 56,   type: 'agent_despawn',  agentId: 'golem-1',  teamId: 'payments' },
+        { time: 56, type: 'agent_despawn', agentId: 'golem-1', teamId: 'payments' },
         // Session end
-        { time: 62,   type: 'session_end',    userId: 'jc',        teamId: 'payments' },
+        { time: 62, type: 'session_end', userId: 'jc', teamId: 'payments' },
         // Idle
-        { time: 68,   type: 'idle',           userId: 'christian' },
+        { time: 68, type: 'idle', userId: 'christian' },
         // Activity resumes
-        { time: 74,   type: 'file_save',      userId: 'christian', file: 'server/auth.ts' },
+        { time: 74, type: 'file_save', userId: 'christian', file: 'server/auth.ts' },
         // --- Remaining agents despawn ---
-        { time: 78,   type: 'agent_despawn',  agentId: 'golem-2',  teamId: 'payments' },
-        { time: 80,   type: 'agent_despawn',  agentId: 'golem-3',  teamId: 'payments' },
+        { time: 78, type: 'agent_despawn', agentId: 'golem-2', teamId: 'payments' },
+        { time: 80, type: 'agent_despawn', agentId: 'golem-3', teamId: 'payments' },
         // Wind down
-        { time: 84,   type: 'summary_update', teamId: 'payments',  activityLevel: 'steady', milestone: false, mood: 'exploring' },
-        { time: 84,   type: 'summary_update', teamId: 'platform',  activityLevel: 'steady', milestone: false, mood: 'building' },
+        {
+          time: 84,
+          type: 'summary_update',
+          teamId: 'payments',
+          activityLevel: 'steady',
+          milestone: false,
+          mood: 'exploring',
+        },
+        {
+          time: 84,
+          type: 'summary_update',
+          teamId: 'platform',
+          activityLevel: 'steady',
+          milestone: false,
+          mood: 'building',
+        },
       ];
 
       // Background activity for other teams
       const backgroundEvents = [
-        { time: 3,  type: 'file_save', userId: 'alex',  file: 'auth/oauth.ts' },
-        { time: 7,  type: 'file_save', userId: 'priya', file: 'onboarding/flow.tsx' },
-        { time: 12, type: 'file_save', userId: 'kai',   file: 'infra/redis.ts' },
-        { time: 15, type: 'file_save', userId: 'sam',   file: 'auth/middleware.ts' },
-        { time: 20, type: 'file_save', userId: 'alex',  file: 'auth/oauth.ts' },
+        { time: 3, type: 'file_save', userId: 'alex', file: 'auth/oauth.ts' },
+        { time: 7, type: 'file_save', userId: 'priya', file: 'onboarding/flow.tsx' },
+        { time: 12, type: 'file_save', userId: 'kai', file: 'infra/redis.ts' },
+        { time: 15, type: 'file_save', userId: 'sam', file: 'auth/middleware.ts' },
+        { time: 20, type: 'file_save', userId: 'alex', file: 'auth/oauth.ts' },
         { time: 25, type: 'file_save', userId: 'priya', file: 'onboarding/step2.tsx' },
-        { time: 30, type: 'commit',    userId: 'alex',  message: 'fix token refresh flow' },
-        { time: 35, type: 'file_save', userId: 'kai',   file: 'infra/pool.ts' },
-        { time: 42, type: 'commit',    userId: 'priya', message: 'wire up step 2 analytics' },
-        { time: 45, type: 'file_save', userId: 'sam',   file: 'auth/scopes.ts' },
-        { time: 55, type: 'commit',    userId: 'kai',   message: 'tune connection pool sizes' },
-        { time: 60, type: 'file_save', userId: 'alex',  file: 'auth/oauth.ts' },
+        { time: 30, type: 'commit', userId: 'alex', message: 'fix token refresh flow' },
+        { time: 35, type: 'file_save', userId: 'kai', file: 'infra/pool.ts' },
+        { time: 42, type: 'commit', userId: 'priya', message: 'wire up step 2 analytics' },
+        { time: 45, type: 'file_save', userId: 'sam', file: 'auth/scopes.ts' },
+        { time: 55, type: 'commit', userId: 'kai', message: 'tune connection pool sizes' },
+        { time: 60, type: 'file_save', userId: 'alex', file: 'auth/oauth.ts' },
         { time: 65, type: 'file_save', userId: 'priya', file: 'onboarding/flow.tsx' },
-        { time: 70, type: 'file_save', userId: 'kai',   file: 'infra/redis.ts' },
-        { time: 75, type: 'commit',    userId: 'sam',   message: 'add scope validation' },
-        { time: 80, type: 'file_save', userId: 'alex',  file: 'auth/oauth.ts' },
+        { time: 70, type: 'file_save', userId: 'kai', file: 'infra/redis.ts' },
+        { time: 75, type: 'commit', userId: 'sam', message: 'add scope validation' },
+        { time: 80, type: 'file_save', userId: 'alex', file: 'auth/oauth.ts' },
       ];
 
       const allEvents = [...mainEvents, ...backgroundEvents].sort((a, b) => a.time - b.time);
@@ -523,7 +706,7 @@
 
       // Which sprites arrive via session_start (start invisible)
       const sessionStartIds = new Set(
-        allEvents.filter(e => e.type === 'session_start').map(e => e.userId)
+        allEvents.filter((e) => e.type === 'session_start').map((e) => e.userId),
       );
 
       // ─── STATE ───
@@ -547,9 +730,9 @@
       const pulseState = teams.map(() => ({ lastPulse: 0, rings: [] }));
 
       // ─── GOLEM STATE ───
-      let pendingSpawns = [];   // active spawn animations
+      let pendingSpawns = []; // active spawn animations
       let pendingDespawns = []; // active despawn animations
-      let golemIdCounter = 0;   // for manual S key spawns
+      let golemIdCounter = 0; // for manual S key spawns
 
       let streamTime = 0;
       let streamIndex = 0;
@@ -558,7 +741,9 @@
       let cycleEndTime = 0;
 
       // ─── HELPERS ───
-      function lerp(a, b, t) { return a + (b - a) * Math.min(Math.max(t, 0), 1); }
+      function lerp(a, b, t) {
+        return a + (b - a) * Math.min(Math.max(t, 0), 1);
+      }
 
       function darken(hex, factor) {
         const r = parseInt(hex.slice(1, 3), 16);
@@ -578,14 +763,17 @@
         const edges = [
           { x: homeX, y: -10 },
           { x: homeX, y: MAP_H + 10 },
-          { x: -10,   y: homeY },
+          { x: -10, y: homeY },
           { x: MAP_W + 10, y: homeY },
         ];
         let best = edges[0];
         let bestDist = Infinity;
         for (const e of edges) {
           const d = Math.hypot(e.x - homeX, e.y - homeY);
-          if (d < bestDist) { bestDist = d; best = e; }
+          if (d < bestDist) {
+            bestDist = d;
+            best = e;
+          }
         }
         return best;
       }
@@ -610,12 +798,9 @@
       function findOpenGolemPosition(teamIndex) {
         const team = teams[teamIndex];
         const existingAngles = [];
-        sprites.forEach(s => {
+        sprites.forEach((s) => {
           if (s.teamIndex === teamIndex) {
-            existingAngles.push(Math.atan2(
-              (s.homeY - team.y) / 0.6,
-              s.homeX - team.x,
-            ));
+            existingAngles.push(Math.atan2((s.homeY - team.y) / 0.6, s.homeX - team.x));
           }
         });
         // Find an angle with maximum distance from existing sprites
@@ -644,7 +829,11 @@
       // ─── SPRITE REGISTRY ───
       function computeHomePosition(team, memberIndex, memberCount, member) {
         const angle = (memberIndex / memberCount) * Math.PI * 2 - Math.PI / 2;
-        const radius = team.fireSize * 8 + 14 + (member.type === 'agent' ? 5 : 0) + (member.status === 'draft' ? 8 : 0);
+        const radius =
+          team.fireSize * 8 +
+          14 +
+          (member.type === 'agent' ? 5 : 0) +
+          (member.status === 'draft' ? 8 : 0);
         return {
           x: team.x + Math.cos(angle) * radius,
           y: team.y + Math.sin(angle) * radius * 0.6,
@@ -753,7 +942,8 @@
         let tooClose = teams.some((t) => Math.hypot(tx - t.x, ty - t.y) < 60);
         if (!tooClose) {
           trees.push({
-            x: tx, y: ty,
+            x: tx,
+            y: ty,
             size: Math.random() * 2 + 2,
             leafColor: TREE_LEAVES[Math.floor(Math.random() * TREE_LEAVES.length)],
             sway: Math.random() * Math.PI * 2,
@@ -872,16 +1062,22 @@
         const glowR = (baseR + size * 4) * fm.glow;
         ctx.save();
         const gradient = ctx.createRadialGradient(
-          cx * PIXEL_SCALE, cy * PIXEL_SCALE, 0,
-          cx * PIXEL_SCALE, cy * PIXEL_SCALE, glowR * PIXEL_SCALE,
+          cx * PIXEL_SCALE,
+          cy * PIXEL_SCALE,
+          0,
+          cx * PIXEL_SCALE,
+          cy * PIXEL_SCALE,
+          glowR * PIXEL_SCALE,
         );
         gradient.addColorStop(0, effectiveColor + '18');
         gradient.addColorStop(0.5, effectiveColor + '08');
         gradient.addColorStop(1, 'transparent');
         ctx.fillStyle = gradient;
         ctx.fillRect(
-          (cx - glowR) * PIXEL_SCALE, (cy - glowR) * PIXEL_SCALE,
-          glowR * 2 * PIXEL_SCALE, glowR * 2 * PIXEL_SCALE,
+          (cx - glowR) * PIXEL_SCALE,
+          (cy - glowR) * PIXEL_SCALE,
+          glowR * 2 * PIXEL_SCALE,
+          glowR * 2 * PIXEL_SCALE,
         );
         ctx.restore();
       }
@@ -985,21 +1181,29 @@
         // Activity glow aura (warm amber, scales with recent event rate)
         if (sprite && sprite.recentEventTimes) {
           const now = lastRenderTime;
-          const recentCount = sprite.recentEventTimes.filter(t => now - t < GOLEM_GLOW_WINDOW).length;
+          const recentCount = sprite.recentEventTimes.filter(
+            (t) => now - t < GOLEM_GLOW_WINDOW,
+          ).length;
           const glowIntensity = Math.min(1, recentCount / 8);
           if (glowIntensity > 0.05) {
             ctx.save();
             const glowR = 8 + glowIntensity * 6;
             const gradient = ctx.createRadialGradient(
-              x * PIXEL_SCALE, y * PIXEL_SCALE, 0,
-              x * PIXEL_SCALE, y * PIXEL_SCALE, glowR * PIXEL_SCALE,
+              x * PIXEL_SCALE,
+              y * PIXEL_SCALE,
+              0,
+              x * PIXEL_SCALE,
+              y * PIXEL_SCALE,
+              glowR * PIXEL_SCALE,
             );
             gradient.addColorStop(0, `rgba(255,180,60,${0.08 + glowIntensity * 0.12})`);
             gradient.addColorStop(1, 'transparent');
             ctx.fillStyle = gradient;
             ctx.fillRect(
-              (x - glowR) * PIXEL_SCALE, (y - glowR) * PIXEL_SCALE,
-              glowR * 2 * PIXEL_SCALE, glowR * 2 * PIXEL_SCALE,
+              (x - glowR) * PIXEL_SCALE,
+              (y - glowR) * PIXEL_SCALE,
+              glowR * 2 * PIXEL_SCALE,
+              glowR * 2 * PIXEL_SCALE,
             );
             ctx.restore();
           }
@@ -1036,15 +1240,21 @@
           if (sprite.orbBrightness > 0.3) {
             const orbGlowR = 2 + sprite.orbBrightness * 2;
             const orbGrad = ctx.createRadialGradient(
-              (x + 0.5) * PIXEL_SCALE, (y - 3) * PIXEL_SCALE, 0,
-              (x + 0.5) * PIXEL_SCALE, (y - 3) * PIXEL_SCALE, orbGlowR * PIXEL_SCALE,
+              (x + 0.5) * PIXEL_SCALE,
+              (y - 3) * PIXEL_SCALE,
+              0,
+              (x + 0.5) * PIXEL_SCALE,
+              (y - 3) * PIXEL_SCALE,
+              orbGlowR * PIXEL_SCALE,
             );
             orbGrad.addColorStop(0, `rgba(255,200,100,${0.15 * sprite.orbBrightness})`);
             orbGrad.addColorStop(1, 'transparent');
             ctx.fillStyle = orbGrad;
             ctx.fillRect(
-              (x + 0.5 - orbGlowR) * PIXEL_SCALE, (y - 3 - orbGlowR) * PIXEL_SCALE,
-              orbGlowR * 2 * PIXEL_SCALE, orbGlowR * 2 * PIXEL_SCALE,
+              (x + 0.5 - orbGlowR) * PIXEL_SCALE,
+              (y - 3 - orbGlowR) * PIXEL_SCALE,
+              orbGlowR * 2 * PIXEL_SCALE,
+              orbGlowR * 2 * PIXEL_SCALE,
             );
           }
           ctx.restore();
@@ -1204,10 +1414,7 @@
         const alpha = (1.0 - progress) * 0.1;
         ctx.save();
         ctx.beginPath();
-        ctx.arc(
-          ring.x * PIXEL_SCALE, ring.y * PIXEL_SCALE,
-          radius * PIXEL_SCALE, 0, Math.PI * 2,
-        );
+        ctx.arc(ring.x * PIXEL_SCALE, ring.y * PIXEL_SCALE, radius * PIXEL_SCALE, 0, Math.PI * 2);
         ctx.strokeStyle = hexToRgba(teamColor, alpha);
         ctx.lineWidth = 2 * PIXEL_SCALE;
         ctx.stroke();
@@ -1266,15 +1473,21 @@
           // Subtle glow
           const glowR = sparkSize * 2;
           const grad = ctx.createRadialGradient(
-            sparkX * PIXEL_SCALE, sparkY * PIXEL_SCALE, 0,
-            sparkX * PIXEL_SCALE, sparkY * PIXEL_SCALE, glowR * PIXEL_SCALE,
+            sparkX * PIXEL_SCALE,
+            sparkY * PIXEL_SCALE,
+            0,
+            sparkX * PIXEL_SCALE,
+            sparkY * PIXEL_SCALE,
+            glowR * PIXEL_SCALE,
           );
           grad.addColorStop(0, 'rgba(255,240,180,0.3)');
           grad.addColorStop(1, 'transparent');
           ctx.fillStyle = grad;
           ctx.fillRect(
-            (sparkX - glowR) * PIXEL_SCALE, (sparkY - glowR) * PIXEL_SCALE,
-            glowR * 2 * PIXEL_SCALE, glowR * 2 * PIXEL_SCALE,
+            (sparkX - glowR) * PIXEL_SCALE,
+            (sparkY - glowR) * PIXEL_SCALE,
+            glowR * 2 * PIXEL_SCALE,
+            glowR * 2 * PIXEL_SCALE,
           );
           ctx.restore();
           spawn.sparkX = sparkX;
@@ -1283,7 +1496,7 @@
           // PHASE 2: Casting — human raises arm, particle line to spark
           const p = (elapsed - t1) / SPAWN_CASTING;
           const sparkX = spawn.sparkX || team.x;
-          const sparkY = spawn.sparkY || (team.y - fireHeight - 18);
+          const sparkY = spawn.sparkY || team.y - fireHeight - 18;
 
           // Draw spark holding position
           px(sparkX, sparkY, 3, 3, '#f0e8a0');
@@ -1309,7 +1522,7 @@
           // PHASE 3: Spark descent — arcs down to ground position
           const p = (elapsed - t2) / SPAWN_DESCENT;
           const startX = spawn.sparkX || team.x;
-          const startY = spawn.sparkY || (team.y - fireHeight - 18);
+          const startY = spawn.sparkY || team.y - fireHeight - 18;
           const endX = spawn.targetX;
           const endY = spawn.targetY;
           // Arc path
@@ -1324,15 +1537,21 @@
             ctx.globalAlpha = flashAlpha;
             const flashR = 5;
             const flashGrad = ctx.createRadialGradient(
-              endX * PIXEL_SCALE, endY * PIXEL_SCALE, 0,
-              endX * PIXEL_SCALE, endY * PIXEL_SCALE, flashR * PIXEL_SCALE,
+              endX * PIXEL_SCALE,
+              endY * PIXEL_SCALE,
+              0,
+              endX * PIXEL_SCALE,
+              endY * PIXEL_SCALE,
+              flashR * PIXEL_SCALE,
             );
             flashGrad.addColorStop(0, 'rgba(255,255,220,0.9)');
             flashGrad.addColorStop(1, 'transparent');
             ctx.fillStyle = flashGrad;
             ctx.fillRect(
-              (endX - flashR) * PIXEL_SCALE, (endY - flashR) * PIXEL_SCALE,
-              flashR * 2 * PIXEL_SCALE, flashR * 2 * PIXEL_SCALE,
+              (endX - flashR) * PIXEL_SCALE,
+              (endY - flashR) * PIXEL_SCALE,
+              flashR * 2 * PIXEL_SCALE,
+              flashR * 2 * PIXEL_SCALE,
             );
             ctx.restore();
           }
@@ -1349,7 +1568,7 @@
           if (p < 0.25) {
             // Still mostly spark
             const size = 2 + p * 8;
-            px(tx - size/2, ty - size/2, size, size, '#f0e8a0');
+            px(tx - size / 2, ty - size / 2, size, size, '#f0e8a0');
           } else if (p < 0.5) {
             // Taking golem shape, still bright
             const alpha = 1.0;
@@ -1484,18 +1703,22 @@
             sprite._lastAfterimageTime = lastRenderTime;
           }
           // Prune old afterimages
-          sprite.afterimages = sprite.afterimages.filter(ai => lastRenderTime - ai.time < AFTERIMAGE_DURATION);
+          sprite.afterimages = sprite.afterimages.filter(
+            (ai) => lastRenderTime - ai.time < AFTERIMAGE_DURATION,
+          );
         } else if (sprite.type === 'agent') {
           // Clear afterimages when not walking
           if (sprite.afterimages && sprite.afterimages.length > 0) {
-            sprite.afterimages = sprite.afterimages.filter(ai => lastRenderTime - ai.time < AFTERIMAGE_DURATION);
+            sprite.afterimages = sprite.afterimages.filter(
+              (ai) => lastRenderTime - ai.time < AFTERIMAGE_DURATION,
+            );
           }
         }
 
         // Clean up recent event times
         if (sprite.recentEventTimes) {
           sprite.recentEventTimes = sprite.recentEventTimes.filter(
-            t => lastRenderTime - t < GOLEM_GLOW_WINDOW
+            (t) => lastRenderTime - t < GOLEM_GLOW_WINDOW,
           );
         }
       }
@@ -1514,8 +1737,10 @@
         // Apply jump offset from milestones
         let jumpOffset = 0;
         if (sprite.jumpUntil > time) {
-          const jumpElapsed = (sprite.jumpUntil - MILESTONE_JUMP_DURATION) > 0
-            ? time - (sprite.jumpUntil - MILESTONE_JUMP_DURATION) : 0;
+          const jumpElapsed =
+            sprite.jumpUntil - MILESTONE_JUMP_DURATION > 0
+              ? time - (sprite.jumpUntil - MILESTONE_JUMP_DURATION)
+              : 0;
           const jp = jumpElapsed / MILESTONE_JUMP_DURATION;
           if (jp < 0.3) jumpOffset = -2;
           else if (jp < 0.7) jumpOffset = -2;
@@ -1534,7 +1759,7 @@
             return {
               x: lerp(anim.startX, anim.endX, p),
               y: lerp(anim.startY, anim.endY, p) + jumpOffset,
-              opacity: anim.fadeIn ? p : anim.fadeOut ? (1 - p) : 1,
+              opacity: anim.fadeIn ? p : anim.fadeOut ? 1 - p : 1,
               task: 'walking',
               status: 'active',
               renderType: 'default',
@@ -1654,11 +1879,11 @@
             drawTossSprite(rs.x, rs.y, sprite.color, rs.tossProgress, time);
           }
         } else if (sprite.type === 'agent') {
-          const golemTask = rs.task === 'walking' ? 'carrying' : (sprite.defaultTask || 'carrying');
+          const golemTask = rs.task === 'walking' ? 'carrying' : sprite.defaultTask || 'carrying';
           drawGolemSprite(rs.x, rs.y, sprite.color, golemTask, time, sprite);
         } else {
           // Check if human is in casting pose
-          const task = (sprite.castingUntil > time) ? 'casting' : rs.task;
+          const task = sprite.castingUntil > time ? 'casting' : rs.task;
           drawHumanSprite(rs.x, rs.y, sprite.color, rs.status, task, time, sprite.name);
         }
 
@@ -1792,18 +2017,41 @@
       // ─── EVENT HANDLERS ───
       function handleEvent(event) {
         switch (event.type) {
-          case 'session_start': handleSessionStart(event); break;
-          case 'session_end': handleSessionEnd(event); break;
-          case 'file_save': handleFileSave(event); break;
-          case 'file_open': break; // visual acknowledgment not needed
-          case 'commit': handleCommit(event); break;
-          case 'branch_switch': handleBranchSwitch(event); break;
-          case 'draft_mode_on': handleDraftModeOn(event); break;
-          case 'draft_mode_off': handleDraftModeOff(event); break;
-          case 'idle': handleIdle(event); break;
-          case 'summary_update': handleSummaryUpdate(event); break;
-          case 'agent_spawn': handleAgentSpawn(event); break;
-          case 'agent_despawn': handleAgentDespawn(event); break;
+          case 'session_start':
+            handleSessionStart(event);
+            break;
+          case 'session_end':
+            handleSessionEnd(event);
+            break;
+          case 'file_save':
+            handleFileSave(event);
+            break;
+          case 'file_open':
+            break; // visual acknowledgment not needed
+          case 'commit':
+            handleCommit(event);
+            break;
+          case 'branch_switch':
+            handleBranchSwitch(event);
+            break;
+          case 'draft_mode_on':
+            handleDraftModeOn(event);
+            break;
+          case 'draft_mode_off':
+            handleDraftModeOff(event);
+            break;
+          case 'idle':
+            handleIdle(event);
+            break;
+          case 'summary_update':
+            handleSummaryUpdate(event);
+            break;
+          case 'agent_spawn':
+            handleAgentSpawn(event);
+            break;
+          case 'agent_despawn':
+            handleAgentDespawn(event);
+            break;
         }
       }
 
@@ -1836,7 +2084,10 @@
           endX: edge.x,
           endY: edge.y,
           fadeOut: true,
-          onComplete: () => { sprite.visible = false; sprite.opacity = 0; },
+          onComplete: () => {
+            sprite.visible = false;
+            sprite.opacity = 0;
+          },
         });
       }
 
@@ -1862,7 +2113,8 @@
 
         sprite.animQueue.push({
           type: 'file_save_strike',
-          duration: sprite.type === 'agent' ? FILE_SAVE_DURATION / GOLEM_SPEED_MULT : FILE_SAVE_DURATION,
+          duration:
+            sprite.type === 'agent' ? FILE_SAVE_DURATION / GOLEM_SPEED_MULT : FILE_SAVE_DURATION,
         });
       }
 
@@ -1913,11 +2165,15 @@
               sprite.recentEventTimes.push(lastRenderTime);
               // Floating text
               if (event.message) {
-                const msg = event.message.length > 28 ? event.message.slice(0, 28) + '...' : event.message;
+                const msg =
+                  event.message.length > 28 ? event.message.slice(0, 28) + '...' : event.message;
                 floatingTexts.push({
                   text: msg,
                   x: team.x,
-                  y: team.y - (team.fireSize * 4 + 3) * getFireMultipliers(sprite.teamIndex).height - 8,
+                  y:
+                    team.y -
+                    (team.fireSize * 4 + 3) * getFireMultipliers(sprite.teamIndex).height -
+                    8,
                   startTime: lastRenderTime,
                 });
               }
@@ -1934,11 +2190,15 @@
               triggerFireFlare(sprite.teamIndex, 1.2);
               // Floating text
               if (event.message) {
-                const msg = event.message.length > 28 ? event.message.slice(0, 28) + '...' : event.message;
+                const msg =
+                  event.message.length > 28 ? event.message.slice(0, 28) + '...' : event.message;
                 floatingTexts.push({
                   text: msg,
                   x: team.x,
-                  y: team.y - (team.fireSize * 4 + 3) * getFireMultipliers(sprite.teamIndex).height - 8,
+                  y:
+                    team.y -
+                    (team.fireSize * 4 + 3) * getFireMultipliers(sprite.teamIndex).height -
+                    8,
                   startTime: lastRenderTime,
                 });
               }
@@ -1961,10 +2221,7 @@
         if (!sprite || !sprite.visible) return;
         const team = teams[sprite.teamIndex];
         // Compute new position around the ring
-        const currentAngle = Math.atan2(
-          (sprite.homeY - team.y) / 0.6,
-          sprite.homeX - team.x,
-        );
+        const currentAngle = Math.atan2((sprite.homeY - team.y) / 0.6, sprite.homeX - team.x);
         const newAngle = currentAngle + Math.PI * (0.3 + Math.random() * 0.4);
         const radius = team.fireSize * 8 + 14 + (sprite.type === 'agent' ? 5 : 0);
         const newHomeX = team.x + Math.cos(newAngle) * radius;
@@ -2055,9 +2312,11 @@
 
         // Update mock summary data
         if (mockSummaryData[event.teamId]) {
-          if (event.activityLevel) mockSummaryData[event.teamId].activityLevel = event.activityLevel;
+          if (event.activityLevel)
+            mockSummaryData[event.teamId].activityLevel = event.activityLevel;
           if (event.mood) mockSummaryData[event.teamId].mood = event.mood;
-          if (event.milestone !== undefined) mockSummaryData[event.teamId].milestone = event.milestone;
+          if (event.milestone !== undefined)
+            mockSummaryData[event.teamId].milestone = event.milestone;
         }
 
         // Milestone celebration
@@ -2117,7 +2376,7 @@
         ms.goldUntil = lastRenderTime + MILESTONE_GOLD_DURATION;
 
         // Jump all sprites at this campfire
-        sprites.forEach(sprite => {
+        sprites.forEach((sprite) => {
           if (sprite.teamIndex === teamIndex && sprite.visible) {
             sprite.jumpUntil = lastRenderTime + MILESTONE_JUMP_DURATION;
           }
@@ -2201,7 +2460,10 @@
         for (let i = 0; i < teams.length; i++) {
           const fs = fireState[i];
           if (fs.transitionProgress < 1) {
-            fs.transitionProgress = Math.min(1, fs.transitionProgress + dt / FIRE_TRANSITION_DURATION);
+            fs.transitionProgress = Math.min(
+              1,
+              fs.transitionProgress + dt / FIRE_TRANSITION_DURATION,
+            );
           }
           // Decay flares
           const flare = fireFlares[i];
@@ -2228,7 +2490,7 @@
           }
 
           // Clean up expired rings
-          ps.rings = ps.rings.filter(r => time - r.startTime < PULSE_DURATION);
+          ps.rings = ps.rings.filter((r) => time - r.startTime < PULSE_DURATION);
         }
       }
 
@@ -2322,7 +2584,7 @@
         tickSpawnAnims(time);
 
         // Tick all sprite animations
-        sprites.forEach(sprite => tickSprite(sprite, dt));
+        sprites.forEach((sprite) => tickSprite(sprite, dt));
 
         // Clean up expired floating texts
         for (let i = floatingTexts.length - 1; i >= 0; i--) {
@@ -2334,9 +2596,12 @@
         // Clean up expired milestone particles
         for (let i = 0; i < milestoneState.length; i++) {
           milestoneState[i].particles = milestoneState[i].particles.filter(
-            p => time - p.startTime < MILESTONE_PARTICLE_DURATION
+            (p) => time - p.startTime < MILESTONE_PARTICLE_DURATION,
           );
-          if (milestoneState[i].celebrating && time - milestoneState[i].startTime > MILESTONE_PARTICLE_DURATION) {
+          if (
+            milestoneState[i].celebrating &&
+            time - milestoneState[i].startTime > MILESTONE_PARTICLE_DURATION
+          ) {
             milestoneState[i].celebrating = false;
           }
         }
@@ -2402,7 +2667,7 @@
 
         // Sprites — build position list for hover detection too
         allSpritePositions = [];
-        sprites.forEach(sprite => {
+        sprites.forEach((sprite) => {
           if (!sprite.visible && !sprite.currentAnim) return;
           const rs = getSpriteRenderState(sprite, time);
           if (rs.opacity <= 0 && rs.renderType !== 'tent' && !sprite.inDraftMode) return;
@@ -2490,8 +2755,12 @@
         // Vignette
         ctx.save();
         const vignette = ctx.createRadialGradient(
-          canvas.width / 2, canvas.height / 2, canvas.width * 0.3,
-          canvas.width / 2, canvas.height / 2, canvas.width * 0.7,
+          canvas.width / 2,
+          canvas.height / 2,
+          canvas.width * 0.3,
+          canvas.width / 2,
+          canvas.height / 2,
+          canvas.width * 0.7,
         );
         vignette.addColorStop(0, 'transparent');
         vignette.addColorStop(1, '#0a0e0a88');

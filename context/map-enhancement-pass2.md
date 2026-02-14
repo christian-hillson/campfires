@@ -73,6 +73,7 @@ Add the following events to the existing mock event stream from Pass 1. These sh
 ```
 
 These events drive:
+
 - The full 5-step spawn animation for golem-1 at t=18
 - Golem orb growing via file_save events at t=21, 23, 25
 - Golem orb deposit + fire flare on commit at t=32
