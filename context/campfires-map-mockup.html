@@ -152,61 +152,6 @@
         line-height: 1.6;
       }
 
-      .legend {
-        position: absolute;
-        bottom: 16px;
-        left: 16px;
-        background: #0d120dee;
-        border: 1px solid #1a2a1a;
-        border-radius: 6px;
-        padding: 10px 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        font-size: 9px;
-        z-index: 10;
-      }
-
-      .legend-title {
-        font-family: 'Press Start 2P', monospace;
-        font-size: 7px;
-        color: #5a6a4a;
-        letter-spacing: 1px;
-        margin-bottom: 2px;
-      }
-
-      .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #7a8a6a;
-      }
-
-      .legend-swatch {
-        width: 10px;
-        height: 10px;
-        border-radius: 2px;
-        flex-shrink: 0;
-      }
-
-      .minimap {
-        position: absolute;
-        bottom: 16px;
-        right: 16px;
-        width: 140px;
-        height: 100px;
-        background: #0d120dee;
-        border: 1px solid #1a2a1a;
-        border-radius: 6px;
-        z-index: 10;
-        overflow: hidden;
-      }
-
-      .minimap canvas {
-        width: 100%;
-        height: 100%;
-      }
-
       .ai-summary-bar {
         position: absolute;
         top: 12px;
@@ -235,6 +180,7 @@
         line-height: 1.5;
         display: flex;
         gap: 6px;
+        transition: opacity 0.3s;
       }
 
       .ai-summary-line .team-dot {
@@ -243,6 +189,55 @@
         border-radius: 50%;
         flex-shrink: 0;
         margin-top: 4px;
+      }
+
+      .campfire-stories {
+        position: absolute;
+        bottom: 16px;
+        right: 16px;
+        background: #0d120dee;
+        border: 1px solid #1a2a1a;
+        border-radius: 6px;
+        padding: 10px 14px;
+        width: 320px;
+        max-height: 200px;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        overflow: hidden;
+      }
+
+      .stories-title {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 7px;
+        color: #f97316;
+        letter-spacing: 1px;
+      }
+
+      #stories-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        overflow: hidden;
+      }
+
+      .story-entry {
+        font-size: 9px;
+        color: #7a8a6a;
+        line-height: 1.5;
+        opacity: 0;
+        transition: opacity 0.6s ease-in;
+      }
+
+      .story-entry.visible {
+        opacity: 1;
+      }
+
+      .story-entry .story-time {
+        color: #5a6a4a;
+        font-size: 8px;
+        margin-right: 4px;
       }
     </style>
   </head>
@@ -267,59 +262,40 @@
       <div class="tooltip" id="tooltip"></div>
 
       <div class="ai-summary-bar">
-        <div class="summary-title">✦ FIRESIDE</div>
+        <div class="summary-title">✦ FIRESIDE UPDATES</div>
         <div class="ai-summary-line">
           <span class="team-dot" style="background: #f97316"></span>
-          <span
+          <span id="summary-text-payments"
             ><strong style="color: #d0c0a0">Payments</strong> — Building Stripe webhook support for
             Q1 billing migration</span
           >
         </div>
         <div class="ai-summary-line">
           <span class="team-dot" style="background: #60a5fa"></span>
-          <span
+          <span id="summary-text-platform"
             ><strong style="color: #d0c0a0">Platform</strong> — Migrating auth service to OAuth
             2.1</span
           >
         </div>
         <div class="ai-summary-line">
           <span class="team-dot" style="background: #a78bfa"></span>
-          <span
+          <span id="summary-text-growth"
             ><strong style="color: #d0c0a0">Growth</strong> — A/B testing new onboarding flow for
             SMBs</span
           >
         </div>
         <div class="ai-summary-line">
           <span class="team-dot" style="background: #4ade80"></span>
-          <span
+          <span id="summary-text-infra"
             ><strong style="color: #d0c0a0">Infra</strong> — DB connection pooling & Redis cluster
             upgrade</span
           >
         </div>
       </div>
 
-      <div class="legend">
-        <div class="legend-title">LEGEND</div>
-        <div class="legend-item">
-          <div class="legend-swatch" style="background: #e8d070"></div>
-          Human (active)
-        </div>
-        <div class="legend-item">
-          <div class="legend-swatch" style="background: #6088a0"></div>
-          Human (idle)
-        </div>
-        <div class="legend-item">
-          <div class="legend-swatch" style="background: #505858"></div>
-          Human (draft)
-        </div>
-        <div class="legend-item">
-          <div class="legend-swatch" style="background: #88a8c8; border: 1px solid #a0c0e0"></div>
-          Agent / Golem
-        </div>
-        <div class="legend-item">
-          <div class="legend-swatch" style="background: #f97316; border-radius: 50%"></div>
-          Campfire
-        </div>
+      <div class="campfire-stories">
+        <div class="stories-title">✦ CAMPFIRE STORIES — Payments</div>
+        <div id="stories-list"></div>
       </div>
     </div>
 
@@ -556,6 +532,13 @@
         },
       };
 
+      // Store original FIRESIDE panel text for reset
+      const originalSummaryHTML = {};
+      ['payments', 'platform', 'growth', 'infra'].forEach((id) => {
+        const span = document.getElementById(`summary-text-${id}`);
+        if (span) originalSummaryHTML[id] = span.innerHTML;
+      });
+
       // ─── MOCK EVENT STREAM ───
       const mainEvents = [
         // Session & Presence
@@ -627,12 +610,31 @@
         { time: 44, type: 'draft_mode_off', userId: 'jc' },
         // Summary updates
         {
+          time: 20,
+          type: 'summary_update',
+          teamId: 'infra',
+          activityLevel: 'steady',
+          milestone: false,
+          mood: 'building',
+          oneLiner: 'Redis cluster failover tested successfully',
+        },
+        {
+          time: 30,
+          type: 'summary_update',
+          teamId: 'growth',
+          activityLevel: 'steady',
+          milestone: false,
+          mood: 'building',
+          oneLiner: 'Conversion up 12% with new onboarding flow',
+        },
+        {
           time: 48,
           type: 'summary_update',
           teamId: 'payments',
           activityLevel: 'high',
           milestone: false,
           mood: 'building',
+          oneLiner: 'Webhook handler passing integration tests',
         },
         {
           time: 48,
@@ -641,6 +643,7 @@
           activityLevel: 'low',
           milestone: false,
           mood: 'fixing',
+          oneLiner: 'Debugging OAuth token refresh race condition',
         },
         // Milestone
         {
@@ -650,6 +653,7 @@
           activityLevel: 'high',
           milestone: true,
           mood: 'building',
+          oneLiner: 'Stripe billing migration v1 shipped!',
         },
         // --- Agent despawn (golem dissolves back into fire) ---
         { time: 56, type: 'agent_despawn', agentId: 'golem-1', teamId: 'payments' },
@@ -662,6 +666,25 @@
         // --- Remaining agents despawn ---
         { time: 78, type: 'agent_despawn', agentId: 'golem-2', teamId: 'payments' },
         { time: 80, type: 'agent_despawn', agentId: 'golem-3', teamId: 'payments' },
+        // More summary updates
+        {
+          time: 60,
+          type: 'summary_update',
+          teamId: 'infra',
+          activityLevel: 'steady',
+          milestone: false,
+          mood: 'building',
+          oneLiner: 'Connection pool tuning under load test',
+        },
+        {
+          time: 70,
+          type: 'summary_update',
+          teamId: 'growth',
+          activityLevel: 'steady',
+          milestone: false,
+          mood: 'building',
+          oneLiner: 'Finalizing copy for SMB signup experiment',
+        },
         // Wind down
         {
           time: 84,
@@ -670,6 +693,7 @@
           activityLevel: 'steady',
           milestone: false,
           mood: 'exploring',
+          oneLiner: 'Exploring edge cases in refund flow',
         },
         {
           time: 84,
@@ -678,6 +702,38 @@
           activityLevel: 'steady',
           milestone: false,
           mood: 'building',
+          oneLiner: 'Auth service migration 80% complete',
+        },
+        // Campfire Stories — Payments team detail updates
+        {
+          time: 5,
+          type: 'story_update',
+          text: 'Christian started a new session on <code>server/api.ts</code> — working on the webhook handler for Stripe billing events',
+        },
+        {
+          time: 15,
+          type: 'story_update',
+          text: 'JC joined the Payments campfire and switched to <code>feat/billing-v2</code> branch',
+        },
+        {
+          time: 35,
+          type: 'story_update',
+          text: 'A golem was summoned to help Christian with auth middleware refactoring',
+        },
+        {
+          time: 52,
+          type: 'story_update',
+          text: 'Milestone reached! Stripe billing migration v1 has shipped — the team has been focused on webhook integration and billing flow testing',
+        },
+        {
+          time: 68,
+          type: 'story_update',
+          text: 'Christian went idle after a productive session. 3 golems assisted across the sprint',
+        },
+        {
+          time: 80,
+          type: 'story_update',
+          text: 'Session winding down — edge cases in the refund flow are next on the backlog',
         },
       ];
 
@@ -899,6 +955,19 @@
           pulseState[i].lastPulse = 0;
           pulseState[i].rings.length = 0;
         }
+        // Clear Campfire Stories entries
+        storyStartTime = null;
+        const storiesList = document.getElementById('stories-list');
+        if (storiesList) storiesList.innerHTML = '';
+
+        // Restore original FIRESIDE panel text
+        ['payments', 'platform', 'growth', 'infra'].forEach((id) => {
+          const span = document.getElementById(`summary-text-${id}`);
+          if (span && originalSummaryHTML[id]) {
+            span.parentElement.style.opacity = '1';
+            span.innerHTML = originalSummaryHTML[id];
+          }
+        });
       }
 
       // ─── CANVAS SETUP ───
@@ -2052,6 +2121,9 @@
           case 'agent_despawn':
             handleAgentDespawn(event);
             break;
+          case 'story_update':
+            handleStoryUpdate(event);
+            break;
         }
       }
 
@@ -2319,9 +2391,54 @@
             mockSummaryData[event.teamId].milestone = event.milestone;
         }
 
+        // Update FIRESIDE panel text with fade
+        if (event.oneLiner) {
+          const span = document.getElementById(`summary-text-${event.teamId}`);
+          if (span) {
+            const line = span.parentElement;
+            line.style.opacity = '0';
+            setTimeout(() => {
+              const teamName = teams[teamIndex].name;
+              span.innerHTML = `<strong style="color: #d0c0a0">${teamName}</strong> — ${event.oneLiner}`;
+              line.style.opacity = '1';
+            }, 300);
+          }
+        }
+
         // Milestone celebration
         if (event.milestone) {
           triggerMilestone(teamIndex);
+        }
+      }
+
+      let storyStartTime = null;
+
+      function handleStoryUpdate(event) {
+        if (storyStartTime === null) storyStartTime = streamTime;
+        const storiesList = document.getElementById('stories-list');
+        if (!storiesList) return;
+
+        const elapsed = streamTime - storyStartTime;
+        let timeLabel = 'just now';
+        if (elapsed >= 120) timeLabel = Math.floor(elapsed / 60) + 'm ago';
+        else if (elapsed >= 60) timeLabel = '1m ago';
+        else if (elapsed >= 10) timeLabel = Math.floor(elapsed) + 's ago';
+
+        const entry = document.createElement('div');
+        entry.className = 'story-entry';
+        entry.innerHTML = `<span class="story-time">${timeLabel}</span> ${event.text}`;
+
+        storiesList.insertBefore(entry, storiesList.firstChild);
+        requestAnimationFrame(() => {
+          entry.classList.add('visible');
+        });
+
+        // Keep max 4 visible entries
+        const entries = storiesList.querySelectorAll('.story-entry');
+        if (entries.length > 4) {
+          const oldest = entries[entries.length - 1];
+          oldest.style.opacity = '0';
+          setTimeout(() => oldest.remove(), 600);
         }
       }
 
