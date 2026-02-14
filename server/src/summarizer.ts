@@ -1,3 +1,4 @@
+import Anthropic from '@anthropic-ai/sdk';
 import type { ActivityEvent, Team } from '@campfires/shared';
 import { CONFIG } from '@campfires/shared';
 import { getPersistence } from './persistence.js';
@@ -7,12 +8,9 @@ interface SummaryResult {
   oneLiner: string;
 }
 
-/**
- * Generate a summary from activity events.
- * Stubbed implementation — returns a mock summary from event data.
- * Replace this function with real Claude API calls later.
- */
-export function generateSummary(
+// --- Stub (fallback) summary generator ---
+
+function generateStubSummary(
   events: ActivityEvent[],
   _orgContext: { mission: string; roadmap: string },
   teamContext: { name: string; description: string },
@@ -63,13 +61,157 @@ export function generateSummary(
   return { content, oneLiner };
 }
 
+// --- Anthropic client singleton ---
+
+let anthropicClient: Anthropic | null = null;
+let loggedNoKey = false;
+
+function getAnthropicClient(): Anthropic | null {
+  if (anthropicClient) return anthropicClient;
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+  anthropicClient = new Anthropic();
+  return anthropicClient;
+}
+
+// --- Event data formatting ---
+
+function prepareEventData(events: ActivityEvent[]): string {
+  const commits = events.filter((e) => e.type === 'commit');
+  const uniqueUsers = new Set(events.map((e) => e.userId));
+  const uniqueFiles = new Set(events.filter((e) => e.file).map((e) => e.file));
+  const branches = new Set(events.filter((e) => e.branch).map((e) => e.branch));
+  const sessionStarts = events.filter((e) => e.type === 'session_start').length;
+
+  const lines: string[] = [];
+
+  lines.push(`Developers: ${uniqueUsers.size}`);
+  lines.push(`Sessions: ${sessionStarts}`);
+  lines.push(`Total events: ${events.length}`);
+  lines.push('');
+
+  if (commits.length > 0) {
+    lines.push('Commits:');
+    for (const c of commits.slice(0, 20)) {
+      const branch = c.branch ? ` (${c.branch})` : '';
+      lines.push(`- ${c.message || 'no message'}${branch}`);
+    }
+    if (commits.length > 20) {
+      lines.push(`  ...and ${commits.length - 20} more commits`);
+    }
+    lines.push('');
+  }
+
+  if (uniqueFiles.size > 0) {
+    const fileList = [...uniqueFiles].slice(0, 30);
+    lines.push(`Files modified (${uniqueFiles.size} total):`);
+    for (const f of fileList) {
+      lines.push(`- ${f}`);
+    }
+    if (uniqueFiles.size > 30) {
+      lines.push(`  ...and ${uniqueFiles.size - 30} more files`);
+    }
+    lines.push('');
+  }
+
+  if (branches.size > 0) {
+    lines.push(`Active branches: ${[...branches].join(', ')}`);
+  }
+
+  return lines.join('\n');
+}
+
+// --- Claude API call ---
+
+async function callClaude(
+  events: ActivityEvent[],
+  orgContext: { mission: string; roadmap: string },
+  teamContext: { name: string; description: string },
+): Promise<SummaryResult> {
+  const client = getAnthropicClient()!;
+  const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20250514';
+  const eventData = prepareEventData(events);
+
+  const systemPrompt = `You are the Campfires activity summarizer. Your job is to turn raw developer activity data into concise, business-legible project summaries.
+
+Respond with a JSON object containing exactly two fields:
+- "oneLiner": A single-line summary under 80 characters, no markdown formatting
+- "content": A markdown summary of 2-4 paragraphs, under 500 words. Focus on what was accomplished, what areas of the codebase were active, and any notable patterns. Write for a non-technical audience who wants to understand project progress.
+
+Respond ONLY with valid JSON. No other text.`;
+
+  let userMessage = `Team: ${teamContext.name}`;
+  if (teamContext.description) {
+    userMessage += `\nTeam description: ${teamContext.description}`;
+  }
+  if (orgContext.mission) {
+    userMessage += `\nOrg mission: ${orgContext.mission}`;
+  }
+  if (orgContext.roadmap) {
+    userMessage += `\nOrg roadmap: ${orgContext.roadmap}`;
+  }
+  userMessage += `\n\nActivity data:\n${eventData}`;
+
+  const response = await client.messages.create({
+    model,
+    max_tokens: 1024,
+    temperature: 0.3,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userMessage }],
+  });
+
+  const textBlock = response.content.find((block) => block.type === 'text');
+  if (!textBlock || textBlock.type !== 'text') {
+    throw new Error('No text content in Claude response');
+  }
+
+  const parsed = JSON.parse(textBlock.text);
+  if (typeof parsed.oneLiner !== 'string' || typeof parsed.content !== 'string') {
+    throw new Error('Claude response missing required oneLiner or content fields');
+  }
+
+  return { oneLiner: parsed.oneLiner, content: parsed.content };
+}
+
+// --- Main generateSummary (async, with fallback) ---
+
+async function generateSummary(
+  events: ActivityEvent[],
+  orgContext: { mission: string; roadmap: string },
+  teamContext: { name: string; description: string },
+): Promise<SummaryResult> {
+  const client = getAnthropicClient();
+  if (!client) {
+    if (!loggedNoKey) {
+      console.log('[Summarizer] No ANTHROPIC_API_KEY set, will use stub summaries');
+      loggedNoKey = true;
+    }
+    return generateStubSummary(events, orgContext, teamContext);
+  }
+
+  try {
+    return await callClaude(events, orgContext, teamContext);
+  } catch (err) {
+    console.error('[Summarizer] Claude API error, falling back to stub:', err);
+    return generateStubSummary(events, orgContext, teamContext);
+  }
+}
+
+export { generateSummary, generateStubSummary };
+
 export class Summarizer {
   private intervalId: ReturnType<typeof setInterval> | null = null;
 
   start(): void {
     console.log(`[Summarizer] Starting with ${CONFIG.SUMMARIZATION_INTERVAL / 1000}s interval`);
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.warn('[Summarizer] No ANTHROPIC_API_KEY set — summaries will use stub generator');
+    }
+
     this.intervalId = setInterval(() => {
-      this.runOnce();
+      this.runOnce().catch((err) => {
+        console.error('[Summarizer] Error during scheduled run:', err);
+      });
     }, CONFIG.SUMMARIZATION_INTERVAL);
   }
 
@@ -81,7 +223,7 @@ export class Summarizer {
     }
   }
 
-  runOnce(): void {
+  async runOnce(): Promise<void> {
     console.log('[Summarizer] Running summarization...');
     const db = getPersistence();
 
@@ -95,7 +237,7 @@ export class Summarizer {
 
     for (const team of teams) {
       try {
-        summariesCreated += this.summarizeTeam(team, db);
+        summariesCreated += await this.summarizeTeam(team, db);
       } catch (err) {
         console.error(`[Summarizer] Error summarizing team ${team.name}:`, err);
       }
@@ -104,7 +246,7 @@ export class Summarizer {
     console.log(`[Summarizer] Done — created ${summariesCreated} summaries`);
   }
 
-  private summarizeTeam(team: Team, db: ReturnType<typeof getPersistence>): number {
+  private async summarizeTeam(team: Team, db: ReturnType<typeof getPersistence>): Promise<number> {
     const lastSummaryTime = db.getLatestSummaryTime(team.teamId);
     const since = lastSummaryTime || new Date(0).toISOString();
 
@@ -126,7 +268,7 @@ export class Summarizer {
       description: team.description,
     };
 
-    const { content, oneLiner } = generateSummary(events, orgContext, teamContext);
+    const { content, oneLiner } = await generateSummary(events, orgContext, teamContext);
 
     const periodStart = since;
     const periodEnd = new Date().toISOString();

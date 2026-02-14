@@ -10,6 +10,7 @@
     "test": "vitest run --config ../vitest.config.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.74.0",
     "@campfires/shared": "*",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^11.3.0",

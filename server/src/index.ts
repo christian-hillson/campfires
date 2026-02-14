@@ -68,7 +68,7 @@ server.listen(PORT, () => {
 
   // Start summarizer and session cleaner
   summarizer.start();
-  summarizer.runOnce();
+  summarizer.runOnce().catch((err) => console.error('[Summarizer] Initial run error:', err));
   sessionCleaner.start();
 });
 
