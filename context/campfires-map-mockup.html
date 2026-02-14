@@ -352,6 +352,21 @@
       const MILESTONE_GOLD_DURATION = 0.5;
       const CYCLE_PAUSE = 5;
 
+      // ─── GOLEM TIMING ───
+      const GOLEM_SPEED_MULT = 2;
+      const SPAWN_SPARK_DETACH = 0.5;
+      const SPAWN_CASTING = 0.3;
+      const SPAWN_DESCENT = 0.3;
+      const SPAWN_FORMATION = 1.0;
+      const SPAWN_ACTIVATION = 0.3;
+      const SPAWN_TOTAL = SPAWN_SPARK_DETACH + SPAWN_CASTING + SPAWN_DESCENT + SPAWN_FORMATION + SPAWN_ACTIVATION;
+      const DESPAWN_WALK_DURATION = 0.6;
+      const DESPAWN_DISSOLVE_DURATION = 0.5;
+      const DESPAWN_FLARE_DURATION = 0.5;
+      const AFTERIMAGE_DURATION = 0.15; // ~3 frames at 60fps
+      const GOLEM_GLOW_WINDOW = 30; // seconds to track recent events
+      const ORB_DEPOSIT_DURATION = 0.3;
+
       // ─── FIRE LEVEL CONFIG ───
       const FIRE_LEVELS = {
         high:   { height: 1.5, sparks: 2.0, flicker: 1.5, glow: 1.3, embers: 1.5, flames: 1.0 },
@@ -362,7 +377,7 @@
       const PULSE_RADIUS_MULT = { high: 3, steady: 2, low: 1.5 };
       const PULSE_DURATION = 2.0;
 
-      // ─── TEAM DEFINITIONS ───
+      // ─── TEAM DEFINITIONS (agents removed — they spawn dynamically) ───
       const teams = [
         {
           id: 'payments',
@@ -377,9 +392,6 @@
             { id: 'jc', name: 'JC', type: 'human', color: '#4080d0', status: 'active', task: 'scribing', file: 'reel/app.ts → renderFeed()', owner: null },
             { id: 'john', name: 'John', type: 'human', color: '#50b860', status: 'idle', task: 'sitting', file: 'idle 12m', owner: null },
             { id: 'maria', name: 'Maria', type: 'human', color: '#c070d0', status: 'draft', task: 'tent', file: 'draft mode', owner: null },
-            { id: 'agent-c1', name: 'Agent-C1', type: 'agent', color: '#e05040', status: 'active', task: 'chopping', file: 'server/batch-job.ts', owner: 'Christian' },
-            { id: 'agent-c2', name: 'Agent-C2', type: 'agent', color: '#e05040', status: 'active', task: 'carrying', file: 'shared/types.ts', owner: 'Christian' },
-            { id: 'agent-jc1', name: 'Agent-JC1', type: 'agent', color: '#4080d0', status: 'active', task: 'mining', file: 'reel/components/feed.ts', owner: 'JC' },
           ],
         },
         {
@@ -393,7 +405,6 @@
           members: [
             { id: 'alex', name: 'Alex', type: 'human', color: '#d09040', status: 'active', task: 'smithing', file: 'auth/oauth.ts → validateToken()', owner: null },
             { id: 'sam', name: 'Sam', type: 'human', color: '#40b0a0', status: 'active', task: 'scribing', file: 'auth/middleware.ts → checkScope()', owner: null },
-            { id: 'agent-a1', name: 'Agent-A1', type: 'agent', color: '#d09040', status: 'active', task: 'chopping', file: 'auth/tests/oauth.test.ts', owner: 'Alex' },
           ],
         },
         {
@@ -407,7 +418,6 @@
           members: [
             { id: 'priya', name: 'Priya', type: 'human', color: '#e07070', status: 'active', task: 'scribing', file: 'onboarding/flow.tsx → StepTwo()', owner: null },
             { id: 'dev', name: 'Dev', type: 'human', color: '#70a0e0', status: 'idle', task: 'sitting', file: 'idle 5m', owner: null },
-            { id: 'agent-p1', name: 'Agent-P1', type: 'agent', color: '#e07070', status: 'active', task: 'carrying', file: 'onboarding/analytics.ts', owner: 'Priya' },
           ],
         },
         {
@@ -420,7 +430,6 @@
           fireSize: 1,
           members: [
             { id: 'kai', name: 'Kai', type: 'human', color: '#b0a050', status: 'active', task: 'mining', file: 'infra/redis.ts → connectCluster()', owner: null },
-            { id: 'agent-k1', name: 'Agent-K1', type: 'agent', color: '#b0a050', status: 'active', task: 'chopping', file: 'infra/pool.ts', owner: 'Kai' },
           ],
         },
       ];
@@ -452,22 +461,38 @@
         { time: 10,   type: 'file_save',      userId: 'jc',        file: 'reel/app.ts' },
         // Branch switch
         { time: 14,   type: 'branch_switch',  userId: 'jc',        branch: 'feat/reel-ui' },
+        // --- Agent spawning (spark-to-golem sequence) ---
+        { time: 18,   type: 'agent_spawn',    userId: 'christian', agentId: 'golem-1', teamId: 'payments' },
+        // --- Agent working (golem file saves, orb grows) ---
+        { time: 21,   type: 'file_save',      userId: 'golem-1',   file: 'server/summarizer.ts', userType: 'agent' },
+        { time: 23,   type: 'file_save',      userId: 'golem-1',   file: 'server/summarizer.ts', userType: 'agent' },
+        { time: 25,   type: 'file_save',      userId: 'golem-1',   file: 'server/batch-job.ts',  userType: 'agent' },
         // Commit
         { time: 28,   type: 'commit',         userId: 'christian', message: 'add JWT refresh endpoint' },
+        // --- Agent commit (golem deposits orb, fire flares) ---
+        { time: 32,   type: 'commit',         userId: 'golem-1',   message: 'wire up batch summarizer', userType: 'agent' },
         // Draft mode
         { time: 36,   type: 'draft_mode_on',  userId: 'jc' },
+        // --- Multiple rapid agent spawns (staggered pop-pop-pop) ---
+        { time: 40,   type: 'agent_spawn',    userId: 'christian', agentId: 'golem-2', teamId: 'payments' },
+        { time: 40.5, type: 'agent_spawn',    userId: 'christian', agentId: 'golem-3', teamId: 'payments' },
         { time: 44,   type: 'draft_mode_off', userId: 'jc' },
         // Summary updates
         { time: 48,   type: 'summary_update', teamId: 'payments',  activityLevel: 'high', milestone: false, mood: 'building' },
         { time: 48,   type: 'summary_update', teamId: 'platform',  activityLevel: 'low',  milestone: false, mood: 'fixing' },
         // Milestone
         { time: 52,   type: 'summary_update', teamId: 'payments',  activityLevel: 'high', milestone: true, mood: 'building' },
+        // --- Agent despawn (golem dissolves back into fire) ---
+        { time: 56,   type: 'agent_despawn',  agentId: 'golem-1',  teamId: 'payments' },
         // Session end
         { time: 62,   type: 'session_end',    userId: 'jc',        teamId: 'payments' },
         // Idle
         { time: 68,   type: 'idle',           userId: 'christian' },
         // Activity resumes
         { time: 74,   type: 'file_save',      userId: 'christian', file: 'server/auth.ts' },
+        // --- Remaining agents despawn ---
+        { time: 78,   type: 'agent_despawn',  agentId: 'golem-2',  teamId: 'payments' },
+        { time: 80,   type: 'agent_despawn',  agentId: 'golem-3',  teamId: 'payments' },
         // Wind down
         { time: 84,   type: 'summary_update', teamId: 'payments',  activityLevel: 'steady', milestone: false, mood: 'exploring' },
         { time: 84,   type: 'summary_update', teamId: 'platform',  activityLevel: 'steady', milestone: false, mood: 'building' },
@@ -520,6 +545,11 @@
         goldUntil: 0,
       }));
       const pulseState = teams.map(() => ({ lastPulse: 0, rings: [] }));
+
+      // ─── GOLEM STATE ───
+      let pendingSpawns = [];   // active spawn animations
+      let pendingDespawns = []; // active despawn animations
+      let golemIdCounter = 0;   // for manual S key spawns
 
       let streamTime = 0;
       let streamIndex = 0;
@@ -576,6 +606,41 @@
         };
       }
 
+      // Find an open position around a campfire for a new golem
+      function findOpenGolemPosition(teamIndex) {
+        const team = teams[teamIndex];
+        const existingAngles = [];
+        sprites.forEach(s => {
+          if (s.teamIndex === teamIndex) {
+            existingAngles.push(Math.atan2(
+              (s.homeY - team.y) / 0.6,
+              s.homeX - team.x,
+            ));
+          }
+        });
+        // Find an angle with maximum distance from existing sprites
+        let bestAngle = -Math.PI / 2;
+        let bestMinDist = -1;
+        for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
+          const candidate = a - Math.PI;
+          let minDist = Infinity;
+          for (const ea of existingAngles) {
+            let diff = Math.abs(candidate - ea);
+            if (diff > Math.PI) diff = Math.PI * 2 - diff;
+            minDist = Math.min(minDist, diff);
+          }
+          if (minDist > bestMinDist) {
+            bestMinDist = minDist;
+            bestAngle = candidate;
+          }
+        }
+        const radius = team.fireSize * 8 + 19;
+        return {
+          x: team.x + Math.cos(bestAngle) * radius,
+          y: team.y + Math.sin(bestAngle) * radius * 0.6,
+        };
+      }
+
       // ─── SPRITE REGISTRY ───
       function computeHomePosition(team, memberIndex, memberCount, member) {
         const angle = (memberIndex / memberCount) * Math.PI * 2 - Math.PI / 2;
@@ -609,6 +674,15 @@
               currentAnim: null,
               jumpUntil: 0,
               teamName: team.name,
+              // Golem-specific (only used if type === 'agent')
+              orbBrightness: 0,
+              orbSaveCount: 0,
+              recentEventTimes: [],
+              afterimages: [],
+              isGolemIdle: false,
+              castingUntil: 0,
+              castingTargetX: 0,
+              castingTargetY: 0,
             });
           });
         });
@@ -621,6 +695,9 @@
         cycleComplete = false;
         cycleEndTime = 0;
         floatingTexts.length = 0;
+        pendingSpawns = [];
+        pendingDespawns = [];
+        golemIdCounter = 0;
         for (let i = 0; i < teams.length; i++) {
           fireState[i].level = 'steady';
           fireState[i].prevLevel = 'steady';
@@ -848,6 +925,18 @@
           return;
         }
 
+        // Casting pose — arm raised toward campfire with particle line
+        if (task === 'casting') {
+          px(x, bY + 2, 1, 1, '#2a2020');
+          px(x + 1, bY + 2, 1, 1, '#2a2020');
+          px(x, bY, 2, 2, color);
+          px(x, bY - 1, 2, 1, '#e0d8c8');
+          // Raised arm toward fire
+          px(x + 1, bY - 2, 1, 1, color);
+          px(x + 1, bY - 3, 1, 1, color);
+          return;
+        }
+
         // active sprite base
         px(x, bY + 2, 1, 1, '#2a2020');
         px(x + 1, bY + 2, 1, 1, '#2a2020');
@@ -891,20 +980,105 @@
         }
       }
 
-      // ─── DRAWING: GOLEM SPRITE ───
-      function drawGolemSprite(x, y, color, task, time) {
-        const bobY = y + Math.sin(time * 3 + 1) * 0.3;
+      // ─── DRAWING: GOLEM SPRITE (enhanced with afterimage, glow, orb, idle) ───
+      function drawGolemSprite(x, y, color, task, time, sprite) {
+        // Activity glow aura (warm amber, scales with recent event rate)
+        if (sprite && sprite.recentEventTimes) {
+          const now = lastRenderTime;
+          const recentCount = sprite.recentEventTimes.filter(t => now - t < GOLEM_GLOW_WINDOW).length;
+          const glowIntensity = Math.min(1, recentCount / 8);
+          if (glowIntensity > 0.05) {
+            ctx.save();
+            const glowR = 8 + glowIntensity * 6;
+            const gradient = ctx.createRadialGradient(
+              x * PIXEL_SCALE, y * PIXEL_SCALE, 0,
+              x * PIXEL_SCALE, y * PIXEL_SCALE, glowR * PIXEL_SCALE,
+            );
+            gradient.addColorStop(0, `rgba(255,180,60,${0.08 + glowIntensity * 0.12})`);
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(
+              (x - glowR) * PIXEL_SCALE, (y - glowR) * PIXEL_SCALE,
+              glowR * 2 * PIXEL_SCALE, glowR * 2 * PIXEL_SCALE,
+            );
+            ctx.restore();
+          }
+        }
+
+        // Afterimage trail
+        if (sprite && sprite.afterimages) {
+          const prevAlpha = ctx.globalAlpha;
+          for (const ai of sprite.afterimages) {
+            const age = lastRenderTime - ai.time;
+            if (age > AFTERIMAGE_DURATION) continue;
+            const alpha = 0.25 * (1 - age / AFTERIMAGE_DURATION);
+            ctx.globalAlpha = alpha;
+            drawGolemBody(ai.x, ai.y, color, task, time, true, sprite);
+            ctx.globalAlpha = prevAlpha;
+          }
+        }
+
+        // Golem idle = standing still, eyes dim, body darkened
+        const isIdle = sprite && sprite.isGolemIdle;
+
+        // Draw the main golem body
+        drawGolemBody(x, y, color, task, time, isIdle, sprite);
+
+        // Carrying orb
+        if (sprite && sprite.orbBrightness > 0) {
+          const orbAlpha = 0.3 + sprite.orbBrightness * 0.7;
+          const orbSize = 1 + Math.min(1, sprite.orbSaveCount / 6);
+          ctx.save();
+          ctx.globalAlpha = orbAlpha;
+          const orbColor = `rgba(255,${200 + Math.floor(sprite.orbBrightness * 55)},${100 + Math.floor(sprite.orbBrightness * 80)},1)`;
+          px(x + 0.5, y - 3, orbSize, orbSize, orbColor);
+          // Tiny glow around orb
+          if (sprite.orbBrightness > 0.3) {
+            const orbGlowR = 2 + sprite.orbBrightness * 2;
+            const orbGrad = ctx.createRadialGradient(
+              (x + 0.5) * PIXEL_SCALE, (y - 3) * PIXEL_SCALE, 0,
+              (x + 0.5) * PIXEL_SCALE, (y - 3) * PIXEL_SCALE, orbGlowR * PIXEL_SCALE,
+            );
+            orbGrad.addColorStop(0, `rgba(255,200,100,${0.15 * sprite.orbBrightness})`);
+            orbGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = orbGrad;
+            ctx.fillRect(
+              (x + 0.5 - orbGlowR) * PIXEL_SCALE, (y - 3 - orbGlowR) * PIXEL_SCALE,
+              orbGlowR * 2 * PIXEL_SCALE, orbGlowR * 2 * PIXEL_SCALE,
+            );
+          }
+          ctx.restore();
+        }
+      }
+
+      function drawGolemBody(x, y, color, task, time, isDim, sprite) {
+        const dimFactor = isDim ? 0.6 : 1.0;
+        const bodyColor = isDim ? darken(color, 0.5) : color;
+        const bobY = isDim ? y : y + Math.sin(time * 3 + 1) * 0.3;
+
+        // Feet
         px(x, bobY + 3, 1, 1, '#3a3a40');
         px(x + 2, bobY + 3, 1, 1, '#3a3a40');
-        px(x, bobY + 2, 1, 1, darken(color, 0.5));
-        px(x + 2, bobY + 2, 1, 1, darken(color, 0.5));
-        px(x - 1, bobY, 4, 2, darken(color, 0.7));
-        px(x, bobY, 2, 1, color);
+        // Legs
+        px(x, bobY + 2, 1, 1, darken(color, 0.5 * dimFactor));
+        px(x + 2, bobY + 2, 1, 1, darken(color, 0.5 * dimFactor));
+        // Body (wider/blockier)
+        px(x - 1, bobY, 4, 2, darken(bodyColor, 0.7));
+        px(x, bobY, 2, 1, bodyColor);
+        // Head
         px(x, bobY - 1, 2, 1, '#6a6a70');
-        const eyeGlow = Math.sin(time * 4) > 0 ? '#80f0f0' : '#50c0c0';
+        // Eyes — dim in idle mode (30% opacity), normal glow when active
+        const eyeAlpha = isDim ? 0.3 : 1.0;
+        const eyeGlow = Math.sin(time * 4) > 0 ? '#d0a040' : '#c09030'; // warm amber
+        ctx.save();
+        ctx.globalAlpha = (ctx.globalAlpha || 1) * eyeAlpha;
         px(x, bobY - 1, 1, 1, eyeGlow);
         px(x + 1, bobY - 1, 1, 1, eyeGlow);
-        px(x + 0.5, bobY + 1, 1, 1, color);
+        ctx.restore();
+        // Core detail
+        px(x + 0.5, bobY + 1, 1, 1, bodyColor);
+
+        if (isDim) return; // No task animation when idle
 
         if (task === 'chopping') {
           const swing = Math.sin(time * 6);
@@ -916,10 +1090,8 @@
             px(x + 5 + Math.random() * 3, bobY - Math.random() * 2, 1, 1, '#8a6840');
           }
         } else if (task === 'carrying') {
-          px(x, bobY - 3, 3, 2, '#6a5830');
-          px(x, bobY - 2, 3, 1, '#7a6840');
-          const trail = Math.floor(time * 3) % 3;
-          px(x - 2 - trail, bobY + 3, 1, 1, '#2a2820');
+          // Carrying represented by the orb above — just arm position
+          px(x + 1, bobY - 2, 1, 1, bodyColor);
         } else if (task === 'mining') {
           const swing = Math.sin(time * 5.5);
           px(x - 2 + swing, bobY - 1 + Math.abs(swing), 1, 1, '#999');
@@ -1067,6 +1239,218 @@
         }
       }
 
+      // ─── DRAWING: SPAWN ANIMATION ───
+      function drawSpawnAnim(spawn, time) {
+        const elapsed = time - spawn.startTime;
+        const team = teams[spawn.teamIndex];
+        const fireHeight = (team.fireSize * 4 + 3) * getFireMultipliers(spawn.teamIndex).height;
+
+        // Phase timings
+        const t1 = SPAWN_SPARK_DETACH;
+        const t2 = t1 + SPAWN_CASTING;
+        const t3 = t2 + SPAWN_DESCENT;
+        const t4 = t3 + SPAWN_FORMATION;
+        const t5 = t4 + SPAWN_ACTIVATION;
+
+        if (elapsed < t1) {
+          // PHASE 1: Spark detach — spark rises higher than normal, pulses, grows
+          const p = elapsed / t1;
+          const sparkX = team.x + Math.sin(time * 5) * 2;
+          const sparkY = team.y - fireHeight - 4 - p * 14;
+          const pulsePhase = Math.sin(p * Math.PI * 3);
+          const sparkSize = 1 + p * 2 + pulsePhase * 0.5;
+          const brightness = 0.6 + p * 0.4;
+          ctx.save();
+          ctx.globalAlpha = brightness;
+          px(sparkX, sparkY, sparkSize, sparkSize, '#f0e8a0');
+          // Subtle glow
+          const glowR = sparkSize * 2;
+          const grad = ctx.createRadialGradient(
+            sparkX * PIXEL_SCALE, sparkY * PIXEL_SCALE, 0,
+            sparkX * PIXEL_SCALE, sparkY * PIXEL_SCALE, glowR * PIXEL_SCALE,
+          );
+          grad.addColorStop(0, 'rgba(255,240,180,0.3)');
+          grad.addColorStop(1, 'transparent');
+          ctx.fillStyle = grad;
+          ctx.fillRect(
+            (sparkX - glowR) * PIXEL_SCALE, (sparkY - glowR) * PIXEL_SCALE,
+            glowR * 2 * PIXEL_SCALE, glowR * 2 * PIXEL_SCALE,
+          );
+          ctx.restore();
+          spawn.sparkX = sparkX;
+          spawn.sparkY = sparkY;
+        } else if (elapsed < t2) {
+          // PHASE 2: Casting — human raises arm, particle line to spark
+          const p = (elapsed - t1) / SPAWN_CASTING;
+          const sparkX = spawn.sparkX || team.x;
+          const sparkY = spawn.sparkY || (team.y - fireHeight - 18);
+
+          // Draw spark holding position
+          px(sparkX, sparkY, 3, 3, '#f0e8a0');
+
+          // Particle line from human to spark
+          const humanSprite = sprites.get(spawn.humanId);
+          if (humanSprite) {
+            const hx = humanSprite.homeX;
+            const hy = humanSprite.homeY - 3;
+            const numParticles = 6;
+            for (let i = 0; i < numParticles; i++) {
+              const pt = (i / numParticles + time * 2) % 1;
+              const ppx = lerp(hx, sparkX, pt);
+              const ppy = lerp(hy, sparkY, pt);
+              const alpha = 0.3 + pt * 0.5;
+              ctx.save();
+              ctx.globalAlpha = alpha;
+              px(ppx, ppy, 1, 1, '#f0c040');
+              ctx.restore();
+            }
+          }
+        } else if (elapsed < t3) {
+          // PHASE 3: Spark descent — arcs down to ground position
+          const p = (elapsed - t2) / SPAWN_DESCENT;
+          const startX = spawn.sparkX || team.x;
+          const startY = spawn.sparkY || (team.y - fireHeight - 18);
+          const endX = spawn.targetX;
+          const endY = spawn.targetY;
+          // Arc path
+          const currentX = lerp(startX, endX, p);
+          const arcY = lerp(startY, endY, p) - Math.sin(p * Math.PI) * 10;
+          px(currentX, arcY, 3, 3, '#f0e8a0');
+
+          // Impact flash at end
+          if (p > 0.9) {
+            const flashAlpha = (p - 0.9) / 0.1;
+            ctx.save();
+            ctx.globalAlpha = flashAlpha;
+            const flashR = 5;
+            const flashGrad = ctx.createRadialGradient(
+              endX * PIXEL_SCALE, endY * PIXEL_SCALE, 0,
+              endX * PIXEL_SCALE, endY * PIXEL_SCALE, flashR * PIXEL_SCALE,
+            );
+            flashGrad.addColorStop(0, 'rgba(255,255,220,0.9)');
+            flashGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = flashGrad;
+            ctx.fillRect(
+              (endX - flashR) * PIXEL_SCALE, (endY - flashR) * PIXEL_SCALE,
+              flashR * 2 * PIXEL_SCALE, flashR * 2 * PIXEL_SCALE,
+            );
+            ctx.restore();
+          }
+        } else if (elapsed < t4) {
+          // PHASE 4: Formation — spark expands into golem silhouette
+          const p = (elapsed - t3) / SPAWN_FORMATION;
+          const tx = spawn.targetX;
+          const ty = spawn.targetY;
+
+          // Transition from bright white/gold → team color → golem final color
+          const formProgress = Math.min(1, p * 1.2);
+
+          // Expanding form
+          if (p < 0.25) {
+            // Still mostly spark
+            const size = 2 + p * 8;
+            px(tx - size/2, ty - size/2, size, size, '#f0e8a0');
+          } else if (p < 0.5) {
+            // Taking golem shape, still bright
+            const alpha = 1.0;
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            const blendColor = p < 0.4 ? '#f0e8a0' : team.color;
+            drawGolemBody(tx, ty, blendColor, 'carrying', time, false, null);
+            ctx.restore();
+          } else {
+            // Transitioning to final colors
+            const colorLerp = (p - 0.5) / 0.5;
+            ctx.save();
+            drawGolemBody(tx, ty, spawn.golemColor, 'carrying', time, false, null);
+            // Overlay bright fading
+            if (colorLerp < 0.5) {
+              ctx.globalAlpha = 1 - colorLerp * 2;
+              px(tx - 1, ty - 1, 4, 5, '#f0e8a0');
+            }
+            ctx.restore();
+          }
+
+          // Cooling sparks shed outward
+          if (p > 0.2) {
+            const sparkCount = Math.floor((1 - p) * 6);
+            for (let i = 0; i < sparkCount; i++) {
+              const angle = (i / sparkCount) * Math.PI * 2 + time * 3;
+              const dist = 3 + p * 8;
+              const sx = tx + Math.cos(angle) * dist;
+              const sy = ty + Math.sin(angle) * dist * 0.6;
+              const sparkAlpha = (1 - p) * 0.8;
+              ctx.save();
+              ctx.globalAlpha = sparkAlpha;
+              px(sx, sy, 1, 1, Math.random() > 0.5 ? '#f0c040' : '#f0e8a0');
+              ctx.restore();
+            }
+          }
+        } else if (elapsed < t5) {
+          // PHASE 5: Activation — snap to full form, eyes glow on
+          const p = (elapsed - t4) / SPAWN_ACTIVATION;
+          const tx = spawn.targetX;
+          const ty = spawn.targetY;
+          // Draw full golem
+          drawGolemBody(tx, ty, spawn.golemColor, 'carrying', time, false, null);
+          // Eyes glow intensity ramps up
+          const eyeBrightness = p < 0.5 ? 0.5 : 1.0;
+          ctx.save();
+          ctx.globalAlpha = eyeBrightness;
+          px(tx, ty - 1, 1, 1, '#d0a040');
+          px(tx + 1, ty - 1, 1, 1, '#d0a040');
+          ctx.restore();
+        }
+      }
+
+      // ─── DRAWING: DESPAWN ANIMATION ───
+      function drawDespawnAnim(despawn, time) {
+        const elapsed = time - despawn.startTime;
+        const team = teams[despawn.teamIndex];
+
+        if (despawn.phase === 'dissolve') {
+          const p = elapsed / DESPAWN_DISSOLVE_DURATION;
+          if (p >= 1) return;
+
+          // Breaking apart into particles drifting toward fire
+          const numParticles = 12;
+          for (let i = 0; i < numParticles; i++) {
+            const angle = (i / numParticles) * Math.PI * 2;
+            const drift = p * 8;
+            const toFireX = lerp(despawn.x, team.x, p * 0.5);
+            const toFireY = lerp(despawn.y, team.y, p * 0.5);
+            const px2 = toFireX + Math.cos(angle) * drift * (1 - p);
+            const py = toFireY + Math.sin(angle) * drift * 0.6 * (1 - p) - p * 10;
+            const alpha = 1.0 - p;
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            const color = Math.random() > 0.5 ? despawn.color : '#f0c040';
+            px(px2, py, 1, 1, color);
+            ctx.restore();
+          }
+        }
+      }
+
+      // ─── DRAWING: CASTING PARTICLE LINE ───
+      function drawCastingLine(sprite, time) {
+        if (!sprite || sprite.castingUntil <= time) return;
+        const hx = sprite.homeX + 1;
+        const hy = sprite.homeY - 3;
+        const tx = sprite.castingTargetX;
+        const ty = sprite.castingTargetY;
+        const numParticles = 6;
+        for (let i = 0; i < numParticles; i++) {
+          const pt = (i / numParticles + time * 2) % 1;
+          const ppx = lerp(hx, tx, pt);
+          const ppy = lerp(hy, ty, pt);
+          const alpha = 0.3 + pt * 0.5;
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          px(ppx, ppy, 1, 1, '#f0c040');
+          ctx.restore();
+        }
+      }
+
       // ─── ANIMATION SYSTEM ───
       function tickSprite(sprite, dt) {
         if (!sprite.currentAnim && sprite.animQueue.length > 0) {
@@ -1088,6 +1472,31 @@
               if (anim.onStart) anim.onStart();
             }
           }
+        }
+
+        // Track afterimages for golems during movement
+        if (sprite.type === 'agent' && sprite.currentAnim && sprite.currentAnim.type === 'walk') {
+          const rs = getSpriteRenderState(sprite, lastRenderTime);
+          if (!sprite.afterimages) sprite.afterimages = [];
+          // Add position every couple frames
+          if (!sprite._lastAfterimageTime || lastRenderTime - sprite._lastAfterimageTime > 0.05) {
+            sprite.afterimages.push({ x: rs.x, y: rs.y, time: lastRenderTime });
+            sprite._lastAfterimageTime = lastRenderTime;
+          }
+          // Prune old afterimages
+          sprite.afterimages = sprite.afterimages.filter(ai => lastRenderTime - ai.time < AFTERIMAGE_DURATION);
+        } else if (sprite.type === 'agent') {
+          // Clear afterimages when not walking
+          if (sprite.afterimages && sprite.afterimages.length > 0) {
+            sprite.afterimages = sprite.afterimages.filter(ai => lastRenderTime - ai.time < AFTERIMAGE_DURATION);
+          }
+        }
+
+        // Clean up recent event times
+        if (sprite.recentEventTimes) {
+          sprite.recentEventTimes = sprite.recentEventTimes.filter(
+            t => lastRenderTime - t < GOLEM_GLOW_WINDOW
+          );
         }
       }
 
@@ -1141,6 +1550,16 @@
               strikeProgress: p,
             };
           case 'commit_toss':
+            return {
+              x: anim.x,
+              y: anim.y + jumpOffset,
+              opacity: 1,
+              task: 'toss',
+              status: 'active',
+              renderType: 'toss',
+              tossProgress: p,
+            };
+          case 'orb_deposit':
             return {
               x: anim.x,
               y: anim.y + jumpOffset,
@@ -1221,16 +1640,153 @@
             px(sprite.tentX + 3, sprite.tentY - 1, 2, 1, '#e0d8c8');
           }
         } else if (rs.renderType === 'strike') {
-          drawStrikeSprite(rs.x, rs.y, sprite.color, rs.strikeProgress, time);
+          if (sprite.type === 'agent') {
+            // Golem strike animation
+            drawGolemSprite(rs.x, rs.y, sprite.color, 'chopping', time, sprite);
+          } else {
+            drawStrikeSprite(rs.x, rs.y, sprite.color, rs.strikeProgress, time);
+          }
         } else if (rs.renderType === 'toss') {
-          drawTossSprite(rs.x, rs.y, sprite.color, rs.tossProgress, time);
+          if (sprite.type === 'agent') {
+            // Golem toss/deposit animation
+            drawGolemSprite(rs.x, rs.y, sprite.color, 'carrying', time, sprite);
+          } else {
+            drawTossSprite(rs.x, rs.y, sprite.color, rs.tossProgress, time);
+          }
         } else if (sprite.type === 'agent') {
-          drawGolemSprite(rs.x, rs.y, sprite.color, rs.task === 'walking' ? 'carrying' : sprite.defaultTask, time);
+          const golemTask = rs.task === 'walking' ? 'carrying' : (sprite.defaultTask || 'carrying');
+          drawGolemSprite(rs.x, rs.y, sprite.color, golemTask, time, sprite);
         } else {
-          drawHumanSprite(rs.x, rs.y, sprite.color, rs.status, rs.task, time, sprite.name);
+          // Check if human is in casting pose
+          const task = (sprite.castingUntil > time) ? 'casting' : rs.task;
+          drawHumanSprite(rs.x, rs.y, sprite.color, rs.status, task, time, sprite.name);
+        }
+
+        // Draw casting particle line for humans mid-spawn
+        if (sprite.type === 'human' && sprite.castingUntil > time) {
+          drawCastingLine(sprite, time);
         }
 
         ctx.globalAlpha = prevAlpha;
+      }
+
+      // ─── SPAWN / DESPAWN FUNCTIONS ───
+      function spawnGolem(teamId, humanSpriteId) {
+        const teamIndex = teamIndexById[teamId];
+        if (teamIndex === undefined) return;
+        const team = teams[teamIndex];
+        const human = sprites.get(humanSpriteId);
+
+        golemIdCounter++;
+        const golemId = 'golem-' + golemIdCounter;
+        const targetPos = findOpenGolemPosition(teamIndex);
+
+        const spawn = {
+          golemId,
+          humanId: humanSpriteId,
+          teamIndex,
+          startTime: lastRenderTime,
+          targetX: targetPos.x,
+          targetY: targetPos.y,
+          golemColor: human ? human.color : team.color,
+          sparkX: team.x,
+          sparkY: team.y - 18,
+        };
+
+        pendingSpawns.push(spawn);
+
+        // Set human to casting pose
+        if (human) {
+          human.castingUntil = lastRenderTime + SPAWN_SPARK_DETACH + SPAWN_CASTING;
+          human.castingTargetX = spawn.sparkX;
+          human.castingTargetY = spawn.sparkY;
+        }
+
+        return golemId;
+      }
+
+      function finalizeSpawn(spawn) {
+        const team = teams[spawn.teamIndex];
+        // Create the golem sprite in the registry
+        sprites.set(spawn.golemId, {
+          id: spawn.golemId,
+          name: spawn.golemId.charAt(0).toUpperCase() + spawn.golemId.slice(1),
+          type: 'agent',
+          color: spawn.golemColor,
+          status: 'active',
+          task: 'carrying',
+          file: 'working...',
+          owner: spawn.humanId,
+          teamIndex: spawn.teamIndex,
+          homeX: spawn.targetX,
+          homeY: spawn.targetY,
+          defaultTask: 'carrying',
+          originalStatus: 'active',
+          visible: true,
+          opacity: 1,
+          inDraftMode: false,
+          tentX: 0,
+          tentY: 0,
+          animQueue: [],
+          currentAnim: null,
+          jumpUntil: 0,
+          teamName: team.name,
+          // Golem-specific
+          orbBrightness: 0.1,
+          orbSaveCount: 0,
+          recentEventTimes: [],
+          afterimages: [],
+          isGolemIdle: false,
+          castingUntil: 0,
+          castingTargetX: 0,
+          castingTargetY: 0,
+        });
+
+        // Register in lookup
+        spriteTeamIndex[spawn.golemId] = spawn.teamIndex;
+      }
+
+      function despawnGolem(golemId) {
+        const sprite = sprites.get(golemId);
+        if (!sprite) return;
+        const team = teams[sprite.teamIndex];
+
+        // Clear any pending animations
+        sprite.animQueue = [];
+        sprite.currentAnim = null;
+
+        // Walk to fire edge at 2x speed
+        const angle = Math.atan2(sprite.homeY - team.y, sprite.homeX - team.x);
+        const edgeDist = 6;
+        const edgeX = team.x + Math.cos(angle) * edgeDist;
+        const edgeY = team.y + Math.sin(angle) * edgeDist * 0.6;
+
+        sprite.animQueue.push({
+          type: 'walk',
+          duration: DESPAWN_WALK_DURATION, // fast, 2x speed
+          startX: sprite.homeX,
+          startY: sprite.homeY,
+          endX: edgeX,
+          endY: edgeY,
+          onComplete: () => {
+            // Remove sprite, start dissolve effect
+            sprite.visible = false;
+            sprites.delete(golemId);
+            delete spriteTeamIndex[golemId];
+
+            pendingDespawns.push({
+              x: edgeX,
+              y: edgeY,
+              teamIndex: sprite.teamIndex,
+              color: sprite.color,
+              startTime: lastRenderTime,
+              phase: 'dissolve',
+            });
+
+            // Fire flare on reabsorb
+            triggerFireFlare(sprite.teamIndex, 1.3);
+          },
+        });
       }
 
       // ─── EVENT HANDLERS ───
@@ -1246,6 +1802,8 @@
           case 'draft_mode_off': handleDraftModeOff(event); break;
           case 'idle': handleIdle(event); break;
           case 'summary_update': handleSummaryUpdate(event); break;
+          case 'agent_spawn': handleAgentSpawn(event); break;
+          case 'agent_despawn': handleAgentDespawn(event); break;
         }
       }
 
@@ -1289,10 +1847,22 @@
         if (sprite.status === 'idle') {
           sprite.status = 'active';
         }
+        if (sprite.isGolemIdle) {
+          sprite.isGolemIdle = false;
+        }
         if (event.file) sprite.file = event.file;
+
+        // Track recent events for golem glow
+        if (sprite.type === 'agent') {
+          sprite.recentEventTimes.push(lastRenderTime);
+          // Grow orb brightness with each file_save
+          sprite.orbSaveCount = (sprite.orbSaveCount || 0) + 1;
+          sprite.orbBrightness = Math.min(1, 0.1 + sprite.orbSaveCount * 0.2);
+        }
+
         sprite.animQueue.push({
           type: 'file_save_strike',
-          duration: FILE_SAVE_DURATION,
+          duration: sprite.type === 'agent' ? FILE_SAVE_DURATION / GOLEM_SPEED_MULT : FILE_SAVE_DURATION,
         });
       }
 
@@ -1302,7 +1872,14 @@
         if (sprite.status === 'idle') {
           sprite.status = 'active';
         }
+        if (sprite.isGolemIdle) {
+          sprite.isGolemIdle = false;
+        }
+
         const team = teams[sprite.teamIndex];
+        const isGolem = sprite.type === 'agent';
+        const speedMult = isGolem ? GOLEM_SPEED_MULT : 1;
+
         // Walk to fire edge
         const angle = Math.atan2(sprite.homeY - team.y, sprite.homeX - team.x);
         const commitDist = 8;
@@ -1311,35 +1888,67 @@
 
         sprite.animQueue.push({
           type: 'walk',
-          duration: COMMIT_WALK_DURATION,
+          duration: COMMIT_WALK_DURATION / speedMult,
           startX: sprite.homeX,
           startY: sprite.homeY,
           endX: commitX,
           endY: commitY,
         });
-        sprite.animQueue.push({
-          type: 'commit_toss',
-          duration: COMMIT_TOSS_DURATION,
-          x: commitX,
-          y: commitY,
-          onStart: () => {
-            // Fire flare
-            triggerFireFlare(sprite.teamIndex, 1.2);
-            // Floating text
-            if (event.message) {
-              const msg = event.message.length > 28 ? event.message.slice(0, 28) + '…' : event.message;
-              floatingTexts.push({
-                text: msg,
-                x: team.x,
-                y: team.y - (team.fireSize * 4 + 3) * getFireMultipliers(sprite.teamIndex).height - 8,
-                startTime: lastRenderTime,
-              });
-            }
-          },
-        });
+
+        if (isGolem) {
+          // Golem deposits orb into fire
+          sprite.animQueue.push({
+            type: 'orb_deposit',
+            duration: ORB_DEPOSIT_DURATION,
+            x: commitX,
+            y: commitY,
+            onStart: () => {
+              // Fire flare (stronger for golems with bright orbs)
+              const flareMult = 1.2 + (sprite.orbBrightness || 0) * 0.3;
+              triggerFireFlare(sprite.teamIndex, flareMult);
+              // Reset orb
+              sprite.orbBrightness = 0.1;
+              sprite.orbSaveCount = 0;
+              // Track event for glow
+              sprite.recentEventTimes.push(lastRenderTime);
+              // Floating text
+              if (event.message) {
+                const msg = event.message.length > 28 ? event.message.slice(0, 28) + '...' : event.message;
+                floatingTexts.push({
+                  text: msg,
+                  x: team.x,
+                  y: team.y - (team.fireSize * 4 + 3) * getFireMultipliers(sprite.teamIndex).height - 8,
+                  startTime: lastRenderTime,
+                });
+              }
+            },
+          });
+        } else {
+          sprite.animQueue.push({
+            type: 'commit_toss',
+            duration: COMMIT_TOSS_DURATION,
+            x: commitX,
+            y: commitY,
+            onStart: () => {
+              // Fire flare
+              triggerFireFlare(sprite.teamIndex, 1.2);
+              // Floating text
+              if (event.message) {
+                const msg = event.message.length > 28 ? event.message.slice(0, 28) + '...' : event.message;
+                floatingTexts.push({
+                  text: msg,
+                  x: team.x,
+                  y: team.y - (team.fireSize * 4 + 3) * getFireMultipliers(sprite.teamIndex).height - 8,
+                  startTime: lastRenderTime,
+                });
+              }
+            },
+          });
+        }
+
         sprite.animQueue.push({
           type: 'walk',
-          duration: COMMIT_WALK_DURATION,
+          duration: COMMIT_WALK_DURATION / speedMult,
           startX: commitX,
           startY: commitY,
           endX: sprite.homeX,
@@ -1361,9 +1970,10 @@
         const newHomeX = team.x + Math.cos(newAngle) * radius;
         const newHomeY = team.y + Math.sin(newAngle) * radius * 0.6;
 
+        const speedMult = sprite.type === 'agent' ? GOLEM_SPEED_MULT : 1;
         sprite.animQueue.push({
           type: 'walk',
-          duration: BRANCH_WALK_DURATION,
+          duration: BRANCH_WALK_DURATION / speedMult,
           startX: sprite.homeX,
           startY: sprite.homeY,
           endX: newHomeX,
@@ -1425,7 +2035,11 @@
       function handleIdle(event) {
         const sprite = sprites.get(event.userId);
         if (!sprite || !sprite.visible) return;
-        sprite.status = 'idle';
+        if (sprite.type === 'agent') {
+          sprite.isGolemIdle = true;
+        } else {
+          sprite.status = 'idle';
+        }
       }
 
       function handleSummaryUpdate(event) {
@@ -1450,6 +2064,40 @@
         if (event.milestone) {
           triggerMilestone(teamIndex);
         }
+      }
+
+      function handleAgentSpawn(event) {
+        // Use the event's agentId for the golem counter so manual S spawns don't collide
+        const teamIndex = teamIndexById[event.teamId];
+        if (teamIndex === undefined) return;
+        const team = teams[teamIndex];
+        const human = sprites.get(event.userId);
+        const targetPos = findOpenGolemPosition(teamIndex);
+
+        const spawn = {
+          golemId: event.agentId,
+          humanId: event.userId,
+          teamIndex,
+          startTime: lastRenderTime,
+          targetX: targetPos.x,
+          targetY: targetPos.y,
+          golemColor: human ? human.color : team.color,
+          sparkX: team.x,
+          sparkY: team.y - 18,
+        };
+
+        pendingSpawns.push(spawn);
+
+        // Set human to casting pose
+        if (human) {
+          human.castingUntil = lastRenderTime + SPAWN_SPARK_DETACH + SPAWN_CASTING;
+          human.castingTargetX = spawn.sparkX;
+          human.castingTargetY = spawn.sparkY;
+        }
+      }
+
+      function handleAgentDespawn(event) {
+        despawnGolem(event.agentId);
       }
 
       // ─── FIRE FLARE ───
@@ -1493,6 +2141,35 @@
         // Fire flare
         triggerFireFlare(teamIndex, 1.3);
       }
+
+      // ─── KEYBOARD SHORTCUTS ───
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 's' || e.key === 'S') {
+          // Manual spawn: spawn a golem for the first visible human on payments team
+          const human = sprites.get('christian');
+          if (human && human.visible) {
+            golemIdCounter++;
+            const id = 'manual-golem-' + golemIdCounter;
+            handleAgentSpawn({
+              type: 'agent_spawn',
+              userId: 'christian',
+              agentId: id,
+              teamId: 'payments',
+            });
+          }
+        } else if (e.key === 'd' || e.key === 'D') {
+          // Manual despawn: despawn the first golem we find
+          let targetGolem = null;
+          sprites.forEach((sprite, id) => {
+            if (sprite.type === 'agent' && sprite.visible && !targetGolem) {
+              targetGolem = id;
+            }
+          });
+          if (targetGolem) {
+            despawnGolem(targetGolem);
+          }
+        }
+      });
 
       // ─── EVENT STREAM ENGINE ───
       function tickEventStream(dt) {
@@ -1552,6 +2229,27 @@
 
           // Clean up expired rings
           ps.rings = ps.rings.filter(r => time - r.startTime < PULSE_DURATION);
+        }
+      }
+
+      // ─── SPAWN/DESPAWN TICK ───
+      function tickSpawnAnims(time) {
+        // Process pending spawns
+        for (let i = pendingSpawns.length - 1; i >= 0; i--) {
+          const spawn = pendingSpawns[i];
+          const elapsed = time - spawn.startTime;
+          if (elapsed >= SPAWN_TOTAL) {
+            finalizeSpawn(spawn);
+            pendingSpawns.splice(i, 1);
+          }
+        }
+        // Clean up completed despawns
+        for (let i = pendingDespawns.length - 1; i >= 0; i--) {
+          const despawn = pendingDespawns[i];
+          const elapsed = time - despawn.startTime;
+          if (elapsed >= DESPAWN_DISSOLVE_DURATION) {
+            pendingDespawns.splice(i, 1);
+          }
         }
       }
 
@@ -1621,6 +2319,7 @@
         tickEventStream(dt);
         tickFireState(dt);
         tickPulses(time);
+        tickSpawnAnims(time);
 
         // Tick all sprite animations
         sprites.forEach(sprite => tickSprite(sprite, dt));
@@ -1730,6 +2429,24 @@
           });
         });
 
+        // Spawn animations (render in order)
+        for (const spawn of pendingSpawns) {
+          renderOrder.push({
+            type: 'spawn',
+            spawn: spawn,
+            y: spawn.targetY,
+          });
+        }
+
+        // Despawn animations
+        for (const despawn of pendingDespawns) {
+          renderOrder.push({
+            type: 'despawn',
+            despawn: despawn,
+            y: despawn.y,
+          });
+        }
+
         // Sort by y
         renderOrder.sort((a, b) => a.y - b.y);
 
@@ -1746,6 +2463,10 @@
             drawMilestoneFlag(ms.flagX, ms.flagY, teams[item.teamIndex].color);
           } else if (item.type === 'sprite') {
             renderSprite(item.sprite, time);
+          } else if (item.type === 'spawn') {
+            drawSpawnAnim(item.spawn, time);
+          } else if (item.type === 'despawn') {
+            drawDespawnAnim(item.despawn, time);
           }
         }
 
