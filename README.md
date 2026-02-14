@@ -93,7 +93,7 @@ Campfires uses fire-themed naming throughout the app:
 campfires/
 ├── shared/        # Types and protocol (build first)
 ├── server/        # Node.js + Express + SQLite
-├── reel/          # Web app (Vite + vanilla TS)
+├── campfire-stories/  # Web app (Vite + vanilla TS)
 └── context/       # Specs and reference docs
 ```
 

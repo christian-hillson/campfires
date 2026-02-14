@@ -212,7 +212,7 @@ async function main() {
 
   console.log('  ── Test Commands ──────────────────────────\n');
 
-  console.log(`  Reel (browser):`);
+  console.log(`  Campfire Stories (browser):`);
   console.log(`    Open: http://localhost:5173/org/${org.orgId}\n`);
 
   console.log(`  CLI — Alice watches her own campfire:`);

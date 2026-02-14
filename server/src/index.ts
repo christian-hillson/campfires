@@ -6,6 +6,7 @@ import { router } from './api.js';
 import { createWebSocketServer } from './ws-server.js';
 import { getPersistence } from './persistence.js';
 import { Summarizer } from './summarizer.js';
+import { SessionCleaner } from './session-cleaner.js';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const DB_PATH = process.env.DB_PATH || './campfires.db';
@@ -47,8 +48,9 @@ const server = http.createServer(app);
 // Create WebSocket server
 const wss = createWebSocketServer(server);
 
-// Create summarizer
+// Create summarizer and session cleaner
 const summarizer = new Summarizer();
+const sessionCleaner = new SessionCleaner();
 
 // Start server
 server.listen(PORT, () => {
@@ -64,15 +66,17 @@ server.listen(PORT, () => {
 ╚═══════════════════════════════════════════════════════════╝
   `);
 
-  // Start summarizer and run initial tick
+  // Start summarizer and session cleaner
   summarizer.start();
   summarizer.runOnce();
+  sessionCleaner.start();
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down...');
   summarizer.stop();
+  sessionCleaner.stop();
   wss.close();
   server.close(() => {
     getPersistence().close();
@@ -83,6 +87,7 @@ process.on('SIGTERM', () => {
 process.on('SIGINT', () => {
   console.log('SIGINT received, shutting down...');
   summarizer.stop();
+  sessionCleaner.stop();
   wss.close();
   server.close(() => {
     getPersistence().close();

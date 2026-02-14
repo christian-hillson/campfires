@@ -2,7 +2,7 @@ Toggle the Campfires share mode. Read the current mode from ~/.campfires/config.
 
 Display what each mode means:
 
-- **full**: Your presence AND session transcripts are streamed to your team in real-time. AI summaries of your work appear on the Reel as you work, not just when you're done.
+- **full**: Your presence AND session transcripts are streamed to your team in real-time. AI summaries of your work appear on Campfire Stories as you work, not just when you're done.
 - **heartbeat**: Only your presence is shared (online/offline status). No transcripts, no activity details.
 - **off**: Fully dark. Nothing is sent to the server. You're invisible on the campfire.
 

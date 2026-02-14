@@ -20,7 +20,7 @@ npm run build        # build everything
 campfires/
   shared/     @campfires/shared   — types and protocol (build this first)
   server/     @campfires/server   — Node.js + Express + SQLite
-  reel/       @campfires/reel     — Vite web app (Organization Map, Fireside Panel, Activity Log)
+  campfire-stories/  @campfires/campfire-stories  — Vite web app (Organization Map, Fireside Panel, Activity Log)
   context/                        — specs, research, reference docs (read-only)
   extension/  (legacy v1)         — VS Code extension prototype
   cli/        (legacy v1)         — campfire watch terminal client prototype
@@ -30,13 +30,13 @@ All packages import types from `@campfires/shared`. If you change `shared/src/ty
 
 ## Development
 
-| Task               | Command                  |
-| ------------------ | ------------------------ |
-| Build everything   | `npm run build`          |
-| Build shared types | `npm run build:shared`   |
-| Build server       | `npm run build:server`   |
-| Run server (dev)   | `npm run dev:server`     |
-| Run reel (dev)     | `cd reel && npm run dev` |
+| Task                       | Command                              |
+| -------------------------- | ------------------------------------ |
+| Build everything           | `npm run build`                      |
+| Build shared types         | `npm run build:shared`               |
+| Build server               | `npm run build:server`               |
+| Run server (dev)           | `npm run dev:server`                 |
+| Run Campfire Stories (dev) | `cd campfire-stories && npm run dev` |
 
 The server uses `tsx watch` for hot reload in dev mode.
 
@@ -69,17 +69,17 @@ These are non-negotiable across all packages:
 2. **Activity log is append-only.** Never update or delete rows in the `activity_log` table.
 3. **Throttling values are config constants.** No hardcoded timing values — use named constants that can be tuned.
 4. **TypeScript strict mode.** All packages extend `tsconfig.base.json` with `"strict": true`.
-5. **The Reel never exposes raw dev activity to non-devs.** Only AI-summarized project-level information.
+5. **Campfire Stories never exposes raw dev activity to non-devs.** Only AI-summarized project-level information.
 
 ## What Goes Where
 
-| Change                      | Package                    |
-| --------------------------- | -------------------------- |
-| New data type or event type | `shared/src/types.ts`      |
-| New REST endpoint           | `server/src/api.ts`        |
-| AI summarization changes    | `server/src/summarizer.ts` |
-| Reel UI components          | `reel/src/components/`     |
-| Reel map view               | `reel/src/map/`            |
+| Change                         | Package                            |
+| ------------------------------ | ---------------------------------- |
+| New data type or event type    | `shared/src/types.ts`              |
+| New REST endpoint              | `server/src/api.ts`                |
+| AI summarization changes       | `server/src/summarizer.ts`         |
+| Campfire Stories UI components | `campfire-stories/src/components/` |
+| Campfire Stories map view      | `campfire-stories/src/map/`        |
 
 ## Spec Reference
 

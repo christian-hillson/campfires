@@ -363,7 +363,7 @@ export function createRouter(): Router {
   });
 
   // ============================================
-  // Reel Endpoints
+  // Campfire Stories Endpoints
   // ============================================
 
   router.get('/orgs/:id/summaries', optionalAuthMiddleware, (req: Request, res: Response) => {
@@ -692,7 +692,7 @@ export function createRouter(): Router {
   });
 
   // ============================================
-  // Reel Endpoints (continued)
+  // Campfire Stories Endpoints (continued)
   // ============================================
 
   router.get('/teams/:id/activity', optionalAuthMiddleware, (req: Request, res: Response) => {
@@ -708,7 +708,7 @@ export function createRouter(): Router {
       return;
     }
 
-    // For Reel detail view: filter to commits and branch switches for non-team members
+    // For Campfire Stories detail view: filter to commits and branch switches for non-team members
     const isTeamMember = req.user?.teamId === id;
 
     const events = db.getActivityEvents(id, {

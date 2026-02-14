@@ -46,7 +46,7 @@ body {
 /* App Header (shared Feed/Map)                 */
 /* ============================================ */
 
-.reel-app-header {
+.stories-app-header {
   width: 100%;
   padding: 12px 24px;
   display: flex;
@@ -132,7 +132,7 @@ body {
 /* Content area                                 */
 /* ============================================ */
 
-.reel-content {
+.stories-content {
   flex: 1;
   overflow-y: auto;
   max-width: 960px;
@@ -141,7 +141,7 @@ body {
   width: 100%;
 }
 
-.reel-content.map-mode {
+.stories-content.map-mode {
   max-width: none;
   padding: 0;
   overflow: hidden;
@@ -152,20 +152,20 @@ body {
 /* Feed Header (inside feed content)            */
 /* ============================================ */
 
-.reel-header {
+.stories-header {
   text-align: center;
   margin-bottom: 40px;
   padding-bottom: 24px;
   border-bottom: 1px solid var(--border);
 }
 
-.reel-header h1 {
+.stories-header h1 {
   font-size: 28px;
   font-weight: 600;
   margin-bottom: 8px;
 }
 
-.reel-header .mission {
+.stories-header .mission {
   color: var(--text-secondary);
   font-size: 16px;
   max-width: 600px;

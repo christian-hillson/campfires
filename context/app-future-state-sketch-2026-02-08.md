@@ -25,7 +25,7 @@ The product is three UIs powered by one data pipeline:
   - **Tier 3 — Activity feed**: raw chronological events, commits highlighted in amber
 - Read-only display, no interactive commands in MVP
 
-### 3. Campfires Reel (web app) — for everyone else (PMs, execs, designers)
+### 3. Campfire Stories (web app) — for everyone else (PMs, execs, designers)
 
 - URL: `campfires.app/org/{orgId}`
 - AI-summarized feed grouped by team, sorted by recency
@@ -51,7 +51,7 @@ CLI (campfire watch) ┘       (awareness + events)                           |
                                                                             |
                                                               +-------------+-------------+
                                                               v             v             v
-                                                         Reel (SSE)   CLI Tier 1     REST API
+                                                         Campfire Stories (SSE)   CLI Tier 1     REST API
 ```
 
 ---
@@ -74,20 +74,20 @@ Agents (Claude Code, etc.) are first-class citizens with `type: 'agent'` and `pa
 
 ## Key Gaps (spec vs. built)
 
-| Spec feature                                            | Status                            |
-| ------------------------------------------------------- | --------------------------------- |
-| Sidebar webview HTML/CSS                                | Not built                         |
-| Reel web app                                            | Not started                       |
-| AI summarization (Claude API batch job)                 | Not started                       |
-| Agent registration + `parentUserId`                     | Data model missing `parentUserId` |
-| Agent REST endpoints (`/agents`, `/agents/activity`)    | Not built                         |
-| Git hooks install (`post-commit`, `post-checkout`)      | Not built                         |
-| Function detection via `DocumentSymbolProvider`         | Stubbed                           |
-| SSE summary streaming                                   | Stubbed                           |
-| Company context ingestion (mission/roadmap for Reel AI) | API exists, no UI                 |
-| Summary `oneLiner` field                                | Not in current data model         |
-| Reel click-through detail page                          | Not started                       |
-| Filters (by person, directory, event type, focus mode)  | Not built                         |
+| Spec feature                                                        | Status                            |
+| ------------------------------------------------------------------- | --------------------------------- |
+| Sidebar webview HTML/CSS                                            | Not built                         |
+| Campfire Stories web app                                            | Not started                       |
+| AI summarization (Claude API batch job)                             | Not started                       |
+| Agent registration + `parentUserId`                                 | Data model missing `parentUserId` |
+| Agent REST endpoints (`/agents`, `/agents/activity`)                | Not built                         |
+| Git hooks install (`post-commit`, `post-checkout`)                  | Not built                         |
+| Function detection via `DocumentSymbolProvider`                     | Stubbed                           |
+| SSE summary streaming                                               | Stubbed                           |
+| Company context ingestion (mission/roadmap for Campfire Stories AI) | API exists, no UI                 |
+| Summary `oneLiner` field                                            | Not in current data model         |
+| Campfire Stories click-through detail page                          | Not started                       |
+| Filters (by person, directory, event type, focus mode)              | Not built                         |
 
 ---
 
@@ -103,10 +103,10 @@ Agents (Claude Code, etc.) are first-class citizens with `type: 'agent'` and `pa
 
 ### Package status
 
-| Package       | Files | Status                                                 |
-| ------------- | ----- | ------------------------------------------------------ |
-| **shared**    | 2     | Complete — single source of truth for all types        |
-| **server**    | 5     | Functional — auth, REST, WebSocket, SQLite all working |
-| **extension** | 7     | Core working, webview UI not built                     |
-| **cli**       | 7     | Connection + renderer + watchers working               |
-| **reel**      | 0 src | Not started                                            |
+| Package              | Files | Status                                                 |
+| -------------------- | ----- | ------------------------------------------------------ |
+| **shared**           | 2     | Complete — single source of truth for all types        |
+| **server**           | 5     | Functional — auth, REST, WebSocket, SQLite all working |
+| **extension**        | 7     | Core working, webview UI not built                     |
+| **cli**              | 7     | Connection + renderer + watchers working               |
+| **campfire-stories** | 0 src | Not started                                            |

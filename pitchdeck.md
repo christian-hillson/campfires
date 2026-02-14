@@ -73,21 +73,21 @@ They click **Visit** and join the campfire as an observer. They see the team's a
 
 ## Slide 7: Three Surfaces, One Pipeline
 
-| Surface                | Who it's for                  | What they see                                              |
-| ---------------------- | ----------------------------- | ---------------------------------------------------------- |
-| **VS Code Extension**  | Developers                    | Teammates in your campfire — who's in what file, real-time |
-| **Terminal CLI**       | Terminal-first devs           | Same awareness, split-pane alongside Claude Code or vim    |
-| **The Reel (Web App)** | PMs, execs, designers, anyone | AI-summarized org-wide view — every campfire at a glance   |
+| Surface                        | Who it's for                  | What they see                                              |
+| ------------------------------ | ----------------------------- | ---------------------------------------------------------- |
+| **VS Code Extension**          | Developers                    | Teammates in your campfire — who's in what file, real-time |
+| **Terminal CLI**               | Terminal-first devs           | Same awareness, split-pane alongside Claude Code or vim    |
+| **Campfire Stories (Web App)** | PMs, execs, designers, anyone | AI-summarized org-wide view — every campfire at a glance   |
 
 All three surfaces read from the same real-time data pipeline. Install once, visible everywhere.
 
 ---
 
-## Slide 8: The Reel
+## Slide 8: Campfire Stories
 
-_[Screenshot: Reel summary feed]_
+_[Screenshot: Campfire Stories summary feed]_
 
-The Reel is the org-wide view. Every team's campfire, summarized by AI every 15 minutes using your company's context — mission, roadmap, team descriptions.
+Campfire Stories is the org-wide view. Every team's campfire, summarized by AI every 15 minutes using your company's context — mission, roadmap, team descriptions.
 
 Summaries like:
 
@@ -119,7 +119,7 @@ Developer's editor              Campfires Server              Surfaces
 │  File opens      │──────────│  Yjs rooms        │──────── VS Code sidebar
 │  File saves      │ WebSocket│  Awareness state   │──────── Terminal CLI
 │  Commits         │──────────│  Activity log      │
-│  Branch switches │           │  AI summarization  │──────── The Reel (web)
+│  Branch switches │           │  AI summarization  │──────── Campfire Stories (web)
 │  Presence        │           └──────────────────┘          The Map
 └─────────────────┘
 ```
@@ -138,13 +138,13 @@ Devs install Campfires
         ↓
 They see teammates → useful for coordination
         ↓
-Activity data flows into the Reel
+Activity data flows into Campfire Stories
         ↓
 PMs and execs see what's happening → demand grows
         ↓
 "Why isn't your team on Campfires?"
         ↓
-More teams install → Reel gets better → Map gets more interesting
+More teams install → Campfire Stories gets better → Map gets more interesting
 ```
 
 Developers adopt it because it helps them. The org adopts it because it helps everyone else. The map makes the whole thing visible and social.
@@ -157,7 +157,7 @@ Developers adopt it because it helps them. The org adopts it because it helps ev
 | ---------------------------------------------------- | ------- |
 | Core server (WebSocket, REST, SQLite, auth)          | Done    |
 | Terminal CLI with agent activity tracking            | Done    |
-| Reel web app with AI summaries and SSE               | Done    |
+| Campfire Stories web app with AI summaries and SSE   | Done    |
 | RPG-style pixel-art map view                         | Done    |
 | VS Code extension (sidebar, decorations, status bar) | Done    |
 | Cross-team campfire visits                           | Planned |

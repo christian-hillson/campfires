@@ -11,10 +11,10 @@ export interface HeaderContext {
 }
 
 export function renderHeader(container: HTMLElement, ctx: HeaderContext): void {
-  let header = container.querySelector('.reel-app-header') as HTMLElement | null;
+  let header = container.querySelector('.stories-app-header') as HTMLElement | null;
   if (!header) {
     header = document.createElement('div');
-    header.className = 'reel-app-header';
+    header.className = 'stories-app-header';
     container.insertBefore(header, container.firstChild);
   }
 

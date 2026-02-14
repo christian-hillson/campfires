@@ -13,7 +13,7 @@
 │                              CLIENTS                                        │
 │                                                                             │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────────────┐   │
-│  │  VS Code Extension│  │  campfire watch  │  │     Reel Web App         │   │
+│  │  VS Code Extension│  │  campfire watch  │  │  Campfire Stories Web App │   │
 │  │  (Campfires IDE)  │  │  (Terminal CLI)  │  │  campfires.app/org/{id}  │   │
 │  │                   │  │                  │  │                          │   │
 │  │  - Sidebar panel  │  │  - Tier 1: Org   │  │  - AI summary feed      │   │
@@ -150,7 +150,7 @@ How a single dev action flows through the system:
 │  │  Used by:                     │  │  Used by:                  │  │
 │  │  - Sidebar presence list      │  │  - Sidebar activity feed   │  │
 │  │  - CLI Tier 2 (team members)  │  │  - CLI Tier 3 (feed)       │  │
-│  │  - Gutter decorations         │  │  - Reel (via SQLite)       │  │
+│  │  - Gutter decorations         │  │  - Campfire Stories (via SQLite)  │  │
 │  │  - Status bar online count    │  │  - AI summarization input  │  │
 │  └───────────────────────────────┘  └────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────┘
@@ -158,7 +158,7 @@ How a single dev action flows through the system:
 
 ---
 
-## 4. Reel Summarization Pipeline
+## 4. Campfire Stories Summarization Pipeline
 
 ```
                               Every 15-30 minutes
@@ -213,14 +213,14 @@ How a single dev action flows through the system:
                            │
             ┌──────────────┼──────────────┐
             ▼              ▼              ▼
-     ┌────────────┐ ┌────────────┐ ┌────────────┐
-     │ Reel App   │ │ CLI Tier 1 │ │ REST API   │
-     │            │ │            │ │            │
-     │ Full       │ │ oneLiner   │ │ Both       │
-     │ content    │ │ per team   │ │ fields     │
-     │ + detail   │ │            │ │            │
-     │ drill-down │ │            │ │            │
-     └────────────┘ └────────────┘ └────────────┘
+     ┌──────────────────┐ ┌────────────┐ ┌────────────┐
+     │ Campfire Stories │ │ CLI Tier 1 │ │ REST API   │
+     │ App              │ │            │ │            │
+     │                  │ │ oneLiner   │ │ Both       │
+     │ Full content     │ │ per team   │ │ fields     │
+     │ + detail         │ │            │ │            │
+     │ drill-down       │ │            │ │            │
+     └──────────────────┘ └────────────┘ └────────────┘
 ```
 
 ---

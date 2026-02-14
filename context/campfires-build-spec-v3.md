@@ -19,17 +19,17 @@ Campfires is three surfaces powered by one data pipeline:
 **Product A: Campfires IDE (VS Code Extension)**
 The data production layer. Devs install it, it captures their activity (file opens, saves, commits, branch switches, presence), and broadcasts it to their team in real time. Devs use the sidebar panel to see what teammates are working on. This is the dev-to-dev coordination tool.
 
-**Product B: Campfires Reel (Web App)**
+**Product B: Campfire Stories (Web App)**
 The data consumption layer. Anyone at the company can open it. It shows an AI-summarized, human-readable feed of what engineering is building right now, translated using company context (mission, roadmap, project descriptions). PMs, designers, execs, and other teams use this to understand what's happening without asking.
 
-The Reel is not a filtered view of raw events. It's a translation layer: it takes technical activity data and produces business-legible summaries like "The payments team is building Stripe webhook support — this is part of the Q1 billing migration."
+Campfire Stories is not a filtered view of raw events. It's a translation layer: it takes technical activity data and produces business-legible summaries like "The payments team is building Stripe webhook support — this is part of the Q1 billing migration."
 
 **Product C: Campfire Watch (Terminal CLI)**
 The terminal-native awareness surface. Developers working in Claude Code or other terminal workflows run `campfire watch` in a split pane to get the same ambient team awareness as the VS Code sidebar. It is a read-only client consuming existing WebSocket and REST endpoints — no new server infrastructure required.
 
 ### 1.1 Naming Hierarchy
 
-The product uses a fire-based naming hierarchy across all surfaces (CLI, extension, Reel):
+The product uses a fire-based naming hierarchy across all surfaces (CLI, extension, Campfire Stories):
 
 | Level        | Name         | Emoji | Scope                                      |
 | ------------ | ------------ | ----- | ------------------------------------------ |
@@ -39,16 +39,16 @@ The product uses a fire-based naming hierarchy across all surfaces (CLI, extensi
 
 ### 1.2 Core Principles
 
-- One campfire per team for devs (detailed, real-time, technical). One Reel per org for everyone (summarized, near-real-time, legible). One CLI for terminal-first devs (same data, different surface).
+- One campfire per team for devs (detailed, real-time, technical). One Campfire Stories per org for everyone (summarized, near-real-time, legible). One CLI for terminal-first devs (same data, different surface).
 - Medium awareness by default. File, function, and intent via commit messages. Not keystroke-level streaming.
 - Draft mode respects the ego. Devs can go dark with one toggle. Adoption requires trust, and trust requires opt-out.
 - Human and agent activity are separated from day one. The `type` field (`human | agent`) exists on every user and awareness state. Agents are nested under their human owner.
-- The Reel never exposes raw dev activity to non-devs. It only shows AI-summarized project-level information. This is critical for dev trust.
-- Commit messages as intent in MVP. AI summarization in the Reel adds the translation layer.
+- Campfire Stories never exposes raw dev activity to non-devs. It only shows AI-summarized project-level information. This is critical for dev trust.
+- Commit messages as intent in MVP. AI summarization in Campfire Stories adds the translation layer.
 
 ### 1.3 The Adoption Flywheel
 
-Devs install Campfires IDE because it helps them coordinate with their team. Terminal devs run `campfire watch` for the same benefit without leaving their workflow. The Reel gives everyone else a reason to care that Campfires exists. The Reel creates organizational demand ("why isn't your team on Campfires?"), which drives more dev adoption, which makes the Reel more useful.
+Devs install Campfires IDE because it helps them coordinate with their team. Terminal devs run `campfire watch` for the same benefit without leaving their workflow. Campfire Stories gives everyone else a reason to care that Campfires exists. Campfire Stories creates organizational demand ("why isn't your team on Campfires?"), which drives more dev adoption, which makes Campfire Stories more useful.
 
 ### 1.4 Philosophical Foundation
 
@@ -58,7 +58,7 @@ Inspired by Steve Yegge's Hive Mind article and the SageOx operating model. Key 
 
 ## 2. MVP Scope
 
-The MVP is built in sprints with Claude Code agents. The goal: devs coordinating via Campfires IDE or `campfire watch`, while the Reel shows AI-summarized activity to anyone with the org link.
+The MVP is built in sprints with Claude Code agents. The goal: devs coordinating via Campfires IDE or `campfire watch`, while Campfire Stories shows AI-summarized activity to anyone with the org link.
 
 ### 2.1 Sprint 1: Campfires IDE (Days 1-3)
 
@@ -90,7 +90,7 @@ No editor activity for 5 minutes triggers idle status. Any keystroke, scroll, or
 
 ### 2.2 Sprint 2: Campfire Watch CLI (Days 4-5)
 
-The terminal-native surface — lighter lift than the Reel, validates the data pipeline end-to-end, and unblocks Claude Code developers immediately.
+The terminal-native surface — lighter lift than Campfire Stories, validates the data pipeline end-to-end, and unblocks Claude Code developers immediately.
 
 **Three-Tier Layout**
 
@@ -98,8 +98,8 @@ _Tier 1: Org Header_
 
 - Company name (Bonfire), active campfire count, online user count
 - AI-generated one-liner summaries of what each campfire is working on
-- Summaries pulled from the Reel's summarization pipeline via REST
-- Updates every 15-30 minutes (matches the Reel batch cycle)
+- Summaries pulled from the Campfire Stories summarization pipeline via REST
+- Updates every 15-30 minutes (matches the Campfire Stories batch cycle)
 
 _Tier 2: Your Campfire_
 
@@ -138,11 +138,11 @@ This requires the `parentUserId` field on agent users in the data model (see Sec
 - Interactive commands (e.g., toggling draft mode from the CLI)
 - Agent identity configuration (naming, color assignment for agents)
 
-### 2.3 Sprint 3: Campfires Reel (Days 6-9)
+### 2.3 Sprint 3: Campfire Stories (Days 6-9)
 
 The AI-summarized org-wide view.
 
-**Reel Web App**
+**Campfire Stories Web App**
 
 - Single-page web app accessible at `campfires.app/org/{orgId}`
 - Shows AI-summarized activity feed across all teams in the org
@@ -151,7 +151,7 @@ The AI-summarized org-wide view.
 - Translates raw activity into business-legible summaries
 - Grouped by team, sorted by recency
 
-**Reel Context Ingestion**
+**Campfire Stories Context Ingestion**
 During org setup, the admin provides:
 
 - Team names and brief descriptions of what each team owns
@@ -170,8 +170,8 @@ _MVP_: Hardcoded/uploaded text provided during org setup
 
 _Future (deferred)_: Notion integration as an automatic context provider, replacing or supplementing uploaded text. This would pull roadmap items, project docs, and team wikis directly from Notion via OAuth. The context injection interface should be designed as a simple text blob so that swapping in Notion (or other sources) later is just a new context provider behind the same interface.
 
-**Reel Click-Through**
-Clicking a team or project in the Reel shows a project-level detail page (still within the web app). This shows: who's active on that team, what modules are hot, recent commits with messages, AI summary of recent progress. It does NOT show raw file-level activity — that stays in the IDE.
+**Campfire Stories Click-Through**
+Clicking a team or project in Campfire Stories shows a project-level detail page (still within the web app). This shows: who's active on that team, what modules are hot, recent commits with messages, AI summary of recent progress. It does NOT show raw file-level activity — that stays in the IDE.
 
 ### 2.4 Sprint 4: Polish (Days 10-12)
 
@@ -179,17 +179,17 @@ Iterate based on dogfooding experience. Tune throttling, improve AI summaries, f
 
 ### 2.5 Explicitly Not in MVP
 
-| Feature                                | Phase    | Rationale                                 |
-| -------------------------------------- | -------- | ----------------------------------------- |
-| PM Dashboard (separate from Reel)      | Phase 2  | Reel covers this for now                  |
-| Co-editing / shared cursors            | Phase 3+ | Not the differentiator; Live Share exists |
-| AI merge/conflict detection            | Phase 3+ | Requires mature activity log              |
-| Self-hosted / enterprise               | Phase 4  | Cloud-first for internal launch           |
-| Reel notifications / follow            | Phase 2  | Get the core view right first             |
-| Daily digest emails                    | Phase 2  | Reel is the primary interface first       |
-| Graphical TUI for CLI                  | Phase 2  | Plain text CLI first                      |
-| Interactive CLI commands               | Phase 2  | Read-only display first                   |
-| Agent identity config (naming, colors) | Phase 2  | Data model supports it; UI deferred       |
+| Feature                                       | Phase    | Rationale                                       |
+| --------------------------------------------- | -------- | ----------------------------------------------- |
+| PM Dashboard (separate from Campfire Stories) | Phase 2  | Campfire Stories covers this for now            |
+| Co-editing / shared cursors                   | Phase 3+ | Not the differentiator; Live Share exists       |
+| AI merge/conflict detection                   | Phase 3+ | Requires mature activity log                    |
+| Self-hosted / enterprise                      | Phase 4  | Cloud-first for internal launch                 |
+| Campfire Stories notifications / follow       | Phase 2  | Get the core view right first                   |
+| Daily digest emails                           | Phase 2  | Campfire Stories is the primary interface first |
+| Graphical TUI for CLI                         | Phase 2  | Plain text CLI first                            |
+| Interactive CLI commands                      | Phase 2  | Read-only display first                         |
+| Agent identity config (naming, colors)        | Phase 2  | Data model supports it; UI deferred             |
 
 ---
 
@@ -203,7 +203,7 @@ Campfires has five components:
 2. **Campfire Watch CLI** — read-only terminal display of team awareness and activity, consumes the same WebSocket and REST endpoints
 3. **WebSocket Server (real-time hub)** — manages Yjs rooms, broadcasts awareness, writes activity events to the log
 4. **Persistence Layer (activity log)** — append-only SQLite database of all activity events
-5. **Reel Web App** — reads from activity log, calls Claude API for summarization, serves the org-wide view
+5. **Campfire Stories Web App** — reads from activity log, calls Claude API for summarization, serves the org-wide view
 
 ### 3.2 Yjs Room Topology
 
@@ -211,7 +211,7 @@ Each team gets one Yjs document, identified by `campfire:{teamId}`. All team mem
 
 The Yjs doc holds a `Y.Array` for the activity feed (rolling window of ~500 recent events for the sidebar). Awareness states are handled by the Yjs awareness protocol, which is separate from the doc.
 
-The append-only activity log in SQLite is written server-side by listening to `Y.Array` updates. The Yjs doc is the real-time broadcast layer, not the persistence layer. The Reel reads from the SQLite activity log, not from Yjs directly.
+The append-only activity log in SQLite is written server-side by listening to `Y.Array` updates. The Yjs doc is the real-time broadcast layer, not the persistence layer. Campfire Stories reads from the SQLite activity log, not from Yjs directly.
 
 ### 3.3 Why Yjs + WebSocket
 
@@ -221,16 +221,16 @@ The append-only activity log in SQLite is written server-side by listening to `Y
 - **Network-agnostic**: start with WebSocket, add WebRTC later
 - **Proven at scale**: used by AFFiNE, Huly, Nimbus Note, and dozens of production apps
 
-### 3.4 Reel Data Pipeline
+### 3.4 Campfire Stories Data Pipeline
 
-The Reel does not connect to Yjs rooms. It reads from the persisted activity log via a REST API on the server. The summarization pipeline:
+Campfire Stories does not connect to Yjs rooms. It reads from the persisted activity log via a REST API on the server. The summarization pipeline:
 
 1. Batch job runs every 15-30 minutes
 2. Queries `activity_log` for all events since last summarization, grouped by team
 3. Constructs a prompt with: raw events, team descriptions, company context/roadmap
 4. Calls Claude API (`claude-sonnet-4-5-20250929`) for summarization
 5. Stores the generated summary in a `summaries` table
-6. Reel web app and `campfire watch` CLI poll or use SSE to display latest summaries
+6. Campfire Stories web app and `campfire watch` CLI poll or use SSE to display latest summaries
 
 ### 3.5 Agent Activity Pipeline
 
@@ -259,7 +259,7 @@ Monorepo with five packages:
 | `server/awareness-engine.ts`      | Processes awareness updates, maintains team state, broadcasts activity events |
 | `server/persistence.ts`           | Append-only activity log (SQLite)                                             |
 | `server/auth.ts`                  | JWT-based auth for teams/orgs                                                 |
-| `server/summarizer.ts`            | Batch job that calls Claude API to generate Reel summaries                    |
+| `server/summarizer.ts`            | Batch job that calls Claude API to generate Campfire Stories summaries        |
 | `server/api.ts`                   | REST endpoints for auth, teams, summaries, and health                         |
 | **extension/**                    | VS Code Extension (Campfires IDE)                                             |
 | `extension/extension.ts`          | Extension entry point, lifecycle management                                   |
@@ -274,10 +274,10 @@ Monorepo with five packages:
 | `cli/renderer.ts`                 | ANSI terminal rendering for the three-tier layout                             |
 | `cli/agent-watcher.ts`            | Filesystem watcher for agent activity emission                                |
 | `cli/git-hooks.ts`                | Installs/manages post-commit and post-checkout hooks                          |
-| **reel/**                         | Campfires Reel Web App                                                        |
-| `reel/index.html`                 | Single-page app entry point                                                   |
-| `reel/app.ts`                     | Main app logic, fetches and displays summaries                                |
-| `reel/components/`                | UI components: team cards, summary feed, detail views                         |
+| **campfire-stories/**             | Campfire Stories Web App                                                      |
+| `campfire-stories/index.html`     | Single-page app entry point                                                   |
+| `campfire-stories/app.ts`         | Main app logic, fetches and displays summaries                                |
+| `campfire-stories/components/`    | UI components: team cards, summary feed, detail views                         |
 | **shared/**                       | Shared types and protocol                                                     |
 | `shared/types.ts`                 | ActivityEvent, User, Team, Org, AwarenessState, FilterConfig, Summary types   |
 | `shared/protocol.ts`              | Message types and serialization for client-server communication               |
@@ -286,19 +286,19 @@ Monorepo with five packages:
 
 ## 5. Tech Stack
 
-| Layer            | Technology                  | Rationale                                                                                |
-| ---------------- | --------------------------- | ---------------------------------------------------------------------------------------- |
-| Real-time sync   | Yjs + y-websocket           | Battle-tested CRDT with awareness protocol; Monaco bindings for future co-editing        |
-| Transport        | WebSocket                   | Simple, reliable; upgradeable to WebRTC via Yjs provider swap                            |
-| IDE Extension    | TypeScript + VS Code API    | Native sidebar, decorations, status bar, webview panels                                  |
-| CLI              | Node.js + ANSI escape codes | Same language as server/extension; no TUI framework overhead for MVP                     |
-| Server           | Node.js + Express           | Same language as extension; y-websocket is Node-native                                   |
-| Persistence      | SQLite (better-sqlite3)     | Append-only activity log; synchronous reads for simplicity; Postgres upgrade path exists |
-| Auth             | JWT tokens                  | Simple team/org scoping; upgradeable to SSO for enterprise                               |
-| Reel Web App     | Vanilla TypeScript + Vite   | Lightweight, fast build, no framework overhead for a read-mostly app                     |
-| Reel Data        | SSE (Server-Sent Events)    | Simpler than WebSocket for a read-only summary stream                                    |
-| AI Summarization | Claude API (Sonnet)         | Batch summarization every 15-30 min with company context                                 |
-| Hosting          | Railway or Fly.io           | Zero-friction; WebSocket support out of the box                                          |
+| Layer                    | Technology                  | Rationale                                                                                |
+| ------------------------ | --------------------------- | ---------------------------------------------------------------------------------------- |
+| Real-time sync           | Yjs + y-websocket           | Battle-tested CRDT with awareness protocol; Monaco bindings for future co-editing        |
+| Transport                | WebSocket                   | Simple, reliable; upgradeable to WebRTC via Yjs provider swap                            |
+| IDE Extension            | TypeScript + VS Code API    | Native sidebar, decorations, status bar, webview panels                                  |
+| CLI                      | Node.js + ANSI escape codes | Same language as server/extension; no TUI framework overhead for MVP                     |
+| Server                   | Node.js + Express           | Same language as extension; y-websocket is Node-native                                   |
+| Persistence              | SQLite (better-sqlite3)     | Append-only activity log; synchronous reads for simplicity; Postgres upgrade path exists |
+| Auth                     | JWT tokens                  | Simple team/org scoping; upgradeable to SSO for enterprise                               |
+| Campfire Stories Web App | Vanilla TypeScript + Vite   | Lightweight, fast build, no framework overhead for a read-mostly app                     |
+| Campfire Stories Data    | SSE (Server-Sent Events)    | Simpler than WebSocket for a read-only summary stream                                    |
+| AI Summarization         | Claude API (Sonnet)         | Batch summarization every 15-30 min with company context                                 |
+| Hosting                  | Railway or Fly.io           | Zero-friction; WebSocket support out of the box                                          |
 
 ---
 
@@ -320,25 +320,25 @@ Monorepo with five packages:
 
 ### 6.2 Org (Persisted)
 
-| Field     | Type          | Description                                             |
-| --------- | ------------- | ------------------------------------------------------- |
-| orgId     | UUID          | Unique org identifier                                   |
-| name      | string        | Organization name (displayed as "{name} Bonfire")       |
-| mission   | text          | Company mission statement (for Reel AI context)         |
-| roadmap   | text          | Current roadmap / active projects (for Reel AI context) |
-| createdAt | ISO timestamp | When the org was created                                |
+| Field     | Type          | Description                                                         |
+| --------- | ------------- | ------------------------------------------------------------------- |
+| orgId     | UUID          | Unique org identifier                                               |
+| name      | string        | Organization name (displayed as "{name} Bonfire")                   |
+| mission   | text          | Company mission statement (for Campfire Stories AI context)         |
+| roadmap   | text          | Current roadmap / active projects (for Campfire Stories AI context) |
+| createdAt | ISO timestamp | When the org was created                                            |
 
 ### 6.3 Team (Persisted)
 
-| Field       | Type          | Description                                        |
-| ----------- | ------------- | -------------------------------------------------- |
-| teamId      | UUID          | Unique team identifier                             |
-| orgId       | UUID          | Parent org                                         |
-| name        | string        | Team display name (displayed as "{name} Campfire") |
-| description | text          | What this team owns (for Reel AI context)          |
-| inviteCode  | string        | Shareable code for joining the campfire            |
-| members     | User[]        | List of team members                               |
-| createdAt   | ISO timestamp | When the team was created                          |
+| Field       | Type          | Description                                           |
+| ----------- | ------------- | ----------------------------------------------------- |
+| teamId      | UUID          | Unique team identifier                                |
+| orgId       | UUID          | Parent org                                            |
+| name        | string        | Team display name (displayed as "{name} Campfire")    |
+| description | text          | What this team owns (for Campfire Stories AI context) |
+| inviteCode  | string        | Shareable code for joining the campfire               |
+| members     | User[]        | List of team members                                  |
+| createdAt   | ISO timestamp | When the team was created                             |
 
 ### 6.4 Awareness State (Real-Time, In-Memory via Yjs)
 
@@ -359,7 +359,7 @@ Each connected client broadcasts this via the Yjs awareness protocol. Ephemeral,
 
 ### 6.5 Activity Event (Persisted, Append-Only)
 
-Discrete events written to the `activity_log` table. These form the forensic trail and the input to Reel summarization.
+Discrete events written to the `activity_log` table. These form the forensic trail and the input to Campfire Stories summarization.
 
 | Field        | Type           | Description                                                                         |
 | ------------ | -------------- | ----------------------------------------------------------------------------------- |
@@ -377,7 +377,7 @@ Discrete events written to the `activity_log` table. These form the forensic tra
 
 ### 6.6 Summary (Persisted)
 
-AI-generated summaries for the Reel and the campfire watch org header, stored after each batch summarization run.
+AI-generated summaries for Campfire Stories and the campfire watch org header, stored after each batch summarization run.
 
 | Field       | Type          | Description                                                            |
 | ----------- | ------------- | ---------------------------------------------------------------------- |
@@ -407,23 +407,23 @@ The WebSocket handles real-time awareness. These HTTP endpoints handle everythin
 
 ### 7.2 Org & Team Management
 
-| Endpoint             | Method | Description                                          |
-| -------------------- | ------ | ---------------------------------------------------- |
-| `/orgs`              | POST   | Create org. Returns orgId.                           |
-| `/orgs/:id`          | GET    | Get org details including mission, roadmap.          |
-| `/orgs/:id`          | PUT    | Update org context (mission, roadmap) for Reel AI.   |
-| `/orgs/:id/teams`    | GET    | List all teams in org.                               |
-| `/teams`             | POST   | Create team within org. Returns teamId + inviteCode. |
-| `/teams/join`        | POST   | Join a team via invite code.                         |
-| `/teams/:id/members` | GET    | List team members.                                   |
+| Endpoint             | Method | Description                                                    |
+| -------------------- | ------ | -------------------------------------------------------------- |
+| `/orgs`              | POST   | Create org. Returns orgId.                                     |
+| `/orgs/:id`          | GET    | Get org details including mission, roadmap.                    |
+| `/orgs/:id`          | PUT    | Update org context (mission, roadmap) for Campfire Stories AI. |
+| `/orgs/:id/teams`    | GET    | List all teams in org.                                         |
+| `/teams`             | POST   | Create team within org. Returns teamId + inviteCode.           |
+| `/teams/join`        | POST   | Join a team via invite code.                                   |
+| `/teams/:id/members` | GET    | List team members.                                             |
 
-### 7.3 Reel & Summaries
+### 7.3 Campfire Stories & Summaries
 
-| Endpoint                     | Method | Description                                                                                                                |
-| ---------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `/orgs/:id/summaries`        | GET    | Latest summaries for all teams in org. Supports `?since=` param. Returns both full `content` and `oneLiner` fields.        |
-| `/orgs/:id/summaries/stream` | GET    | SSE stream of new summaries as they are generated.                                                                         |
-| `/teams/:id/activity`        | GET    | Recent activity events for a team (for Reel detail view). Filtered to commits + branch switches only for non-team-members. |
+| Endpoint                     | Method | Description                                                                                                                            |
+| ---------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `/orgs/:id/summaries`        | GET    | Latest summaries for all teams in org. Supports `?since=` param. Returns both full `content` and `oneLiner` fields.                    |
+| `/orgs/:id/summaries/stream` | GET    | SSE stream of new summaries as they are generated.                                                                                     |
+| `/teams/:id/activity`        | GET    | Recent activity events for a team (for Campfire Stories detail view). Filtered to commits + branch switches only for non-team-members. |
 
 ### 7.4 Agent Management
 
@@ -548,7 +548,7 @@ The onboarding must be fast enough that a dev can go from discovery to seeing te
 4. Create a team within the org, or join one via invite code (one click)
 5. See the campfire — sidebar immediately shows your activity; teammates appear as they join
 6. Share the invite code with your team via Slack, email, or any channel
-7. Share the Reel URL (`campfires.app/org/{orgId}`) with PMs, execs, anyone who should see the summary view
+7. Share the Campfire Stories URL (`campfires.app/org/{orgId}`) with PMs, execs, anyone who should see the summary view
 
 **CLI path:**
 
@@ -562,15 +562,15 @@ The onboarding must be fast enough that a dev can go from discovery to seeing te
 
 ## 12. Phased Roadmap
 
-| Phase           | Timeline   | Deliverables                                                                                                                         | Success Metric                                                |
-| --------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
-| 1a: IDE         | Days 1-3   | VS Code extension with campfire panel, inline decorations, draft mode, status bar, cloud server, append-only log                     | 2 devs on one campfire, daily active usage while building     |
-| 1b: CLI         | Days 4-5   | `campfire watch` terminal client with three-tier layout, agent activity emission via git hooks + fs watcher                          | Terminal-first dev using campfire watch alongside Claude Code |
-| 1c: Reel        | Days 6-9   | Web app with AI-summarized org feed, company context ingestion, team detail views                                                    | Non-dev stakeholder checks the Reel daily                     |
-| 1d: Polish      | Days 10-12 | Iterate based on dogfooding, tune throttling, improve AI summaries                                                                   | All three surfaces feel usable without friction               |
-| 2: Intelligence | Weeks 3-6  | Intent inference from diffs, Reel notifications/follow, daily digest, agent identity config, interactive CLI commands, graphical TUI | PMs actively using Reel; AI summaries rated useful            |
-| 3: Hive Mind    | Weeks 7-12 | AI merge/conflict detection, agent doing visible work, co-editing (Yjs + Monaco), role-based views                                   | Teams reporting measurable coordination improvement           |
-| 4: Enterprise   | Months 4-6 | Self-hosted option, SSO/SAML, audit logs, compliance, admin console                                                                  | First external team using Campfires                           |
+| Phase                | Timeline   | Deliverables                                                                                                                                     | Success Metric                                                 |
+| -------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| 1a: IDE              | Days 1-3   | VS Code extension with campfire panel, inline decorations, draft mode, status bar, cloud server, append-only log                                 | 2 devs on one campfire, daily active usage while building      |
+| 1b: CLI              | Days 4-5   | `campfire watch` terminal client with three-tier layout, agent activity emission via git hooks + fs watcher                                      | Terminal-first dev using campfire watch alongside Claude Code  |
+| 1c: Campfire Stories | Days 6-9   | Web app with AI-summarized org feed, company context ingestion, team detail views                                                                | Non-dev stakeholder checks Campfire Stories daily              |
+| 1d: Polish           | Days 10-12 | Iterate based on dogfooding, tune throttling, improve AI summaries                                                                               | All three surfaces feel usable without friction                |
+| 2: Intelligence      | Weeks 3-6  | Intent inference from diffs, Campfire Stories notifications/follow, daily digest, agent identity config, interactive CLI commands, graphical TUI | PMs actively using Campfire Stories; AI summaries rated useful |
+| 3: Hive Mind         | Weeks 7-12 | AI merge/conflict detection, agent doing visible work, co-editing (Yjs + Monaco), role-based views                                               | Teams reporting measurable coordination improvement            |
+| 4: Enterprise        | Months 4-6 | Self-hosted option, SSO/SAML, audit logs, compliance, admin console                                                                              | First external team using Campfires                            |
 
 ---
 
@@ -578,14 +578,14 @@ The onboarding must be fast enough that a dev can go from discovery to seeing te
 
 Campfires occupies a new category. No existing tool provides both ambient dev awareness inside the editor AND AI-translated visibility for the rest of the org.
 
-| Tool                 | What It Does                                     | How Campfires Differs                                                                                 |
-| -------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| VS Code Live Share   | Real-time co-editing with shared cursors         | Co-editing is a feature, not the product. Campfires is about awareness, not shared editing sessions.  |
-| GitHub / GitLab      | Async collaboration via PRs, issues, code review | Campfires is real-time and continuous. PRs are after-the-fact; Campfires is during-the-fact.          |
-| Tuple / Pop          | Pair programming with video/screen share         | Campfires is ambient and always-on. Pair programming is synchronous and session-based.                |
-| Linear / Jira        | Project management and issue tracking            | PM tools track planned work. Campfires shows actual work happening right now.                         |
-| Slack / Teams        | Chat-based communication for teams               | Chat is manual and interruptive. Campfires is automatic and ambient.                                  |
-| GitHub Activity Feed | Shows commits, PRs, issues across repos          | Raw and technical. The Reel translates activity into business-legible summaries with company context. |
+| Tool                 | What It Does                                     | How Campfires Differs                                                                                         |
+| -------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| VS Code Live Share   | Real-time co-editing with shared cursors         | Co-editing is a feature, not the product. Campfires is about awareness, not shared editing sessions.          |
+| GitHub / GitLab      | Async collaboration via PRs, issues, code review | Campfires is real-time and continuous. PRs are after-the-fact; Campfires is during-the-fact.                  |
+| Tuple / Pop          | Pair programming with video/screen share         | Campfires is ambient and always-on. Pair programming is synchronous and session-based.                        |
+| Linear / Jira        | Project management and issue tracking            | PM tools track planned work. Campfires shows actual work happening right now.                                 |
+| Slack / Teams        | Chat-based communication for teams               | Chat is manual and interruptive. Campfires is automatic and ambient.                                          |
+| GitHub Activity Feed | Shows commits, PRs, issues across repos          | Raw and technical. Campfire Stories translates activity into business-legible summaries with company context. |
 
 ---
 
@@ -593,12 +593,12 @@ Campfires occupies a new category. No existing tool provides both ambient dev aw
 
 | Risk                                            | Severity | Mitigation                                                                                                                                                                           |
 | ----------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Developers resist transparency ("surveillance") | High     | Draft mode is prominent. Medium awareness only. Reel never exposes raw activity to non-devs. Messaging emphasizes team benefit.                                                      |
-| Reel AI summaries are low quality               | High     | Require good company context. Use commit messages as primary signal. Iterate on prompts. Allow human correction of summaries in Phase 2.                                             |
+| Developers resist transparency ("surveillance") | High     | Draft mode is prominent. Medium awareness only. Campfire Stories never exposes raw activity to non-devs. Messaging emphasizes team benefit.                                          |
+| Campfire Stories AI summaries are low quality   | High     | Require good company context. Use commit messages as primary signal. Iterate on prompts. Allow human correction of summaries in Phase 2.                                             |
 | Stream becomes too noisy at scale               | Medium   | Client-side filters from day one. Focus mode. Event throttling on saves/opens. Server-side rate limiting.                                                                            |
 | WebSocket server scalability                    | Medium   | Yjs is designed for scale. y-redis exists for multi-server. Start simple, shard by team later.                                                                                       |
 | Security concerns (code metadata in cloud)      | Medium   | Only file paths and function names transmitted, never code content. Enterprise self-hosted option in Phase 4.                                                                        |
-| Low initial adoption / cold start               | Low      | Dogfooding from day one. Minimum viable campfire is 2 people. Reel creates org-level pull for adoption.                                                                              |
+| Low initial adoption / cold start               | Low      | Dogfooding from day one. Minimum viable campfire is 2 people. Campfire Stories creates org-level pull for adoption.                                                                  |
 | Agent attribution accuracy                      | Medium   | Git hooks are reliable for commits/branches. Filesystem watcher may misattribute saves — use heuristics (active agent session in the same workspace) and accept imperfection in MVP. |
 
 ---
@@ -613,7 +613,7 @@ These questions were open during the design phase and are now resolved:
 - **Agent identity**: `type: human | agent` on User model and AwarenessState from day one. `parentUserId` links agents to their human owner. CLI and sidebar both render agents nested under their parent. Phase 2 adds agent identity config (naming, color assignment).
 - **Stream naming**: "Activity feed" in the UI, "activity_log" in the database, "activityFeed" in the Yjs `Y.Array`. Users see a feed; the backend writes a log.
 - **Idle detection**: 5 minutes of no editor activity triggers idle status. Any keystroke, scroll, or file switch resets to active. Simple timer in the extension.
-- **Reel detail drill-down**: Clicking into a team from the Reel shows a project-level summary page within the web app. It does NOT expose raw file-level activity. This protects dev trust.
+- **Campfire Stories detail drill-down**: Clicking into a team from Campfire Stories shows a project-level summary page within the web app. It does NOT expose raw file-level activity. This protects dev trust.
 - **User-to-team mapping**: One user, one team in MVP. Multi-team support deferred to Phase 3+.
 - **CLI vs. TUI**: MVP is plain text with ANSI colors and emoji. No TUI framework (blessed, ink, etc.). Graphical TUI deferred to Phase 2.
 - **Agent activity capture**: Git hooks for commits/branches, filesystem watcher for saves. Hooks installed by `campfire watch` on startup, persist across sessions. Filesystem watcher runs only while CLI is active.

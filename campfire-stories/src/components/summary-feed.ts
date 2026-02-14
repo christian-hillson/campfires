@@ -73,7 +73,7 @@ export function renderSummaryFeed(container: HTMLElement, ctx: FeedContext): voi
 
   // Header
   const header = document.createElement('div');
-  header.className = 'reel-header';
+  header.className = 'stories-header';
 
   const title = document.createElement('h1');
   title.textContent = `\uD83D\uDD25 ${ctx.org.name} Bonfire`;

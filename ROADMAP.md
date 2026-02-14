@@ -32,40 +32,40 @@ Terminal-native awareness for Claude Code and terminal workflows.
 | CLI: agent activity via git hooks       | Done   | —     | `post-commit`, `post-checkout` in `.git/hooks/`, config in `.git/campfires.json` |
 | CLI: filesystem watcher for agent saves | Done   | —     | Routes file saves through agent identity when agent is active                    |
 
-## Sprint 3: Campfires Reel (Web App)
+## Sprint 3: Campfire Stories (Web App)
 
 AI-summarized org-wide view for non-dev stakeholders.
 
-| Feature                                | Status | Owner | Notes                                                                                    |
-| -------------------------------------- | ------ | ----- | ---------------------------------------------------------------------------------------- |
-| Reel: web app shell                    | Done   | —     | Vite + vanilla TS, `reel/index.html`, `reel/src/main.ts`                                 |
-| Reel: summary feed UI                  | Done   | —     | Team cards grouped by recency, SSE live updates, `reel/src/components/summary-feed.ts`   |
-| Reel: team detail drill-down           | Done   | —     | Members, full summary, recent activity, `reel/src/components/detail-view.ts`             |
-| Server: AI summarization batch job     | Done   | —     | Stubbed `generateSummary()` in `server/src/summarizer.ts`, pluggable for real Claude API |
-| Server: org context ingestion          | Done   | —     | Mission, roadmap, team descriptions passed to summarizer                                 |
-| Server: SSE for summary stream         | Done   | —     | `GET /orgs/:id/summaries/stream`, intervals in CONFIG                                    |
-| Shared: `oneLiner` on Summary          | Done   | —     | Added to types + persistence for compact card display                                    |
-| Server: read endpoints opened for Reel | Done   | —     | `GET /orgs/:id`, `/orgs/:id/teams`, `/teams/:id/members` use optional auth               |
+| Feature                                            | Status | Owner | Notes                                                                                              |
+| -------------------------------------------------- | ------ | ----- | -------------------------------------------------------------------------------------------------- |
+| Campfire Stories: web app shell                    | Done   | —     | Vite + vanilla TS, `campfire-stories/index.html`, `campfire-stories/src/main.ts`                   |
+| Campfire Stories: summary feed UI                  | Done   | —     | Team cards grouped by recency, SSE live updates, `campfire-stories/src/components/summary-feed.ts` |
+| Campfire Stories: team detail drill-down           | Done   | —     | Members, full summary, recent activity, `campfire-stories/src/components/detail-view.ts`           |
+| Server: AI summarization batch job                 | Done   | —     | Stubbed `generateSummary()` in `server/src/summarizer.ts`, pluggable for real Claude API           |
+| Server: org context ingestion                      | Done   | —     | Mission, roadmap, team descriptions passed to summarizer                                           |
+| Server: SSE for summary stream                     | Done   | —     | `GET /orgs/:id/summaries/stream`, intervals in CONFIG                                              |
+| Shared: `oneLiner` on Summary                      | Done   | —     | Added to types + persistence for compact card display                                              |
+| Server: read endpoints opened for Campfire Stories | Done   | —     | `GET /orgs/:id`, `/orgs/:id/teams`, `/teams/:id/members` use optional auth                         |
 
-## Sprint 4: Reel Map View — RPG-Style Graphical Interface
+## Sprint 4: Campfire Stories Map View — RPG-Style Graphical Interface
 
-2D pixel-art map view as an alternative rendering mode for PMs and non-dev stakeholders. Same data pipeline, same SSE stream, same access controls — canvas-based rendering layer on top of the existing Reel.
+2D pixel-art map view as an alternative rendering mode for PMs and non-dev stakeholders. Same data pipeline, same SSE stream, same access controls — canvas-based rendering layer on top of the existing Campfire Stories app.
 
 **Core concept:** Each team is a campfire on the map. Fire size/intensity reflects activity level. Human users are small sprites with task animations (smithing, scribing, mining). Agent sprites are visually distinct (blockier, glowing eyes) and color-matched to their human owner. Status maps to animation: active = working, idle = sitting with zzz, draft = inside tent, offline = absent.
 
 **Tech approach:** Pure HTML5 canvas with pixel-art rendering, y-sorted depth, auto-layout. Feed/Map toggle in shared header. Awareness polling via REST endpoint every 10s.
 
-| Feature                                 | Status | Owner | Notes                                                                            |
-| --------------------------------------- | ------ | ----- | -------------------------------------------------------------------------------- |
-| Reel: Feed/Map toggle + shared header   | Done   | —     | `reel/src/components/header.ts`, Press Start 2P + Silkscreen fonts               |
-| Map: canvas renderer + campfire sprites | Done   | —     | 3 intensity levels from event count, `reel/src/map/renderer.ts`                  |
-| Map: human user sprites + animations    | Done   | —     | smithing/scribing/mining + idle/zzz + draft/tent, `reel/src/map/sprites.ts`      |
-| Map: agent/golem sprites                | Done   | —     | Blockier body, glowing eyes, color-matched to parent, `reel/src/map/sprites.ts`  |
-| Map: environmental art                  | Done   | —     | Trees, paths, woodpiles, barrels, crates, torches, `reel/src/map/environment.ts` |
-| Map: zoomed-out org view                | Done   | —     | Elliptical auto-layout, AI summary one-liners overlay, `reel/src/map/layout.ts`  |
-| Map: hover tooltips                     | Done   | —     | Hit detection on sprites, name/role/team/file tooltip                            |
-| Server: awareness REST endpoint         | Done   | —     | `GET /api/teams/:id/awareness`, reads Yjs awareness state                        |
-| Mockup: `campfires-map-mockup.html`     | Done   | —     | Visual direction established                                                     |
+| Feature                                           | Status | Owner | Notes                                                                                        |
+| ------------------------------------------------- | ------ | ----- | -------------------------------------------------------------------------------------------- |
+| Campfire Stories: Feed/Map toggle + shared header | Done   | —     | `campfire-stories/src/components/header.ts`, Press Start 2P + Silkscreen fonts               |
+| Map: canvas renderer + campfire sprites           | Done   | —     | 3 intensity levels from event count, `campfire-stories/src/map/renderer.ts`                  |
+| Map: human user sprites + animations              | Done   | —     | smithing/scribing/mining + idle/zzz + draft/tent, `campfire-stories/src/map/sprites.ts`      |
+| Map: agent/golem sprites                          | Done   | —     | Blockier body, glowing eyes, color-matched to parent, `campfire-stories/src/map/sprites.ts`  |
+| Map: environmental art                            | Done   | —     | Trees, paths, woodpiles, barrels, crates, torches, `campfire-stories/src/map/environment.ts` |
+| Map: zoomed-out org view                          | Done   | —     | Elliptical auto-layout, AI summary one-liners overlay, `campfire-stories/src/map/layout.ts`  |
+| Map: hover tooltips                               | Done   | —     | Hit detection on sprites, name/role/team/file tooltip                                        |
+| Server: awareness REST endpoint                   | Done   | —     | `GET /api/teams/:id/awareness`, reads Yjs awareness state                                    |
+| Mockup: `campfires-map-mockup.html`               | Done   | —     | Visual direction established                                                                 |
 
 **Deferred from Sprint 4:** Zoom/scroll interaction, ambient display mode (TV in office), sprite customization, day/night cycle.
 
@@ -90,14 +90,14 @@ Let people see into other campfires and temporarily visit them. The Map View alr
 
 **Core concept:** You're at your campfire and you see a big fire burning across the map. You walk over, peek in, see what's happening, and maybe sit down for a while. Visitors see the same awareness and activity feed as members but don't broadcast their own activity into that campfire.
 
-| Feature                                         | Status | Owner | Notes                                                                                     |
-| ----------------------------------------------- | ------ | ----- | ----------------------------------------------------------------------------------------- |
-| Map: click campfire to open detail overlay      | Done   | —     | Team name, AI summary, member list with statuses, headcount                               |
-| Reel: campfire detail as entry point for visits | Done   | —     | Existing detail drill-down gains a "Visit this campfire" action                           |
-| Server: cross-team read access for visitors     | Done   | —     | Read-only awareness + activity for any team in your org                                   |
-| Server: visitor presence (lightweight)          | Done   | —     | Visitors appear in awareness with a distinct `visitor` status, don't emit activity events |
-| Extension: visit campfire command               | Done   | —     | Switch sidebar to observe a different team's campfire temporarily                         |
-| CLI: visit campfire flag                        | Done   | —     | `campfire watch --visit <teamId>` to observe another team                                 |
+| Feature                                                     | Status | Owner | Notes                                                                                     |
+| ----------------------------------------------------------- | ------ | ----- | ----------------------------------------------------------------------------------------- |
+| Map: click campfire to open detail overlay                  | Done   | —     | Team name, AI summary, member list with statuses, headcount                               |
+| Campfire Stories: campfire detail as entry point for visits | Done   | —     | Existing detail drill-down gains a "Visit this campfire" action                           |
+| Server: cross-team read access for visitors                 | Done   | —     | Read-only awareness + activity for any team in your org                                   |
+| Server: visitor presence (lightweight)                      | Done   | —     | Visitors appear in awareness with a distinct `visitor` status, don't emit activity events |
+| Extension: visit campfire command                           | Done   | —     | Switch sidebar to observe a different team's campfire temporarily                         |
+| CLI: visit campfire flag                                    | Done   | —     | `campfire watch --visit <teamId>` to observe another team                                 |
 
 ---
 
@@ -124,23 +124,23 @@ The plugin captures developer activity ambiently and uploads session transcripts
 
 Replace the stubbed summarizer with real Claude API integration. Transcripts provide much richer context than raw file events.
 
-| Feature                                         | Status      | Owner | Notes                                                          |
-| ----------------------------------------------- | ----------- | ----- | -------------------------------------------------------------- |
-| Server: Claude API integration replacing stub   | Not started | —     | `server/src/summarizer.ts`                                     |
-| Server: transcript → summary pipeline           | Not started | —     | Process transcripts into business-legible team summaries       |
-| Server: summary quality tuning                  | Not started | —     | Prompt engineering, chunking for long sessions                 |
-| Reel: Fireside Panel branding for summary feed  | Not started | —     | Rename/restyle the existing summary feed view                  |
-| Reel: richer summary cards from transcript data | Not started | —     | Summaries powered by "what was accomplished" vs raw file saves |
+| Feature                                                     | Status      | Owner | Notes                                                          |
+| ----------------------------------------------------------- | ----------- | ----- | -------------------------------------------------------------- |
+| Server: Claude API integration replacing stub               | Not started | —     | `server/src/summarizer.ts`                                     |
+| Server: transcript → summary pipeline                       | Not started | —     | Process transcripts into business-legible team summaries       |
+| Server: summary quality tuning                              | Not started | —     | Prompt engineering, chunking for long sessions                 |
+| Campfire Stories: Fireside Panel branding for summary feed  | Not started | —     | Rename/restyle the existing summary feed view                  |
+| Campfire Stories: richer summary cards from transcript data | Not started | —     | Summaries powered by "what was accomplished" vs raw file saves |
 
 ## Sprint 9: Integration & Polish
 
-End-to-end flow: Claude Code Plugin → Server → AI Summarizer → Reel. Driven by real usage and dogfooding.
+End-to-end flow: Claude Code Plugin → Server → AI Summarizer → Campfire Stories. Driven by real usage and dogfooding.
 
-| Feature                                     | Status      | Owner | Notes                                               |
-| ------------------------------------------- | ----------- | ----- | --------------------------------------------------- |
-| End-to-end plugin → server → reel flow      | Not started | —     | Full pipeline working with real data                |
-| Zero-config onboarding experience           | Not started | —     | Plugin captures activity with no setup beyond Share |
-| Deprecate extension + CLI as primary inputs | Not started | —     | Keep as reference, remove from active development   |
+| Feature                                            | Status      | Owner | Notes                                               |
+| -------------------------------------------------- | ----------- | ----- | --------------------------------------------------- |
+| End-to-end plugin → server → campfire-stories flow | Not started | —     | Full pipeline working with real data                |
+| Zero-config onboarding experience                  | Not started | —     | Plugin captures activity with no setup beyond Share |
+| Deprecate extension + CLI as primary inputs        | Not started | —     | Keep as reference, remove from active development   |
 
 ## Not Yet Planned
 
@@ -149,7 +149,7 @@ These are explicitly deferred. Don't build them yet.
 - Co-editing / shared cursors (not the differentiator)
 - AI merge/conflict detection (needs mature activity log)
 - Self-hosted / enterprise (cloud-first)
-- Reel notifications / follow
+- Campfire Stories notifications / follow
 - Daily digest emails
 - Agent identity config (naming, colors)
 - Map View: zoom/scroll interaction (add if needed, Phaser.js)

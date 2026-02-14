@@ -6,7 +6,7 @@
     "shared",
     "server",
     "extension",
-    "reel",
+    "campfire-stories",
     "cli"
   ],
   "scripts": {

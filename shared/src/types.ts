@@ -88,7 +88,7 @@ export interface ActivityEvent {
 
 /**
  * Summary (Persisted)
- * AI-generated summaries for the Reel
+ * AI-generated summaries for Campfire Stories
  */
 export interface Summary {
   id: string;
@@ -247,7 +247,7 @@ export const CONFIG = {
   // Awareness timeout (when to show user as offline)
   AWARENESS_TIMEOUT: 30 * 1000, // 30 seconds
 
-  // Reel summarization interval
+  // Campfire Stories summarization interval
   SUMMARIZATION_INTERVAL: 15 * 60 * 1000, // 15 minutes
 
   // SSE stream intervals

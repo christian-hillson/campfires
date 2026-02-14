@@ -41,10 +41,10 @@ function renderCurrentView(): void {
     onViewChange: switchView,
   });
 
-  let content = app.querySelector('.reel-content') as HTMLElement | null;
+  let content = app.querySelector('.stories-content') as HTMLElement | null;
   if (!content) {
     content = document.createElement('div');
-    content.className = 'reel-content';
+    content.className = 'stories-content';
     app.appendChild(content);
   }
 
@@ -94,7 +94,7 @@ function showDetail(teamId: string): void {
   const team = state.teams.find((t) => t.teamId === teamId);
   if (!team) return;
 
-  const content = app.querySelector('.reel-content') as HTMLElement;
+  const content = app.querySelector('.stories-content') as HTMLElement;
   if (!content) return;
 
   renderDetailView(content, {
@@ -131,7 +131,7 @@ function connectSSE(orgId: string): EventSource {
       if (data.type === 'update' && data.summaries && state) {
         state.summaries = [...data.summaries, ...state.summaries];
 
-        const content = app.querySelector('.reel-content');
+        const content = app.querySelector('.stories-content');
         if (content && state.currentView === 'feed') {
           updateSummaryFeed(content as HTMLElement, data.summaries);
         }
