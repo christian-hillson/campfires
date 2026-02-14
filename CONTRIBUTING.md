@@ -30,12 +30,12 @@ All packages import types from `@campfires/shared`. If you change `shared/src/ty
 
 ## Development
 
-| Task               | Command            |
-| ------------------ | ------------------ |
-| Build everything   | `npm run build`    |
-| Build shared types | `npm run build:shared` |
-| Build server       | `npm run build:server` |
-| Run server (dev)   | `npm run dev:server`   |
+| Task               | Command                  |
+| ------------------ | ------------------------ |
+| Build everything   | `npm run build`          |
+| Build shared types | `npm run build:shared`   |
+| Build server       | `npm run build:server`   |
+| Run server (dev)   | `npm run dev:server`     |
 | Run reel (dev)     | `cd reel && npm run dev` |
 
 The server uses `tsx watch` for hot reload in dev mode.
@@ -44,11 +44,11 @@ The server uses `tsx watch` for hot reload in dev mode.
 
 These packages were the original prototype clients. The Claude Code Plugin is replacing them as the primary data source. They remain in the repo for reference but are not under active development.
 
-| Task              | Command                                                                         |
-| ----------------- | ------------------------------------------------------------------------------- |
-| Build CLI         | `npm run build:cli`                                                             |
-| Run CLI (dev)     | `npm run dev:cli -- watch` (or `npx tsx cli/src/index.ts watch` from repo root) |
-| Run extension     | Open `extension/` in VS Code, press F5 (launch config included)                 |
+| Task          | Command                                                                         |
+| ------------- | ------------------------------------------------------------------------------- |
+| Build CLI     | `npm run build:cli`                                                             |
+| Run CLI (dev) | `npm run dev:cli -- watch` (or `npx tsx cli/src/index.ts watch` from repo root) |
+| Run extension | Open `extension/` in VS Code, press F5 (launch config included)                 |
 
 ## Branch Conventions
 
@@ -73,13 +73,13 @@ These are non-negotiable across all packages:
 
 ## What Goes Where
 
-| Change                      | Package                                                               |
-| --------------------------- | --------------------------------------------------------------------- |
-| New data type or event type | `shared/src/types.ts`                                                 |
-| New REST endpoint           | `server/src/api.ts`                                                   |
-| AI summarization changes    | `server/src/summarizer.ts`                                            |
-| Reel UI components          | `reel/src/components/`                                                |
-| Reel map view               | `reel/src/map/`                                                       |
+| Change                      | Package                    |
+| --------------------------- | -------------------------- |
+| New data type or event type | `shared/src/types.ts`      |
+| New REST endpoint           | `server/src/api.ts`        |
+| AI summarization changes    | `server/src/summarizer.ts` |
+| Reel UI components          | `reel/src/components/`     |
+| Reel map view               | `reel/src/map/`            |
 
 ## Spec Reference
 
