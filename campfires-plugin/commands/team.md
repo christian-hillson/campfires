@@ -3,6 +3,7 @@ Show your current Campfires team. Fetch the team members from the server and dis
 Read config from ~/.campfires/config.json, then call GET /teams/{team_id}/members on the server.
 
 Display each team member with:
+
 - Name
 - Status (active / idle / draft / offline)
 - What they're working on (current file/function if available)

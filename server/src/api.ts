@@ -533,7 +533,13 @@ export function createRouter(): Router {
       return;
     }
 
-    const session = db.createSession(session_id, caller.userId, caller.teamId, repo || null, branch || null);
+    const session = db.createSession(
+      session_id,
+      caller.userId,
+      caller.teamId,
+      repo || null,
+      branch || null,
+    );
 
     // Log session_start activity
     db.appendActivityEvent({
