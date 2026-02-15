@@ -189,7 +189,7 @@ End-to-end flow: Claude Code Plugin → Server → AI Summarizer → Campfire St
 | -------------------------------------------------- | ----------- | ----- | --------------------------------------------------- |
 | End-to-end plugin → server → campfire-stories flow | Done        | —     | Static serving, SPA fallback, sessionId threading   |
 | Zero-config onboarding experience                  | Done        | —     | Login command handles signup + auto-provision org/team |
-| Deprecate extension + CLI as primary inputs        | Not started | —     | Keep as reference, remove from active development   |
+| Deprecate extension + CLI as primary inputs        | Done        | —     | Removed from workspaces + build pipeline, kept for reference |
 
 ## Not Yet Planned
 

@@ -22,8 +22,8 @@ campfires/
   server/     @campfires/server   — Node.js + Express + SQLite
   campfire-stories/  @campfires/campfire-stories  — Vite web app (Organization Map, Fireside Panel, Activity Log)
   context/                        — specs, research, reference docs (read-only)
-  extension/  (legacy v1)         — VS Code extension prototype
-  cli/        (legacy v1)         — campfire watch terminal client prototype
+  extension/  (archived, not built) — VS Code extension prototype
+  cli/        (archived, not built) — campfire watch terminal client prototype
 ```
 
 All packages import types from `@campfires/shared`. If you change `shared/src/types.ts`, rebuild shared before building dependents.
@@ -36,19 +36,9 @@ All packages import types from `@campfires/shared`. If you change `shared/src/ty
 | Build shared types         | `npm run build:shared`               |
 | Build server               | `npm run build:server`               |
 | Run server (dev)           | `npm run dev:server`                 |
-| Run Campfire Stories (dev) | `cd campfire-stories && npm run dev` |
+| Run Campfire Stories (dev) | `npm run dev:stories`                |
 
 The server uses `tsx watch` for hot reload in dev mode.
-
-### Legacy v1 packages (extension, cli)
-
-These packages were the original prototype clients. The Claude Code Plugin is replacing them as the primary data source. They remain in the repo for reference but are not under active development.
-
-| Task          | Command                                                                         |
-| ------------- | ------------------------------------------------------------------------------- |
-| Build CLI     | `npm run build:cli`                                                             |
-| Run CLI (dev) | `npm run dev:cli -- watch` (or `npx tsx cli/src/index.ts watch` from repo root) |
-| Run extension | Open `extension/` in VS Code, press F5 (launch config included)                 |
 
 ## Branch Conventions
 
@@ -89,7 +79,7 @@ The original v1 technical spec lives at `context/campfires-build-spec-v3.md`. It
 
 ## Testing
 
-No test framework is configured yet. When one is added, this section will be updated. In the meantime, test manually by running the server and extension together.
+No test framework is configured yet. When one is added, this section will be updated. In the meantime, test manually by running the server and Campfire Stories together.
 
 ## What Not to Commit
 

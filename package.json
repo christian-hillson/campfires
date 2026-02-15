@@ -5,25 +5,21 @@
   "workspaces": [
     "shared",
     "server",
-    "extension",
-    "campfire-stories",
-    "cli"
+    "campfire-stories"
   ],
   "scripts": {
     "build": "npm run build --workspaces",
     "build:all": "npm run build -w shared && npm run build -w server && npm run build -w campfire-stories",
     "build:shared": "npm run build -w shared",
     "build:server": "npm run build -w server",
-    "build:cli": "npm run build -w cli",
     "start": "npm start -w server",
     "dev:server": "npm run dev -w server",
     "dev:stories": "npm run dev -w campfire-stories",
-    "dev:cli": "npm run dev -w cli",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc -b shared server cli",
+    "typecheck": "tsc -b shared server",
     "test": "vitest run",
     "test:watch": "vitest"
   },
