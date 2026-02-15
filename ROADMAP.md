@@ -159,27 +159,27 @@ The plugin captures developer activity ambiently via Claude Code hooks and uploa
 
 Iterative pass on the map mockup (`context/campfires-map-mockup.html`). Added the "Campfire Stories" detail panel concept and cleaned up unused UI elements.
 
-| Feature                                                   | Status | Owner | Notes                                                                       |
-| --------------------------------------------------------- | ------ | ----- | --------------------------------------------------------------------------- |
-| Mockup: remove legend panel                               | Done   | —     | Legend was unnecessary clutter, removed HTML + CSS                           |
-| Mockup: remove orphaned minimap CSS                       | Done   | —     | CSS rules existed with no corresponding HTML element                        |
-| Mockup: rename FIRESIDE → FIRESIDE UPDATES                | Done   | —     | Org-wide summary panel in top-right                                         |
-| Mockup: add "Campfire Stories — Payments" panel           | Done   | —     | Bottom-right panel with detailed, multi-line team updates over 90s loop     |
-| Mockup: story_update events in simulation timeline        | Done   | —     | 6 narrative entries for Payments team spread across the cycle                |
-| Mockup: handleStoryUpdate() with fade-in + max 4 entries  | Done   | —     | Prepend with relative timestamps, oldest fades out, clears on cycle reset   |
+| Feature                                                  | Status | Owner | Notes                                                                     |
+| -------------------------------------------------------- | ------ | ----- | ------------------------------------------------------------------------- |
+| Mockup: remove legend panel                              | Done   | —     | Legend was unnecessary clutter, removed HTML + CSS                        |
+| Mockup: remove orphaned minimap CSS                      | Done   | —     | CSS rules existed with no corresponding HTML element                      |
+| Mockup: rename FIRESIDE → FIRESIDE UPDATES               | Done   | —     | Org-wide summary panel in top-right                                       |
+| Mockup: add "Campfire Stories — Payments" panel          | Done   | —     | Bottom-right panel with detailed, multi-line team updates over 90s loop   |
+| Mockup: story_update events in simulation timeline       | Done   | —     | 6 narrative entries for Payments team spread across the cycle             |
+| Mockup: handleStoryUpdate() with fade-in + max 4 entries | Done   | —     | Prepend with relative timestamps, oldest fades out, clears on cycle reset |
 
 ## Sprint 8: AI Summarizer (Intelligence Layer)
 
 Replace the stubbed summarizer with real Claude API integration. Transcripts provide much richer context than raw file events.
 
-| Feature                                                     | Status      | Owner | Notes                                                                              |
-| ----------------------------------------------------------- | ----------- | ----- | ---------------------------------------------------------------------------------- |
-| Server: Claude API integration replacing stub               | Done        | —     | `server/src/summarizer.ts`, Claude API wired up                                    |
-| Server: transcript → summary pipeline                       | Not started | —     | Process transcripts into business-legible team summaries                           |
-| Server: summary quality tuning                              | Not started | —     | Prompt engineering, chunking for long sessions                                     |
-| Campfire Stories: Fireside Updates panel (org-wide)         | Not started | —     | Rename/restyle summary feed to match mockup "FIRESIDE UPDATES" branding            |
-| Campfire Stories: Campfire Stories panel (team detail)      | Not started | —     | New panel showing detailed AI-generated narrative for a single team, per mockup    |
-| Campfire Stories: richer summary cards from transcript data | Not started | —     | Summaries powered by "what was accomplished" vs raw file saves                     |
+| Feature                                                     | Status      | Owner | Notes                                                                           |
+| ----------------------------------------------------------- | ----------- | ----- | ------------------------------------------------------------------------------- |
+| Server: Claude API integration replacing stub               | Done        | —     | `server/src/summarizer.ts`, Claude API wired up                                 |
+| Server: transcript → summary pipeline                       | Not started | —     | Process transcripts into business-legible team summaries                        |
+| Server: summary quality tuning                              | Not started | —     | Prompt engineering, chunking for long sessions                                  |
+| Campfire Stories: Fireside Updates panel (org-wide)         | Not started | —     | Rename/restyle summary feed to match mockup "FIRESIDE UPDATES" branding         |
+| Campfire Stories: Campfire Stories panel (team detail)      | Not started | —     | New panel showing detailed AI-generated narrative for a single team, per mockup |
+| Campfire Stories: richer summary cards from transcript data | Not started | —     | Summaries powered by "what was accomplished" vs raw file saves                  |
 
 ## Sprint 9: Integration & Polish
 
