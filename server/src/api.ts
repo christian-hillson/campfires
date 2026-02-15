@@ -25,6 +25,15 @@ import {
 // Zod Schemas
 // ============================================
 
+// Strip control characters (except newline/tab) from fields that flow into AI prompts
+function stripControlChars(s: string): string {
+  return s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+}
+
+// Sanitized string for AI-facing fields: length limit + control char stripping
+const aiSafeString = (maxLen: number) =>
+  z.string().max(maxLen).transform(stripControlChars);
+
 const SignupSchema = z.object({
   email: z.string().email().max(255),
   password: z.string().min(8).max(128),
@@ -38,20 +47,20 @@ const LoginSchema = z.object({
 
 const CreateOrgSchema = z.object({
   name: z.string().min(1).max(200).trim(),
-  mission: z.string().max(2000).optional(),
-  roadmap: z.string().max(10000).optional(),
+  mission: aiSafeString(2000).optional(),
+  roadmap: aiSafeString(2000).optional(),
 });
 
 const UpdateOrgSchema = z.object({
   name: z.string().min(1).max(200).trim().optional(),
-  mission: z.string().max(2000).optional(),
-  roadmap: z.string().max(10000).optional(),
+  mission: aiSafeString(2000).optional(),
+  roadmap: aiSafeString(2000).optional(),
 });
 
 const CreateTeamSchema = z.object({
   orgId: z.string().uuid(),
   name: z.string().min(1).max(200).trim(),
-  description: z.string().max(2000).optional(),
+  description: aiSafeString(2000).optional(),
 });
 
 const JoinTeamSchema = z.object({
