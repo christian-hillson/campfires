@@ -5,6 +5,7 @@
 You are working on Campfires, a pixel-art RPG-style map web app (`campfire-stories/`) that visualizes team development activity. Each team is represented as a campfire on an HTML5 canvas. Currently, campfires only exist when teams are active. This sprint adds a full campfire lifecycle: cold firepits for offline teams, a kindle animation when the first person logs in, revised fire intensity tiers, a decay system with grace period, and a special founder animation for brand-new teams.
 
 **Codebase location:** Monorepo. The map renderer lives in `campfire-stories/src/map/`. Key files:
+
 - `renderer.ts` — Main canvas render loop, `drawCampfire()`, day/night cycle
 - `sprites.ts` — Human and golem sprite rendering + animations
 - `environment.ts` — Trees, paths, woodpiles, barrels, crates, torches
@@ -12,6 +13,7 @@ You are working on Campfires, a pixel-art RPG-style map web app (`campfire-stori
 - `camera.ts` — Zoom/pan camera system
 
 The server lives in `server/src/`. Key files:
+
 - `api.ts` — REST endpoints
 - `persistence.ts` — SQLite persistence
 - `ws-server.ts` — WebSocket + Yjs awareness
@@ -27,6 +29,7 @@ Read all of these files before making changes. Understand the existing rendering
 Every registered team gets a campfire position on the map at all times, even when no one is online. When a team is fully offline, their campfire renders as a **cold firepit**:
 
 **Visual elements:**
+
 - **Stone ring** — 6-8 small gray stones arranged in a circle (pixel-art style, 3-4px each). Use slightly varied gray tones (#555, #666, #777) for a natural look.
 - **Charred logs** — 2-3 small dark brown/black log shapes inside the ring, crossed casually. These are remnants of the last fire.
 - **Faint smoke wisp** — A single thin wisp of smoke rising from the center, very subtle. 1-2px wide, light gray (#888 at ~30% opacity), slow sinusoidal drift. This signals "this was a fire" without suggesting it's active.
@@ -34,6 +37,7 @@ Every registered team gets a campfire position on the map at all times, even whe
 - **Team name label** — Still displayed below the firepit, same as active campfires, but dimmed (#555 instead of the normal color).
 
 **Day/night interaction:**
+
 - At night, the charred logs should have a very faint orange-red glow (embers effect) — just 2-3 pixels flickering between #8B2500 and #4A1400 at ~40% opacity. The stone ring catches faint moonlight (slightly lighter gray on the top-facing edges).
 - During day, no ember glow. Just the cold stones and charred logs.
 
@@ -41,14 +45,15 @@ Every registered team gets a campfire position on the map at all times, even whe
 
 Replace the current 3-tier system with 4 tiers plus the cold state:
 
-| Tier | Name | Trigger | Visual |
-|------|------|---------|--------|
-| 0 | Cold/Smoldering | No team members online | Stone ring, charred logs, faint smoke, leftover tools. See above. |
-| 1 | Kindled | First person logs in | Small flame (60% of current min size). Minimal sparks (1-2). Warm glow radius small. Fire is clearly lit but modest. The "someone just got here" state. |
-| 2 | Steady | Multiple people active, moderate event rate | Normal campfire. Steady flame, moderate sparks (3-5). This is roughly what the current "low/medium" tier looks like. |
-| 3 | Roaring | High activity, lots of events flowing | Big flames, lots of sparks (6-10), expanded glow radius. Current "high" tier. |
+| Tier | Name            | Trigger                                     | Visual                                                                                                                                                  |
+| ---- | --------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | Cold/Smoldering | No team members online                      | Stone ring, charred logs, faint smoke, leftover tools. See above.                                                                                       |
+| 1    | Kindled         | First person logs in                        | Small flame (60% of current min size). Minimal sparks (1-2). Warm glow radius small. Fire is clearly lit but modest. The "someone just got here" state. |
+| 2    | Steady          | Multiple people active, moderate event rate | Normal campfire. Steady flame, moderate sparks (3-5). This is roughly what the current "low/medium" tier looks like.                                    |
+| 3    | Roaring         | High activity, lots of events flowing       | Big flames, lots of sparks (6-10), expanded glow radius. Current "high" tier.                                                                           |
 
 **Tier transitions** should use the existing smooth 1-second transition system. Tier calculation should factor in:
+
 - Number of online team members (0 = Tier 0, 1 = at least Tier 1)
 - Event rate over the last 60 seconds (file_saves, commits, branch_switches)
 - Suggested thresholds: 0 events/min → Tier 1 (if anyone online), 1-5 events/min → Tier 2, 6+ events/min → Tier 3
@@ -60,6 +65,7 @@ Adjust these thresholds based on what looks good — the numbers above are start
 When the first team member comes online and a campfire transitions from Tier 0 → Tier 1, play a **kindle animation** (~1.5 seconds):
 
 **Sequence:**
+
 1. **Spark** (0-0.3s) — A small bright spark (#FFD700) appears at the center of the firepit, jumping between the charred logs. 2-3 quick position jitters.
 2. **Catch** (0.3-0.7s) — The spark expands into a tiny flame. Charred logs begin to glow orange at contact points. Faint crackle particles (2-3 tiny orange dots rising).
 3. **Grow** (0.7-1.5s) — Flame smoothly grows to Tier 1 size. Glow radius expands. Smoke wisp transitions from gray to light white/yellow (now it's real fire smoke). Leftover tools from the cold state fade out or get "picked up" (shrink and vanish over 0.3s).
@@ -81,10 +87,12 @@ Track the grace period on the server side via the session/heartbeat system. The 
 When a brand-new team registers for the first time (not a daily rekindle — the very first time this team appears on any org map), play a special **founder ceremony animation** (~4 seconds):
 
 **The Founder Pig:**
+
 - A small pixel-art pig character (8-10px wide, 6-8px tall). Pink body (#FFB6C1 / #FF69B4), darker pink snout, tiny black dot eyes, small pointed ears, curly tail. Keep it cute and simple — this is pixel art, not a painting. 4 colors max.
 - The pig should have a tiny hard hat or construction hat (yellow, #FFD700) to signal "builder."
 
 **Animation sequence:**
+
 1. **Entrance** (0-1s) — The pig trots in from the nearest map edge toward the designated campfire position. Movement speed similar to sprite walk animations. Small bouncy gait (1-2px vertical bob per step).
 2. **Building** (1-2.5s) — The pig stops at the position. Stones appear one at a time in a circle (each stone pops in with a tiny 1-frame scale-up). After the ring is placed, the pig pushes/rolls 2 log shapes into the center (logs slide in from the pig's position).
 3. **Lighting** (2.5-3.5s) — The pig faces the firepit. A bright spark appears (same as kindle spark). The fire catches and grows to Tier 1. Brief celebration particles — 3-4 gold sparkles around the pig.
@@ -97,11 +105,13 @@ When a brand-new team registers for the first time (not a daily rekindle — the
 Campfire positions must be **stable and persistent**. People build spatial memory ("Payments is top-left").
 
 **On team registration:**
+
 - Calculate a position for the new campfire using the existing elliptical auto-layout algorithm, but now accounting for all existing campfires (not just active ones).
 - Persist the (x, y) world coordinates to SQLite on the team record.
 - Existing campfires do NOT move when a new one is added. The new campfire gets placed in the best available gap.
 
 **On map load:**
+
 - Read persisted positions from the server. If a team has stored coordinates, use them. Only run auto-layout for teams that don't have persisted positions (migration case).
 - Add a new endpoint or extend the existing teams endpoint: `GET /orgs/:id/teams` should include `mapX` and `mapY` fields.
 
@@ -134,17 +144,20 @@ Campfire positions must be **stable and persistent**. People build spatial memor
 ## Files You'll Likely Touch
 
 **Map rendering (campfire-stories/src/map/):**
+
 - `renderer.ts` — `drawCampfire()` refactor, new `drawColdFirepit()`, tier logic, kindle animation, decay animation
 - `sprites.ts` — Founder pig sprite (new), leftover tool sprites (may reuse environment art)
 - `environment.ts` — Possibly extend for leftover tool props
 - `layout.ts` — Persist positions, gap-finding for new teams
 
 **Server (server/src/):**
+
 - `persistence.ts` — New columns: `mapX`, `mapY`, `firstSeenAt` on teams table. Grace period tracking on sessions.
 - `api.ts` — Extend `GET /orgs/:id/teams` with position data. SSE event for team registration.
 - Possibly `ws-server.ts` if awareness state needs to carry team online/offline status for tier calculation.
 
 **Shared (shared/src/):**
+
 - `types.ts` — Update Team type with `mapX`, `mapY`, `firstSeenAt`. Add fire tier enum/type if not implicit.
 
 ---

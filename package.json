@@ -21,13 +21,15 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc -b shared server",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@types/supertest": "^6.0.3",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
     "prettier": "^3.8.1",
     "supertest": "^7.2.2",
     "typescript": "^5.3.3",
