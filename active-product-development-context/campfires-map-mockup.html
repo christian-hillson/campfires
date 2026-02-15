@@ -579,7 +579,13 @@
         { time: 8, type: 'session_start', userId: 'christian', teamId: 'payments' },
         { time: 10, type: 'file_save', userId: 'christian', file: 'server/api.ts' },
         // t=13: First golem spawn
-        { time: 13, type: 'agent_spawn', userId: 'christian', agentId: 'golem-1', teamId: 'payments' },
+        {
+          time: 13,
+          type: 'agent_spawn',
+          userId: 'christian',
+          agentId: 'golem-1',
+          teamId: 'payments',
+        },
         // t=16: JC arrives
         { time: 16, type: 'session_start', userId: 'jc', teamId: 'payments' },
         // t=18: Platform team wakes up — Alex arrives
@@ -599,48 +605,174 @@
         { time: 38, type: 'new_campfire_striking' },
         { time: 40, type: 'new_campfire_caught' },
         { time: 42, type: 'new_campfire_working' },
-        { time: 43, type: 'story_update', text: '🔥 New campfire: <strong style="color:#fbbf24">Hackathon</strong> — Natasha started a new project' },
+        {
+          time: 43,
+          type: 'story_update',
+          text: '🔥 New campfire: <strong style="color:#fbbf24">Hackathon</strong> — Natasha started a new project',
+        },
 
         // ═══ PEAK ACTIVITY (t=45-85) — existing events shifted +20 ═══
         // Agent working
-        { time: 41, type: 'file_save', userId: 'golem-1', file: 'server/summarizer.ts', userType: 'agent' },
-        { time: 43, type: 'file_save', userId: 'golem-1', file: 'server/summarizer.ts', userType: 'agent' },
-        { time: 45, type: 'file_save', userId: 'golem-1', file: 'server/batch-job.ts', userType: 'agent' },
+        {
+          time: 41,
+          type: 'file_save',
+          userId: 'golem-1',
+          file: 'server/summarizer.ts',
+          userType: 'agent',
+        },
+        {
+          time: 43,
+          type: 'file_save',
+          userId: 'golem-1',
+          file: 'server/summarizer.ts',
+          userType: 'agent',
+        },
+        {
+          time: 45,
+          type: 'file_save',
+          userId: 'golem-1',
+          file: 'server/batch-job.ts',
+          userType: 'agent',
+        },
         // Commit
         { time: 48, type: 'commit', userId: 'christian', message: 'add JWT refresh endpoint' },
         // Agent commit
-        { time: 52, type: 'commit', userId: 'golem-1', message: 'wire up batch summarizer', userType: 'agent' },
+        {
+          time: 52,
+          type: 'commit',
+          userId: 'golem-1',
+          message: 'wire up batch summarizer',
+          userType: 'agent',
+        },
         // Cross-team spark
-        { time: 55, type: 'spark', fromTeam: 'payments', toTeam: 'platform', summary: 'Payments \u2194 Platform \u2014 webhook auth changes may conflict with OAuth migration' },
+        {
+          time: 55,
+          type: 'spark',
+          fromTeam: 'payments',
+          toTeam: 'platform',
+          summary:
+            'Payments \u2194 Platform \u2014 webhook auth changes may conflict with OAuth migration',
+        },
         // Draft mode
         { time: 56, type: 'draft_mode_on', userId: 'jc' },
         // Multiple agent spawns
-        { time: 60, type: 'agent_spawn', userId: 'christian', agentId: 'golem-2', teamId: 'payments' },
-        { time: 60.5, type: 'agent_spawn', userId: 'christian', agentId: 'golem-3', teamId: 'payments' },
+        {
+          time: 60,
+          type: 'agent_spawn',
+          userId: 'christian',
+          agentId: 'golem-2',
+          teamId: 'payments',
+        },
+        {
+          time: 60.5,
+          type: 'agent_spawn',
+          userId: 'christian',
+          agentId: 'golem-3',
+          teamId: 'payments',
+        },
         { time: 64, type: 'draft_mode_off', userId: 'jc' },
         // Summary updates
-        { time: 40, type: 'summary_update', teamId: 'infra', activityLevel: 'steady', milestone: false, mood: 'building', oneLiner: 'Redis cluster failover tested successfully' },
-        { time: 50, type: 'summary_update', teamId: 'growth', activityLevel: 'steady', milestone: false, mood: 'building', oneLiner: 'Conversion up 12% with new onboarding flow' },
-        { time: 68, type: 'summary_update', teamId: 'payments', activityLevel: 'high', milestone: false, mood: 'building', oneLiner: 'Webhook handler passing integration tests' },
-        { time: 68, type: 'summary_update', teamId: 'platform', activityLevel: 'low', milestone: false, mood: 'fixing', oneLiner: 'Debugging OAuth token refresh race condition' },
+        {
+          time: 40,
+          type: 'summary_update',
+          teamId: 'infra',
+          activityLevel: 'steady',
+          milestone: false,
+          mood: 'building',
+          oneLiner: 'Redis cluster failover tested successfully',
+        },
+        {
+          time: 50,
+          type: 'summary_update',
+          teamId: 'growth',
+          activityLevel: 'steady',
+          milestone: false,
+          mood: 'building',
+          oneLiner: 'Conversion up 12% with new onboarding flow',
+        },
+        {
+          time: 68,
+          type: 'summary_update',
+          teamId: 'payments',
+          activityLevel: 'high',
+          milestone: false,
+          mood: 'building',
+          oneLiner: 'Webhook handler passing integration tests',
+        },
+        {
+          time: 68,
+          type: 'summary_update',
+          teamId: 'platform',
+          activityLevel: 'low',
+          milestone: false,
+          mood: 'fixing',
+          oneLiner: 'Debugging OAuth token refresh race condition',
+        },
         // Milestone
-        { time: 72, type: 'summary_update', teamId: 'payments', activityLevel: 'high', milestone: true, mood: 'building', oneLiner: 'Stripe billing migration v1 shipped!' },
+        {
+          time: 72,
+          type: 'summary_update',
+          teamId: 'payments',
+          activityLevel: 'high',
+          milestone: true,
+          mood: 'building',
+          oneLiner: 'Stripe billing migration v1 shipped!',
+        },
         // Agent despawn
         { time: 76, type: 'agent_despawn', agentId: 'golem-1', teamId: 'payments' },
         // Session end
         { time: 82, type: 'session_end', userId: 'jc', teamId: 'payments' },
         // More summary updates
-        { time: 80, type: 'summary_update', teamId: 'infra', activityLevel: 'steady', milestone: false, mood: 'building', oneLiner: 'Connection pool tuning under load test' },
+        {
+          time: 80,
+          type: 'summary_update',
+          teamId: 'infra',
+          activityLevel: 'steady',
+          milestone: false,
+          mood: 'building',
+          oneLiner: 'Connection pool tuning under load test',
+        },
         // Cross-team spark
-        { time: 85, type: 'spark', fromTeam: 'growth', toTeam: 'infra', summary: 'Growth \u2194 Infra \u2014 new SMB onboarding load will hit the connection pool changes' },
+        {
+          time: 85,
+          type: 'spark',
+          fromTeam: 'growth',
+          toTeam: 'infra',
+          summary:
+            'Growth \u2194 Infra \u2014 new SMB onboarding load will hit the connection pool changes',
+        },
 
         // ═══ DUSK / WIND-DOWN (t=85-95) ═══
         { time: 86, type: 'idle', userId: 'christian' },
         { time: 88, type: 'agent_despawn', agentId: 'golem-2', teamId: 'payments' },
         { time: 89, type: 'agent_despawn', agentId: 'golem-3', teamId: 'payments' },
-        { time: 90, type: 'summary_update', teamId: 'payments', activityLevel: 'low', milestone: false, mood: 'exploring', oneLiner: 'Exploring edge cases in refund flow' },
-        { time: 90, type: 'summary_update', teamId: 'platform', activityLevel: 'low', milestone: false, mood: 'building', oneLiner: 'Auth service migration 80% complete' },
-        { time: 90, type: 'summary_update', teamId: 'growth', activityLevel: 'low', milestone: false, mood: 'building', oneLiner: 'Finalizing copy for SMB signup experiment' },
+        {
+          time: 90,
+          type: 'summary_update',
+          teamId: 'payments',
+          activityLevel: 'low',
+          milestone: false,
+          mood: 'exploring',
+          oneLiner: 'Exploring edge cases in refund flow',
+        },
+        {
+          time: 90,
+          type: 'summary_update',
+          teamId: 'platform',
+          activityLevel: 'low',
+          milestone: false,
+          mood: 'building',
+          oneLiner: 'Auth service migration 80% complete',
+        },
+        {
+          time: 90,
+          type: 'summary_update',
+          teamId: 'growth',
+          activityLevel: 'low',
+          milestone: false,
+          mood: 'building',
+          oneLiner: 'Finalizing copy for SMB signup experiment',
+        },
         { time: 91, type: 'session_end', userId: 'christian', teamId: 'payments' },
         { time: 92, type: 'session_end', userId: 'alex', teamId: 'platform' },
         { time: 92, type: 'session_end', userId: 'sam', teamId: 'platform' },
@@ -648,13 +780,41 @@
         { time: 94, type: 'session_end', userId: 'kai', teamId: 'infra' },
 
         // Logs panel — Payments team detail updates
-        { time: 9, type: 'story_update', text: 'The sun rises over Gusto Engineering — Christian is first to arrive at the Payments campfire' },
-        { time: 17, type: 'story_update', text: 'JC joined the Payments campfire and switched to <code>feat/billing-v2</code> branch' },
-        { time: 36, type: 'story_update', text: 'Natasha walks into an empty clearing — looks like a new campfire is about to be born' },
-        { time: 55, type: 'story_update', text: 'A golem was summoned to help Christian with auth middleware refactoring' },
-        { time: 72, type: 'story_update', text: 'Milestone reached! Stripe billing migration v1 has shipped — the team has been focused on webhook integration and billing flow testing' },
-        { time: 87, type: 'story_update', text: 'Dusk settles over the campfires. Christian went idle after a productive session' },
-        { time: 95, type: 'story_update', text: 'The fires burn low as the team signs off for the night' },
+        {
+          time: 9,
+          type: 'story_update',
+          text: 'The sun rises over Gusto Engineering — Christian is first to arrive at the Payments campfire',
+        },
+        {
+          time: 17,
+          type: 'story_update',
+          text: 'JC joined the Payments campfire and switched to <code>feat/billing-v2</code> branch',
+        },
+        {
+          time: 36,
+          type: 'story_update',
+          text: 'Natasha walks into an empty clearing — looks like a new campfire is about to be born',
+        },
+        {
+          time: 55,
+          type: 'story_update',
+          text: 'A golem was summoned to help Christian with auth middleware refactoring',
+        },
+        {
+          time: 72,
+          type: 'story_update',
+          text: 'Milestone reached! Stripe billing migration v1 has shipped — the team has been focused on webhook integration and billing flow testing',
+        },
+        {
+          time: 87,
+          type: 'story_update',
+          text: 'Dusk settles over the campfires. Christian went idle after a productive session',
+        },
+        {
+          time: 95,
+          type: 'story_update',
+          text: 'The fires burn low as the team signs off for the night',
+        },
       ];
 
       // Background activity for other teams (shifted +20)
@@ -904,21 +1064,32 @@
 
         // Reset new campfire state
         newCampfireState = {
-          active: false, phase: 'none', startTime: 0,
-          x: 230, y: 200, strikeAttempts: 0, strikeStartTime: 0,
-          fireSize: 0.5, fireAlpha: 0, labelAlpha: 0,
-          natashaSprite: null, teamAdded: false, summaryAdded: false,
+          active: false,
+          phase: 'none',
+          startTime: 0,
+          x: 230,
+          y: 200,
+          strikeAttempts: 0,
+          strikeStartTime: 0,
+          fireSize: 0.5,
+          fireAlpha: 0,
+          labelAlpha: 0,
+          natashaSprite: null,
+          teamAdded: false,
+          summaryAdded: false,
         };
         // Remove Natasha sprite if present
         sprites.delete('natasha');
         delete spriteTeamIndex['natasha'];
         // Remove hackathon team if added
-        const hackIdx = teams.findIndex(t => t.id === 'hackathon');
+        const hackIdx = teams.findIndex((t) => t.id === 'hackathon');
         if (hackIdx !== -1) {
           teams.splice(hackIdx, 1);
           // Rebuild lookup
-          Object.keys(teamIndexById).forEach(k => delete teamIndexById[k]);
-          teams.forEach((t, i) => { teamIndexById[t.id] = i; });
+          Object.keys(teamIndexById).forEach((k) => delete teamIndexById[k]);
+          teams.forEach((t, i) => {
+            teamIndexById[t.id] = i;
+          });
           // Trim fire/milestone/pulse state arrays
           fireState.splice(hackIdx, 1);
           fireFlares.splice(hackIdx, 1);
@@ -1749,7 +1920,8 @@
           // Flint spark particles
           const elapsed = time - ncs.strikeStartTime;
           const attemptIdx = Math.floor(elapsed / FIRE_STARTING_FIZZLE_DURATION);
-          const attemptProgress = (elapsed % FIRE_STARTING_FIZZLE_DURATION) / FIRE_STARTING_FIZZLE_DURATION;
+          const attemptProgress =
+            (elapsed % FIRE_STARTING_FIZZLE_DURATION) / FIRE_STARTING_FIZZLE_DURATION;
 
           if (strikePhase && attemptProgress < 0.6) {
             // Sparks at ground level
@@ -1801,16 +1973,22 @@
         // Small warm glow
         const glowR = 10;
         const gradient = ctx.createRadialGradient(
-          cx * PIXEL_SCALE, cy * PIXEL_SCALE, 0,
-          cx * PIXEL_SCALE, cy * PIXEL_SCALE, glowR * PIXEL_SCALE,
+          cx * PIXEL_SCALE,
+          cy * PIXEL_SCALE,
+          0,
+          cx * PIXEL_SCALE,
+          cy * PIXEL_SCALE,
+          glowR * PIXEL_SCALE,
         );
         gradient.addColorStop(0, '#fbbf2418');
         gradient.addColorStop(0.5, '#fbbf2408');
         gradient.addColorStop(1, 'transparent');
         ctx.fillStyle = gradient;
         ctx.fillRect(
-          (cx - glowR) * PIXEL_SCALE, (cy - glowR) * PIXEL_SCALE,
-          glowR * 2 * PIXEL_SCALE, glowR * 2 * PIXEL_SCALE,
+          (cx - glowR) * PIXEL_SCALE,
+          (cy - glowR) * PIXEL_SCALE,
+          glowR * 2 * PIXEL_SCALE,
+          glowR * 2 * PIXEL_SCALE,
         );
 
         ctx.restore();
@@ -1832,7 +2010,8 @@
         if (starAlpha <= 0) return;
         ctx.save();
         for (const star of stars) {
-          const twinkle = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(time * star.twinkleSpeed + star.twinkleOffset));
+          const twinkle =
+            0.4 + 0.6 * (0.5 + 0.5 * Math.sin(time * star.twinkleSpeed + star.twinkleOffset));
           ctx.globalAlpha = starAlpha * twinkle * star.brightness;
           const color = Math.random() > 0.9 ? '#fffde0' : '#ffffff';
           px(star.x, star.y, star.size, star.size, color);
@@ -1855,15 +2034,21 @@
         ctx.stroke();
         // Warm fill
         const grad = ctx.createRadialGradient(
-          ring.x * PIXEL_SCALE, ring.y * PIXEL_SCALE, 0,
-          ring.x * PIXEL_SCALE, ring.y * PIXEL_SCALE, radius * PIXEL_SCALE,
+          ring.x * PIXEL_SCALE,
+          ring.y * PIXEL_SCALE,
+          0,
+          ring.x * PIXEL_SCALE,
+          ring.y * PIXEL_SCALE,
+          radius * PIXEL_SCALE,
         );
         grad.addColorStop(0, `rgba(240,160,48,${alpha * 0.3})`);
         grad.addColorStop(1, 'transparent');
         ctx.fillStyle = grad;
         ctx.fillRect(
-          (ring.x - radius) * PIXEL_SCALE, (ring.y - radius) * PIXEL_SCALE,
-          radius * 2 * PIXEL_SCALE, radius * 2 * PIXEL_SCALE,
+          (ring.x - radius) * PIXEL_SCALE,
+          (ring.y - radius) * PIXEL_SCALE,
+          radius * 2 * PIXEL_SCALE,
+          radius * 2 * PIXEL_SCALE,
         );
         ctx.restore();
       }
@@ -2704,23 +2889,47 @@
         newCampfireState.startTime = lastRenderTime;
         // Create Natasha sprite walking in from bottom
         const natasha = {
-          id: 'natasha', name: 'Natasha', type: 'human', color: '#e8a040',
-          status: 'active', task: 'walking', file: 'starting new project',
-          owner: null, teamIndex: -1, homeX: newCampfireState.x, homeY: newCampfireState.y,
-          defaultTask: 'scribing', originalStatus: 'active', visible: true, opacity: 1,
-          inDraftMode: false, tentX: 0, tentY: 0, animQueue: [], currentAnim: null,
-          jumpUntil: 0, teamName: 'Hackathon',
-          orbBrightness: 0, orbSaveCount: 0, recentEventTimes: [],
-          afterimages: [], isGolemIdle: false, castingUntil: 0,
-          castingTargetX: 0, castingTargetY: 0,
+          id: 'natasha',
+          name: 'Natasha',
+          type: 'human',
+          color: '#e8a040',
+          status: 'active',
+          task: 'walking',
+          file: 'starting new project',
+          owner: null,
+          teamIndex: -1,
+          homeX: newCampfireState.x,
+          homeY: newCampfireState.y,
+          defaultTask: 'scribing',
+          originalStatus: 'active',
+          visible: true,
+          opacity: 1,
+          inDraftMode: false,
+          tentX: 0,
+          tentY: 0,
+          animQueue: [],
+          currentAnim: null,
+          jumpUntil: 0,
+          teamName: 'Hackathon',
+          orbBrightness: 0,
+          orbSaveCount: 0,
+          recentEventTimes: [],
+          afterimages: [],
+          isGolemIdle: false,
+          castingUntil: 0,
+          castingTargetX: 0,
+          castingTargetY: 0,
         };
         sprites.set('natasha', natasha);
         newCampfireState.natashaSprite = natasha;
         // Walk from bottom edge to clearing
         natasha.animQueue.push({
-          type: 'walk', duration: 2.0,
-          startX: newCampfireState.x, startY: MAP_H + 10,
-          endX: newCampfireState.x, endY: newCampfireState.y,
+          type: 'walk',
+          duration: 2.0,
+          startX: newCampfireState.x,
+          startY: MAP_H + 10,
+          endX: newCampfireState.x,
+          endY: newCampfireState.y,
           fadeIn: true,
         });
       }
@@ -2742,9 +2951,14 @@
 
         // Add the hackathon team to the teams array
         const newTeam = {
-          id: 'hackathon', name: 'Hackathon', description: 'New project',
-          color: '#fbbf24', x: newCampfireState.x, y: newCampfireState.y,
-          fireSize: 0.5, members: [],
+          id: 'hackathon',
+          name: 'Hackathon',
+          description: 'New project',
+          color: '#fbbf24',
+          x: newCampfireState.x,
+          y: newCampfireState.y,
+          fireSize: 0.5,
+          members: [],
         };
         teams.push(newTeam);
         const newIdx = teams.length - 1;
@@ -2752,8 +2966,13 @@
         fireState.push({ level: 'low', prevLevel: 'ember', transitionProgress: 0 });
         fireFlares.push({ active: false, startTime: 0, mult: 1.0 });
         milestoneState.push({
-          celebrating: false, startTime: 0, hasFlag: false,
-          flagX: newTeam.x + 12, flagY: newTeam.y - 2, particles: [], goldUntil: 0,
+          celebrating: false,
+          startTime: 0,
+          hasFlag: false,
+          flagX: newTeam.x + 12,
+          flagY: newTeam.y - 2,
+          particles: [],
+          goldUntil: 0,
         });
         pulseState.push({ lastPulse: 0, rings: [] });
         newCampfireState.teamAdded = true;
@@ -2767,7 +2986,10 @@
 
         // "First catch" pulse
         pulseState[newIdx].rings.push({
-          startTime: lastRenderTime, x: newTeam.x, y: newTeam.y, firstCatch: true,
+          startTime: lastRenderTime,
+          x: newTeam.x,
+          y: newTeam.y,
+          firstCatch: true,
         });
 
         // Trigger fire flare
@@ -2781,7 +3003,9 @@
           line.style.opacity = '0';
           line.innerHTML = `<span class="team-dot" style="background: #fbbf24"></span><span id="summary-text-hackathon"><strong style="color: #fbbf24">Hackathon</strong> — Natasha started a new project</span>`;
           summaryBar.appendChild(line);
-          requestAnimationFrame(() => { line.style.opacity = '1'; });
+          requestAnimationFrame(() => {
+            line.style.opacity = '1';
+          });
           newCampfireState.summaryAdded = true;
         }
       }
@@ -3214,7 +3438,14 @@
           } else if (item.type === 'fire_starting') {
             const nat = sprites.get('natasha');
             if (nat) {
-              drawFireStartingPose(nat.homeX, nat.homeY, nat.color, time, newCampfireState.phase, newCampfireState);
+              drawFireStartingPose(
+                nat.homeX,
+                nat.homeY,
+                nat.color,
+                time,
+                newCampfireState.phase,
+                newCampfireState,
+              );
             }
           }
         }
