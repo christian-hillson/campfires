@@ -230,22 +230,22 @@ AI-powered cross-team connection detection. After each batch summarization cycle
 
 **Core concept:** Sparks are precious, not noisy. Max 1 per campfire per 24h. They appear as an animated arc on the map, a momentary stories entry, and persistent badges on connected campfires. Dismissed sparks are preserved in a searchable log.
 
-| Feature                                                 | Status      | Owner | Notes                                                                                            |
-| ------------------------------------------------------- | ----------- | ----- | ------------------------------------------------------------------------------------------------ |
-| Shared: Spark + SparkTeamConnection types               | Done        | —     | `shared/src/types.ts` — Spark, SparkTeamConnection                                               |
-| Server: sparks table + persistence methods              | Done        | —     | `server/src/persistence.ts` — CRUD, dedup queries, expiration                                    |
-| Server: spark detection prompt                          | Done        | —     | `server/src/summarizer.ts` — second Claude API call after team summaries                         |
-| Server: spark rate limiter                              | Done        | —     | 1 spark/campfire/24h, select highest confidence when over limit                                  |
-| Server: spark deduplication                             | Done        | —     | Content hash + active spark check before creation                                                |
-| Server: spark expiration                                | Done        | —     | 72h TTL, check-on-read or background cleanup                                                     |
-| Server: spark API endpoints                             | Done        | —     | GET sparks, GET log, POST dismiss, POST view                                                     |
-| Server: SSE spark events                                | Done        | —     | Extend existing summary stream with spark event type                                             |
-| Campfire Stories: map arc animation                     | Done        | —     | Bezier particle arc between campfires, plays once on new spark                                   |
-| Campfire Stories: persistent spark badge on campfires   | Done        | —     | Amber lightning badge on campfires with active sparks                                            |
-| Campfire Stories: momentary spark in stories panel      | Done        | —     | 15s fade-out spark notification in Campfire Stories panel (org-wide summaries)                   |
-| Campfire Stories: campfire detail spark section         | Done        | —     | Persistent spark display in Logs panel, with dismiss, view tracking, visit prompt                |
-| Campfire Stories: spark log                             | Done        | —     | Historical log in Campfire Stories panel (org-wide summaries), all statuses, scrollable          |
-| Mockup: spark arc + badge + stories entry in simulation | Done        | —     | 2 spark events in 90s loop (Payments↔Platform t=35, Growth↔Infra t=65), amber #fbbf24 throughout |
+| Feature                                                 | Status | Owner | Notes                                                                                            |
+| ------------------------------------------------------- | ------ | ----- | ------------------------------------------------------------------------------------------------ |
+| Shared: Spark + SparkTeamConnection types               | Done   | —     | `shared/src/types.ts` — Spark, SparkTeamConnection                                               |
+| Server: sparks table + persistence methods              | Done   | —     | `server/src/persistence.ts` — CRUD, dedup queries, expiration                                    |
+| Server: spark detection prompt                          | Done   | —     | `server/src/summarizer.ts` — second Claude API call after team summaries                         |
+| Server: spark rate limiter                              | Done   | —     | 1 spark/campfire/24h, select highest confidence when over limit                                  |
+| Server: spark deduplication                             | Done   | —     | Content hash + active spark check before creation                                                |
+| Server: spark expiration                                | Done   | —     | 72h TTL, check-on-read or background cleanup                                                     |
+| Server: spark API endpoints                             | Done   | —     | GET sparks, GET log, POST dismiss, POST view                                                     |
+| Server: SSE spark events                                | Done   | —     | Extend existing summary stream with spark event type                                             |
+| Campfire Stories: map arc animation                     | Done   | —     | Bezier particle arc between campfires, plays once on new spark                                   |
+| Campfire Stories: persistent spark badge on campfires   | Done   | —     | Amber lightning badge on campfires with active sparks                                            |
+| Campfire Stories: momentary spark in stories panel      | Done   | —     | 15s fade-out spark notification in Campfire Stories panel (org-wide summaries)                   |
+| Campfire Stories: campfire detail spark section         | Done   | —     | Persistent spark display in Logs panel, with dismiss, view tracking, visit prompt                |
+| Campfire Stories: spark log                             | Done   | —     | Historical log in Campfire Stories panel (org-wide summaries), all statuses, scrollable          |
+| Mockup: spark arc + badge + stories entry in simulation | Done   | —     | 2 spark events in 90s loop (Payments↔Platform t=35, Growth↔Infra t=65), amber #fbbf24 throughout |
 
 ## Sprint 13: Campfire Lifecycle — Cold Firepits, Kindle Animation & Founder Ceremony
 
