@@ -33,7 +33,7 @@ export interface SpriteData {
   py: number;
 }
 
-const TEAM_COLORS = [
+export const TEAM_COLORS = [
   '#f97316',
   '#60a5fa',
   '#a78bfa',

@@ -161,7 +161,7 @@ export class MapView {
     const bar = this.container.querySelector('#map-summary-bar');
     if (!bar) return;
 
-    bar.innerHTML = '<div class="map-summary-title">\u2726 AI REEL</div>';
+    bar.innerHTML = '<div class="map-summary-title">\u2726 FIRESIDE UPDATES</div>';
 
     // Show latest summary per team
     for (const cf of this.campfires) {

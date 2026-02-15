@@ -1,10 +1,17 @@
 import type { Summary, Org, Team } from '@campfires/shared';
+import { TEAM_COLORS } from '../map/layout.js';
 
 export interface FeedContext {
   org: Org;
   teams: Team[];
   summaries: Summary[];
   onTeamClick: (teamId: string) => void;
+}
+
+function esc(str: string): string {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 function timeAgo(isoString: string): string {
@@ -26,46 +33,35 @@ function getLatestSummaryForTeam(summaries: Summary[], teamId: string): Summary 
   );
 }
 
-function createTeamCard(
+function getTeamColor(index: number): string {
+  return TEAM_COLORS[index % TEAM_COLORS.length];
+}
+
+function createTeamEntry(
   team: Team,
+  teamIndex: number,
   summary: Summary | null,
   onTeamClick: (teamId: string) => void,
 ): HTMLElement {
-  const card = document.createElement('div');
-  card.className = summary ? 'team-card' : 'team-card empty';
-  card.dataset.teamId = team.teamId;
+  const entry = document.createElement('div');
+  entry.className = summary ? 'team-entry' : 'team-entry empty';
+  entry.dataset.teamId = team.teamId;
 
-  const header = document.createElement('div');
-  header.className = 'team-card-header';
-
-  const name = document.createElement('h2');
-  name.textContent = team.name;
-  header.appendChild(name);
+  const mainLine = document.createElement('div');
+  mainLine.className = 'entry-main';
+  mainLine.innerHTML = `<span class="team-dot" style="background:${esc(getTeamColor(teamIndex))}"></span><strong>${esc(team.name)}</strong> — <span class="entry-one-liner">${esc(summary?.oneLiner || 'No activity yet')}</span>`;
+  entry.appendChild(mainLine);
 
   if (summary) {
-    const count = document.createElement('span');
-    count.className = 'event-count';
-    count.textContent = `${summary.eventCount} event${summary.eventCount !== 1 ? 's' : ''}`;
-    header.appendChild(count);
+    const meta = document.createElement('div');
+    meta.className = 'entry-meta';
+    meta.innerHTML = `<span class="entry-event-count">${summary.eventCount} event${summary.eventCount !== 1 ? 's' : ''}</span> · ${esc(timeAgo(summary.createdAt))}`;
+    entry.appendChild(meta);
   }
 
-  card.appendChild(header);
+  entry.addEventListener('click', () => onTeamClick(team.teamId));
 
-  const oneLiner = document.createElement('div');
-  oneLiner.className = 'one-liner';
-  oneLiner.textContent = summary?.oneLiner || 'No activity yet';
-  card.appendChild(oneLiner);
-
-  if (summary) {
-    const updated = document.createElement('div');
-    updated.className = 'updated-at';
-    updated.textContent = `Updated ${timeAgo(summary.createdAt)}`;
-    card.appendChild(updated);
-  }
-
-  card.addEventListener('click', () => onTeamClick(team.teamId));
-
-  return card;
+  return entry;
 }
 
 export function renderSummaryFeed(container: HTMLElement, ctx: FeedContext): void {
@@ -76,8 +72,13 @@ export function renderSummaryFeed(container: HTMLElement, ctx: FeedContext): voi
   header.className = 'stories-header';
 
   const title = document.createElement('h1');
-  title.textContent = `\uD83D\uDD25 ${ctx.org.name} Bonfire`;
+  title.textContent = '\u2726 FIRESIDE UPDATES';
   header.appendChild(title);
+
+  const subtitle = document.createElement('p');
+  subtitle.className = 'stories-header-org';
+  subtitle.textContent = ctx.org.name;
+  header.appendChild(subtitle);
 
   if (ctx.org.mission) {
     const mission = document.createElement('p');
@@ -88,13 +89,17 @@ export function renderSummaryFeed(container: HTMLElement, ctx: FeedContext): voi
 
   container.appendChild(header);
 
-  // Team cards
-  const grid = document.createElement('div');
-  grid.className = 'team-cards';
+  // Team entries
+  const list = document.createElement('div');
+  list.className = 'team-entries';
 
   // Sort teams: those with summaries first (by recency), then those without
   const teamsWithSummaries = ctx.teams
-    .map((team) => ({ team, summary: getLatestSummaryForTeam(ctx.summaries, team.teamId) }))
+    .map((team, i) => ({
+      team,
+      index: i,
+      summary: getLatestSummaryForTeam(ctx.summaries, team.teamId),
+    }))
     .sort((a, b) => {
       if (a.summary && !b.summary) return -1;
       if (!a.summary && b.summary) return 1;
@@ -102,53 +107,45 @@ export function renderSummaryFeed(container: HTMLElement, ctx: FeedContext): voi
       return 0;
     });
 
-  for (const { team, summary } of teamsWithSummaries) {
-    grid.appendChild(createTeamCard(team, summary, ctx.onTeamClick));
+  for (const { team, index, summary } of teamsWithSummaries) {
+    list.appendChild(createTeamEntry(team, index, summary, ctx.onTeamClick));
   }
 
   if (ctx.teams.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
     empty.textContent = 'No teams in this organization yet.';
-    grid.appendChild(empty);
+    list.appendChild(empty);
   }
 
-  container.appendChild(grid);
+  container.appendChild(list);
 }
 
 export function updateSummaryFeed(container: HTMLElement, newSummaries: Summary[]): void {
   for (const summary of newSummaries) {
-    const card = container.querySelector(`.team-card[data-team-id="${summary.teamId}"]`);
-    if (!card) continue;
+    const entry = container.querySelector(`.team-entry[data-team-id="${summary.teamId}"]`);
+    if (!entry) continue;
 
-    card.classList.remove('empty');
+    entry.classList.remove('empty');
 
-    const oneLiner = card.querySelector('.one-liner');
+    const oneLiner = entry.querySelector('.entry-one-liner');
     if (oneLiner) {
       oneLiner.textContent = summary.oneLiner || 'Activity recorded';
     }
 
-    const count = card.querySelector('.event-count');
-    if (count) {
-      count.textContent = `${summary.eventCount} event${summary.eventCount !== 1 ? 's' : ''}`;
-    } else {
-      const header = card.querySelector('.team-card-header');
-      if (header) {
-        const countEl = document.createElement('span');
-        countEl.className = 'event-count';
-        countEl.textContent = `${summary.eventCount} event${summary.eventCount !== 1 ? 's' : ''}`;
-        header.appendChild(countEl);
-      }
+    const countEl = entry.querySelector('.entry-event-count');
+    if (countEl) {
+      countEl.textContent = `${summary.eventCount} event${summary.eventCount !== 1 ? 's' : ''}`;
     }
 
-    let updated = card.querySelector('.updated-at');
-    if (updated) {
-      updated.textContent = `Updated just now`;
+    let meta = entry.querySelector('.entry-meta');
+    if (meta) {
+      meta.innerHTML = `<span class="entry-event-count">${summary.eventCount} event${summary.eventCount !== 1 ? 's' : ''}</span> · just now`;
     } else {
-      updated = document.createElement('div');
-      updated.className = 'updated-at';
-      updated.textContent = `Updated just now`;
-      card.appendChild(updated);
+      meta = document.createElement('div');
+      meta.className = 'entry-meta';
+      meta.innerHTML = `<span class="entry-event-count">${summary.eventCount} event${summary.eventCount !== 1 ? 's' : ''}</span> · just now`;
+      entry.appendChild(meta);
     }
   }
 }
