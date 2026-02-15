@@ -109,6 +109,7 @@ export interface MapViewConfig {
   members: Map<string, User[]>;
   awareness: Map<string, AwarenessState[]>;
   serverUrl: string;
+  homeTeamId?: string;
   onTeamSelect?: (teamId: string) => void;
 }
 
@@ -124,8 +125,9 @@ export class MapView {
   private allSprites: SpriteData[] = [];
   private environment!: EnvironmentData;
   private hoveredSprite: SpriteData | null = null;
-  private overlayElement: HTMLElement | null = null;
-  private overlayPollInterval: ReturnType<typeof setInterval> | null = null;
+  private storiesPanel!: HTMLElement;
+  private currentPanelTeamId: string | null = null;
+  private panelPollInterval: ReturnType<typeof setInterval> | null = null;
 
   // Animation system state
   private animatedSprites = new Map<string, AnimatedSprite>();
@@ -218,7 +220,10 @@ export class MapView {
       this.animFrameId = null;
     }
     this.activityFeed.stop();
-    this.hideOverlay();
+    if (this.panelPollInterval) {
+      clearInterval(this.panelPollInterval);
+      this.panelPollInterval = null;
+    }
   }
 
   updateSummaries(newSummaries: Summary[]): void {
@@ -257,6 +262,11 @@ export class MapView {
     summaryBar.id = 'map-summary-bar';
     wrapper.appendChild(summaryBar);
 
+    // Stories panel (bottom-right)
+    this.storiesPanel = document.createElement('div');
+    this.storiesPanel.className = 'map-stories-panel';
+    wrapper.appendChild(this.storiesPanel);
+
     // Legend
     const legend = document.createElement('div');
     legend.className = 'map-legend';
@@ -289,6 +299,20 @@ export class MapView {
 
     this.resize();
     this.renderSummaryBar();
+
+    // Show home team stories or placeholder
+    if (this.config.homeTeamId) {
+      this.renderStoriesPanel(this.config.homeTeamId);
+    } else {
+      this.storiesPanel.innerHTML = `
+        <div class="stories-panel-header">
+          <span class="stories-panel-title">\u2726 CAMPFIRE STORIES</span>
+        </div>
+        <div class="stories-panel-body">
+          <div class="stories-panel-placeholder">Click a campfire to view its stories</div>
+        </div>
+      `;
+    }
   }
 
   private resize(): void {
@@ -501,7 +525,7 @@ export class MapView {
       this.tooltip.style.display = 'none';
     });
 
-    // Click to show campfire overlay (suppress if dragged)
+    // Click campfire to update stories panel (suppress if dragged)
     this.canvas.addEventListener('click', (e) => {
       if (this.dragDistance > 5) return;
 
@@ -520,70 +544,79 @@ export class MapView {
       for (const cf of this.campfires) {
         const hitRadius = cf.fireSize * 6 + 10;
         if (Math.hypot(wx - cf.x, wy - cf.y) < hitRadius) {
-          this.showOverlay(cf);
+          this.renderStoriesPanel(cf.teamId);
           return;
         }
       }
-
-      // Clicked empty space — close overlay
-      this.hideOverlay();
     });
   }
 
-  private showOverlay(campfire: CampfirePosition): void {
-    this.hideOverlay();
+  private renderStoriesPanel(teamId: string): void {
+    if (teamId === this.currentPanelTeamId) return;
+    this.currentPanelTeamId = teamId;
 
-    const wrapper = this.canvas.parentElement!;
-    const overlay = document.createElement('div');
-    overlay.className = 'map-campfire-overlay';
-    this.overlayElement = overlay;
+    // Clear previous poll
+    if (this.panelPollInterval) {
+      clearInterval(this.panelPollInterval);
+      this.panelPollInterval = null;
+    }
 
     // Loading state
-    overlay.innerHTML = `
-      <div class="overlay-header">
-        <span class="overlay-team-name" style="color:${esc(campfire.color)}">${esc(campfire.name)}</span>
-        <button class="overlay-close">\u2715</button>
+    const cf = this.campfires.find((c) => c.teamId === teamId);
+    const teamName = cf?.name || 'Team';
+    const teamColor = cf?.color || '#f0883e';
+
+    const showHomeBtn = this.config.homeTeamId && teamId !== this.config.homeTeamId;
+
+    this.storiesPanel.innerHTML = `
+      <div class="stories-panel-header">
+        ${showHomeBtn ? '<button class="stories-panel-home-btn">\u2302 HOME</button>' : ''}
+        <span class="stories-panel-title"><span class="team-dot" style="background:${esc(teamColor)}"></span> ${esc(teamName)}</span>
       </div>
-      <div class="overlay-body"><div class="loading">Loading...</div></div>
+      <div class="stories-panel-body"><div class="stories-panel-loading">Loading...</div></div>
     `;
 
-    overlay.querySelector('.overlay-close')!.addEventListener('click', () => this.hideOverlay());
-    wrapper.appendChild(overlay);
+    // Wire home button
+    if (showHomeBtn) {
+      this.storiesPanel.querySelector('.stories-panel-home-btn')!.addEventListener('click', () => {
+        this.currentPanelTeamId = null; // force re-render
+        this.renderStoriesPanel(this.config.homeTeamId!);
+      });
+    }
 
     // Fetch and populate
-    this.fetchOverlayData(campfire);
+    this.fetchPanelData(teamId);
 
-    // Poll for fresh awareness every 10s while open
-    this.overlayPollInterval = setInterval(() => {
-      if (this.overlayElement) this.fetchOverlayData(campfire);
+    // Poll for fresh data every 10s
+    this.panelPollInterval = setInterval(() => {
+      this.fetchPanelData(teamId);
     }, 10000);
   }
 
-  private async fetchOverlayData(campfire: CampfirePosition): Promise<void> {
-    if (!this.overlayElement) return;
-
+  private async fetchPanelData(teamId: string): Promise<void> {
     try {
       const [membersRes, awarenessRes, summariesRes] = await Promise.all([
-        fetch(`${this.config.serverUrl}/api/teams/${campfire.teamId}/members`),
-        fetch(`${this.config.serverUrl}/api/teams/${campfire.teamId}/awareness`),
+        fetch(`${this.config.serverUrl}/api/teams/${teamId}/members`),
+        fetch(`${this.config.serverUrl}/api/teams/${teamId}/awareness`),
         fetch(`${this.config.serverUrl}/api/orgs/${this.config.org.orgId}/summaries`),
       ]);
 
       const members: User[] = membersRes.ok ? await membersRes.json() : [];
       const awareness: AwarenessState[] = awarenessRes.ok ? await awarenessRes.json() : [];
       const allSummaries: Summary[] = summariesRes.ok ? await summariesRes.json() : [];
-      const teamSummary = allSummaries
-        .filter((s) => s.teamId === campfire.teamId)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+      const teamSummaries = allSummaries
+        .filter((s) => s.teamId === teamId)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      const latest = teamSummaries[0];
 
-      if (!this.overlayElement) return;
+      // Guard: panel may have switched while fetching
+      if (this.currentPanelTeamId !== teamId) return;
 
-      const team = this.config.teams.find((t) => t.teamId === campfire.teamId);
       const onlineCount = awareness.filter(
         (a) => a.status === 'active' || a.status === 'idle',
       ).length;
 
-      const statusBadge = (status: string) => {
+      const statusDot = (status: string) => {
         const colors: Record<string, string> = {
           active: '#3fb950',
           idle: '#d29922',
@@ -591,44 +624,42 @@ export class MapView {
           visitor: '#58a6ff',
           offline: '#484f58',
         };
-        return `<span class="overlay-status-dot" style="background:${colors[status] || '#484f58'}"></span>${status}`;
+        return `<span class="panel-status-dot" style="background:${colors[status] || '#484f58'}"></span>`;
       };
 
-      const body = this.overlayElement.querySelector('.overlay-body')!;
-      body.innerHTML = `
-        ${team?.description ? `<div class="overlay-description">${esc(team.description)}</div>` : ''}
-        ${teamSummary ? `<div class="overlay-summary">${esc(teamSummary.oneLiner || 'Activity recorded')}</div>` : ''}
-        <div class="overlay-stats">${members.length} member${members.length !== 1 ? 's' : ''} \u00b7 ${onlineCount} online</div>
-        <div class="overlay-members">
-          ${members
-            .map((m) => {
-              const a = awareness.find((s) => s.userId === m.userId);
-              const status = a?.status || 'offline';
-              return `<div class="overlay-member"><span class="overlay-member-dot" style="background:${esc(m.avatarColor)}"></span>${esc(m.displayName)} ${statusBadge(status)}</div>`;
-            })
-            .join('')}
-          ${awareness
-            .filter((a) => a.homeTeamId && !members.find((m) => m.userId === a.userId))
-            .map(
-              (a) =>
-                `<div class="overlay-member"><span class="overlay-member-dot" style="background:${esc(a.color)}"></span>${esc(a.displayName)} ${statusBadge('visitor')}</div>`,
-            )
-            .join('')}
-        </div>
-        <div class="overlay-actions">
-          <button class="overlay-btn overlay-btn-detail">View Details</button>
-        </div>
-      `;
+      const body = this.storiesPanel.querySelector('.stories-panel-body');
+      if (!body) return;
 
-      body.querySelector('.overlay-btn-detail')?.addEventListener('click', () => {
-        this.hideOverlay();
-        this.config.onTeamSelect?.(campfire.teamId);
-      });
+      // Summary section
+      const summaryHtml = latest
+        ? `<div class="panel-summary">
+            <div class="panel-summary-oneliner">${esc(latest.oneLiner || 'Activity recorded')}</div>
+            ${latest.content ? `<div class="panel-summary-content">${esc(latest.content.slice(0, 200))}${latest.content.length > 200 ? '...' : ''}</div>` : ''}
+            <div class="panel-summary-meta">${new Date(latest.createdAt).toLocaleString()}</div>
+          </div>`
+        : '<div class="panel-no-summary">No stories yet</div>';
+
+      // Members section
+      const membersHtml = members.map((m) => {
+        const a = awareness.find((s) => s.userId === m.userId);
+        const status = a?.status || 'offline';
+        return `<div class="panel-member">${statusDot(status)}<span class="panel-member-dot" style="background:${esc(m.avatarColor)}"></span>${esc(m.displayName)}</div>`;
+      }).join('');
+
+      // Visitors
+      const visitorsHtml = awareness
+        .filter((a) => a.homeTeamId && !members.find((m) => m.userId === a.userId))
+        .map((a) => `<div class="panel-member">${statusDot('visitor')}<span class="panel-member-dot" style="background:${esc(a.color)}"></span>${esc(a.displayName)}</div>`)
+        .join('');
+
+      body.innerHTML = `
+        ${summaryHtml}
+        <div class="panel-stats">${members.length} member${members.length !== 1 ? 's' : ''} \u00b7 ${onlineCount} online</div>
+        <div class="panel-members">${membersHtml}${visitorsHtml}</div>
+      `;
     } catch {
-      if (this.overlayElement) {
-        const body = this.overlayElement.querySelector('.overlay-body');
-        if (body) body.innerHTML = '<div class="error">Failed to load</div>';
-      }
+      const body = this.storiesPanel.querySelector('.stories-panel-body');
+      if (body) body.innerHTML = '<div class="panel-error">Failed to load</div>';
     }
   }
 
@@ -951,17 +982,6 @@ export class MapView {
     const cf = this.campfires[cfIndex];
     const time = performance.now() / 1000;
     this.milestones.push(createMilestoneCelebration(cf.x, cf.y, cf.fireSize, cf.color, time));
-  }
-
-  private hideOverlay(): void {
-    if (this.overlayPollInterval) {
-      clearInterval(this.overlayPollInterval);
-      this.overlayPollInterval = null;
-    }
-    if (this.overlayElement) {
-      this.overlayElement.remove();
-      this.overlayElement = null;
-    }
   }
 
   private render = (timestamp: number): void => {

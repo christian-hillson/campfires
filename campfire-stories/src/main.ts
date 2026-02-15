@@ -15,6 +15,11 @@ function getOrgId(): string | null {
   return params.get('orgId');
 }
 
+function getTeamId(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('teamId');
+}
+
 export interface AppState {
   org: Org;
   teams: Team[];
@@ -117,6 +122,7 @@ function showMap(content: HTMLElement): void {
     members: state.members,
     awareness: state.awareness,
     serverUrl: SERVER_URL,
+    homeTeamId: getTeamId() || undefined,
     onTeamSelect: showDetail,
   });
   mapView.start();
