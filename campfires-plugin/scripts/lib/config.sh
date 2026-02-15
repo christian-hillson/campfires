@@ -10,6 +10,9 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
   return 0 2>/dev/null || exit 0
 fi
 
+# Enforce restrictive permissions on config (contains auth token)
+chmod 600 "$CONFIG_FILE" 2>/dev/null
+
 export CAMPFIRES_SERVER_URL=$(jq -r '.server_url // empty' "$CONFIG_FILE")
 export CAMPFIRES_API_KEY=$(jq -r '.api_key // empty' "$CONFIG_FILE")
 export CAMPFIRES_USER_ID=$(jq -r '.user_id // empty' "$CONFIG_FILE")

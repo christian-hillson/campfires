@@ -37,7 +37,7 @@ After creating org/team, the original JWT won't have the updated claims. Call `P
 
 ## Step 6: Write config
 
-Create `~/.campfires/` directory if it doesn't exist, then write `~/.campfires/config.json`:
+Create `~/.campfires/` directory if it doesn't exist (`mkdir -p`), then write `~/.campfires/config.json`:
 
 ```json
 {
@@ -49,6 +49,12 @@ Create `~/.campfires/` directory if it doesn't exist, then write `~/.campfires/c
   "org_id": "<orgId>",
   "share_mode": "full"
 }
+```
+
+After writing the file, set restrictive permissions so only the current user can read it:
+
+```bash
+chmod 600 ~/.campfires/config.json
 ```
 
 ## Step 7: Confirm success
