@@ -84,6 +84,7 @@ export interface ActivityEvent {
   branch: string | null;
   message: string | null;
   metadata: Record<string, unknown> | null;
+  sessionId: string | null;
 }
 
 /**

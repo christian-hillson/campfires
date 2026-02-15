@@ -1,6 +1,6 @@
 Show your current Campfires team. Fetch the team members from the server and display their current status.
 
-Read config from ~/.campfires/config.json, then call GET /teams/{team_id}/members on the server.
+Read config from ~/.campfires/config.json, then call GET /api/teams/{team_id}/members on the server.
 
 Display each team member with:
 

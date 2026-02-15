@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import http from 'http';
+import path from 'path';
 import { router } from './api.js';
 import { createWebSocketServer } from './ws-server.js';
 import { getPersistence } from './persistence.js';
@@ -19,7 +20,19 @@ getPersistence(DB_PATH);
 const app = express();
 
 // Middleware
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:'],
+        connectSrc: ["'self'", 'ws:', 'wss:'],
+      },
+    },
+  }),
+);
 app.use(
   cors({
     origin: process.env.ALLOWED_ORIGINS
@@ -40,6 +53,15 @@ app.get('/health', (_req, res) => {
     timestamp: new Date().toISOString(),
     version: '0.1.0',
   });
+});
+
+// Serve Campfire Stories static files
+const storiesDir = path.resolve(__dirname, '../../campfire-stories/dist');
+app.use(express.static(storiesDir));
+
+// SPA fallback: serve index.html for non-API/health routes
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(storiesDir, 'index.html'));
 });
 
 // Create HTTP server

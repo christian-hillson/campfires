@@ -226,6 +226,7 @@ function setupActivityLogging(
               branch: activityEvent.branch,
               message: activityEvent.message,
               metadata: activityEvent.metadata,
+              sessionId: activityEvent.sessionId ?? null,
             });
             console.log(`Logged activity: ${activityEvent.type} from ${activityEvent.userId}`);
           } catch (err) {

@@ -101,6 +101,7 @@ const ActivitySchema = z.object({
   branch: z.string().max(200).optional(),
   message: z.string().max(1000).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  session_id: z.string().max(200).optional(),
 });
 
 export function createRouter(): Router {
@@ -501,6 +502,7 @@ export function createRouter(): Router {
       branch: body.branch || null,
       message: body.message || null,
       metadata: body.metadata || null,
+      sessionId: null,
     });
 
     res.status(201).json(event);
@@ -552,6 +554,7 @@ export function createRouter(): Router {
       branch: branch || null,
       message: repo ? `Started session in ${repo}` : 'Started session',
       metadata: { sessionId: session_id },
+      sessionId: session_id,
     });
 
     res.status(201).json(session);
@@ -618,6 +621,7 @@ export function createRouter(): Router {
         branch: null,
         message: reason || 'Session ended',
         metadata: { sessionId: session_id },
+        sessionId: session_id,
       });
     }
 
@@ -686,6 +690,7 @@ export function createRouter(): Router {
       branch: body.branch || null,
       message: body.message || null,
       metadata: body.metadata || null,
+      sessionId: body.session_id || null,
     });
 
     res.status(201).json(event);

@@ -150,6 +150,12 @@ export class Persistence {
     } catch {
       // Column already exists
     }
+    // Migration for sessionId on activity_log
+    try {
+      this.db.exec(`ALTER TABLE activity_log ADD COLUMN sessionId TEXT`);
+    } catch {
+      // Column already exists
+    }
   }
 
   // ============================================
@@ -461,8 +467,8 @@ export class Persistence {
     this.db
       .prepare(
         `
-      INSERT INTO activity_log (id, timestamp, userId, userType, parentUserId, teamId, type, file, branch, message, metadata)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO activity_log (id, timestamp, userId, userType, parentUserId, teamId, type, file, branch, message, metadata, sessionId)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
       )
       .run(
@@ -477,6 +483,7 @@ export class Persistence {
         event.branch,
         event.message,
         metadata,
+        event.sessionId ?? null,
       );
 
     return {
@@ -491,6 +498,7 @@ export class Persistence {
       branch: event.branch,
       message: event.message,
       metadata: event.metadata,
+      sessionId: event.sessionId ?? null,
     };
   }
 
@@ -505,7 +513,7 @@ export class Persistence {
     const { since, limit = 100, types } = options;
 
     let query = `
-      SELECT id, timestamp, userId, userType, parentUserId, teamId, type, file, branch, message, metadata
+      SELECT id, timestamp, userId, userType, parentUserId, teamId, type, file, branch, message, metadata, sessionId
       FROM activity_log
       WHERE teamId = ?
     `;
@@ -536,18 +544,20 @@ export class Persistence {
       branch: string | null;
       message: string | null;
       metadata: string | null;
+      sessionId: string | null;
     }>;
 
     return rows.map((row) => ({
       ...row,
       parentUserId: row.parentUserId || null,
       metadata: row.metadata ? JSON.parse(row.metadata) : null,
+      sessionId: row.sessionId || null,
     }));
   }
 
   getActivityEventsSince(since: string, orgId?: string): ActivityEvent[] {
     let query = `
-      SELECT al.id, al.timestamp, al.userId, al.userType, al.parentUserId, al.teamId, al.type, al.file, al.branch, al.message, al.metadata
+      SELECT al.id, al.timestamp, al.userId, al.userType, al.parentUserId, al.teamId, al.type, al.file, al.branch, al.message, al.metadata, al.sessionId
       FROM activity_log al
     `;
     const params: string[] = [since];
@@ -573,12 +583,14 @@ export class Persistence {
       branch: string | null;
       message: string | null;
       metadata: string | null;
+      sessionId: string | null;
     }>;
 
     return rows.map((row) => ({
       ...row,
       parentUserId: row.parentUserId || null,
       metadata: row.metadata ? JSON.parse(row.metadata) : null,
+      sessionId: row.sessionId || null,
     }));
   }
 
