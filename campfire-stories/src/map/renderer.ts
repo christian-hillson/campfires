@@ -1,5 +1,5 @@
 import type { FireLevelMultipliers, FireLevel } from './animation-constants.js';
-import { PULSE_DURATION, PULSE_RADIUS_MULT, SPARK_ARC_DURATION, SPARK_ARC_HEIGHT } from './animation-constants.js';
+import { PULSE_DURATION, PULSE_RADIUS_MULT, SPARK_ARC_HEIGHT } from './animation-constants.js';
 import type { PulseRing } from './fire-state.js';
 
 // Low-level pixel art drawing helpers

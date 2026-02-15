@@ -38,7 +38,7 @@ export class DecorationManager implements vscode.Disposable {
         this.filePresence.set(file, []);
       }
 
-      this.filePresence.get(file)!.push({
+      this.filePresence.get(file)?.push({
         userId: state.userId,
         displayName: state.displayName,
         color: state.color,
@@ -89,13 +89,13 @@ export class DecorationManager implements vscode.Disposable {
       if (!this.currentDecorations.has(key)) {
         this.currentDecorations.set(key, []);
       }
-      this.currentDecorations.get(key)!.push(decorationType);
+      this.currentDecorations.get(key)?.push(decorationType);
     });
   }
 
   private getOrCreateDecorationType(color: string): vscode.TextEditorDecorationType {
     if (this.gutterDecorationTypes.has(color)) {
-      return this.gutterDecorationTypes.get(color)!;
+      return this.gutterDecorationTypes.get(color) as vscode.TextEditorDecorationType;
     }
 
     const decorationType = vscode.window.createTextEditorDecorationType({

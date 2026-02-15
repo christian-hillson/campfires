@@ -31,7 +31,8 @@ export interface AppState {
   currentView: ViewMode;
 }
 
-const app = document.getElementById('app')!;
+const app = document.getElementById('app');
+if (!app) throw new Error('Missing #app element');
 let state: AppState | null = null;
 let mapView: MapView | null = null;
 let awarenessInterval: ReturnType<typeof setInterval> | null = null;

@@ -118,7 +118,8 @@ export function createWebSocketServer(server: http.Server): WebSocketServer {
 
   // Handle connections
   wss.on('connection', (ws: AuthenticatedWebSocket, request: http.IncomingMessage) => {
-    const teamId = ws.teamId!;
+    const teamId = ws.teamId;
+    if (!teamId) return;
     const docName = `campfire:${teamId}`;
 
     // Track visitors for activity filtering
@@ -126,12 +127,12 @@ export function createWebSocketServer(server: http.Server): WebSocketServer {
       if (!roomVisitors.has(docName)) {
         roomVisitors.set(docName, new Set());
       }
-      roomVisitors.get(docName)!.add(ws.userId);
+      roomVisitors.get(docName)?.add(ws.userId);
 
       ws.on('close', () => {
         const visitors = roomVisitors.get(docName);
         if (visitors) {
-          visitors.delete(ws.userId!);
+          if (ws.userId) visitors.delete(ws.userId);
           if (visitors.size === 0) roomVisitors.delete(docName);
         }
       });

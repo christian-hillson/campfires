@@ -118,7 +118,7 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
       // Apply directory filter
       if (this.filterConfig.directories.length > 0 && state.currentFile) {
         const matchesDir = this.filterConfig.directories.some((dir) =>
-          state.currentFile!.startsWith(dir),
+          state.currentFile?.startsWith(dir),
         );
         if (!matchesDir) return;
       }
@@ -151,7 +151,7 @@ export class CampfirePanel implements vscode.WebviewViewProvider {
     if (this.filterConfig.directories.length > 0) {
       events = events.filter((e) => {
         if (!e.file) return false;
-        return this.filterConfig.directories.some((dir) => e.file!.startsWith(dir));
+        return this.filterConfig.directories.some((dir) => e.file?.startsWith(dir));
       });
     }
 

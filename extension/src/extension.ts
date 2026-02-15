@@ -225,14 +225,14 @@ function registerCommands(context: vscode.ExtensionContext): void {
           serverUrl,
           color: user.avatarColor,
           visitorMode: true,
-          homeTeamId: payload.teamId!,
+          homeTeamId: payload.teamId ?? '',
         });
 
         visitedTeamName = pick.label;
 
         visitProvider.onConnectionChange((state) => {
           if (state.connected) {
-            statusBar?.setVisitMode(visitedTeamName!);
+            if (visitedTeamName) statusBar?.setVisitMode(visitedTeamName);
           }
         });
 

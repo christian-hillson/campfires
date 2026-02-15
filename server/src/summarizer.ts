@@ -45,7 +45,7 @@ function generateStubSummary(
 
   const commitMessages = commits
     .filter((e) => e.message)
-    .map((e) => e.message!)
+    .map((e) => e.message as string)
     .slice(0, 10);
 
   const uniqueFiles = new Set(events.filter((e) => e.file).map((e) => e.file));
@@ -394,7 +394,8 @@ async function callClaude(
   teamContext: { name: string; description: string },
   members?: User[],
 ): Promise<SummaryResult> {
-  const client = getAnthropicClient()!;
+  const client = getAnthropicClient();
+  if (!client) throw new Error('Anthropic client not configured');
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20250514';
   const eventData = prepareEventData(events);
   const transcriptData = prepareTranscriptData(transcripts, members);

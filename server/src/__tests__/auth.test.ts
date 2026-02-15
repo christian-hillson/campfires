@@ -155,7 +155,7 @@ describe('Auth API', () => {
 
       // Verify the hash was upgraded to bcrypt (starts with $2a$ or $2b$)
       const updatedUser = db.getUserByEmail('legacy@example.com');
-      expect(updatedUser!.passwordHash).toMatch(/^\$2[ab]\$/);
+      expect(updatedUser?.passwordHash).toMatch(/^\$2[ab]\$/);
 
       // Login should still work after migration
       const res2 = await request(app)

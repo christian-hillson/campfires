@@ -138,9 +138,12 @@ export function renderSummaryFeed(container: HTMLElement, ctx: FeedContext): voi
   const sparkLogLink = document.createElement('div');
   sparkLogLink.className = 'spark-log-link';
   sparkLogLink.innerHTML = '<button class="spark-log-btn">\u26A1 Spark History</button>';
-  sparkLogLink.querySelector('button')!.addEventListener('click', () => {
-    renderSparkLog(container, ctx);
-  });
+  const sparkLogBtn = sparkLogLink.querySelector('button');
+  if (sparkLogBtn) {
+    sparkLogBtn.addEventListener('click', () => {
+      renderSparkLog(container, ctx);
+    });
+  }
   container.appendChild(sparkLogLink);
 }
 

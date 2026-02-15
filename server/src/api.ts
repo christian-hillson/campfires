@@ -21,12 +21,20 @@ import {
   auditRateLimitHit,
 } from './audit-log.js';
 
+/** Extract the authenticated user from the request (guaranteed by authMiddleware). */
+function getUser(req: Request) {
+  const user = req.user;
+  if (!user) throw new Error('authMiddleware did not attach user');
+  return user;
+}
+
 // ============================================
 // Zod Schemas
 // ============================================
 
 // Strip control characters (except newline/tab) from fields that flow into AI prompts
 function stripControlChars(s: string): string {
+  // eslint-disable-next-line no-control-regex
   return s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 }
 
@@ -253,7 +261,7 @@ export function createRouter(): Router {
   });
 
   router.post('/auth/ws-token', authMiddleware, (req: Request, res: Response) => {
-    const wsToken = createWsToken(req.user!);
+    const wsToken = createWsToken(getUser(req));
     res.json({ token: wsToken, expiresIn: 30 });
   });
 
@@ -298,8 +306,8 @@ export function createRouter(): Router {
     const updates = parsed.data;
 
     // Only members of this org can update it
-    if (req.user!.orgId !== id) {
-      auditAuthorizationDenied(req, req.user!.userId, 'Org update denied — wrong org');
+    if (getUser(req).orgId !== id) {
+      auditAuthorizationDenied(req, getUser(req).userId, 'Org update denied — wrong org');
       res.status(403).json({ error: 'You do not belong to this organization' });
       return;
     }
@@ -342,8 +350,8 @@ export function createRouter(): Router {
     const { orgId, name, description } = parsed.data;
 
     // Only members of this org (or users with no org yet) can create teams in it
-    if (req.user!.orgId && req.user!.orgId !== orgId) {
-      auditAuthorizationDenied(req, req.user!.userId, 'Team create denied — wrong org');
+    if (getUser(req).orgId && getUser(req).orgId !== orgId) {
+      auditAuthorizationDenied(req, getUser(req).userId, 'Team create denied — wrong org');
       res.status(403).json({ error: 'You do not belong to this organization' });
       return;
     }
@@ -360,7 +368,7 @@ export function createRouter(): Router {
     const team = db.createTeam(orgId, name, description || '');
 
     // Auto-join the creating user to the team
-    const userId = req.user!.userId;
+    const userId = getUser(req).userId;
     db.updateUserTeam(userId, team.teamId, orgId);
 
     res.status(201).json(team);
@@ -382,19 +390,23 @@ export function createRouter(): Router {
       return;
     }
 
-    const userId = req.user!.userId;
+    const userId = getUser(req).userId;
     db.updateUserTeam(userId, team.teamId, team.orgId);
 
     // Get updated user
     const user = db.getUser(userId);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
 
     // Generate new token with updated teamId
     const token = generateToken({
-      userId: user!.userId,
-      email: user!.email,
-      teamId: user!.teamId || null,
-      orgId: user!.orgId || null,
-      type: user!.type,
+      userId: user.userId,
+      email: user.email,
+      teamId: user.teamId || null,
+      orgId: user.orgId || null,
+      type: user.type,
     });
 
     res.json({ team, user, token });
@@ -547,7 +559,7 @@ export function createRouter(): Router {
 
   router.post('/sparks/:sparkId/dismiss', authMiddleware, (req: Request, res: Response) => {
     const { sparkId } = req.params;
-    const caller = req.user!;
+    const caller = getUser(req);
 
     const db = getPersistence();
     db.dismissSpark(sparkId, caller.userId);
@@ -557,7 +569,7 @@ export function createRouter(): Router {
   router.post('/sparks/:sparkId/view', authMiddleware, (req: Request, res: Response) => {
     const { sparkId } = req.params;
     const teamId = req.body?.teamId;
-    const caller = req.user!;
+    const caller = getUser(req);
 
     if (!teamId) {
       res.status(400).json({ error: 'teamId required' });
@@ -574,7 +586,7 @@ export function createRouter(): Router {
   // ============================================
 
   router.post('/agents', authMiddleware, (req: Request, res: Response) => {
-    const caller = req.user!;
+    const caller = getUser(req);
 
     // Only human users on a team can register agents
     if (caller.type !== 'human') {
@@ -614,7 +626,7 @@ export function createRouter(): Router {
   });
 
   router.post('/agents/activity', authMiddleware, (req: Request, res: Response) => {
-    const caller = req.user!;
+    const caller = getUser(req);
     const parsed = AgentActivitySchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: parsed.error.issues[0].message });
@@ -660,7 +672,7 @@ export function createRouter(): Router {
       return;
     }
 
-    const caller = req.user!;
+    const caller = getUser(req);
     if (!caller.teamId) {
       res.status(400).json({ error: 'You must be on a team to start a session' });
       return;
@@ -708,7 +720,7 @@ export function createRouter(): Router {
       return;
     }
 
-    const caller = req.user!;
+    const caller = getUser(req);
     const db = getPersistence();
 
     // Verify session ownership
@@ -734,7 +746,7 @@ export function createRouter(): Router {
       return;
     }
 
-    const caller = req.user!;
+    const caller = getUser(req);
     const { session_id, reason } = parsed.data;
     const db = getPersistence();
 
@@ -778,7 +790,7 @@ export function createRouter(): Router {
       return;
     }
 
-    const caller = req.user!;
+    const caller = getUser(req);
     const { session_id, delta, is_final } = parsed.data;
     const db = getPersistence();
 
@@ -805,7 +817,7 @@ export function createRouter(): Router {
   });
 
   router.post('/activity', authMiddleware, (req: Request, res: Response) => {
-    const caller = req.user!;
+    const caller = getUser(req);
     const parsed = ActivitySchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: parsed.error.issues[0].message });

@@ -109,7 +109,8 @@ export interface SpriteRenderState {
 
 export function tickSprite(sprite: AnimatedSprite, dt: number): void {
   if (!sprite.currentAnim && sprite.animQueue.length > 0) {
-    sprite.currentAnim = sprite.animQueue.shift()!;
+    const next = sprite.animQueue.shift();
+    if (next) sprite.currentAnim = next;
   }
 
   if (!sprite.currentAnim) return;
@@ -126,7 +127,8 @@ export function tickSprite(sprite: AnimatedSprite, dt: number): void {
 
     // Start next anim immediately if queued
     if (sprite.animQueue.length > 0) {
-      sprite.currentAnim = sprite.animQueue.shift()!;
+      const next = sprite.animQueue.shift();
+      if (next) sprite.currentAnim = next;
     }
   }
 }

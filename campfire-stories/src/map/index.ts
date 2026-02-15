@@ -91,7 +91,6 @@ import {
   SPAWN_TOTAL,
   DESPAWN_WALK_DURATION,
   DESPAWN_DISSOLVE_DURATION,
-  DESPAWN_FLARE_DURATION,
   GOLEM_SPEED_MULT,
   AFTERIMAGE_DURATION,
   GOLEM_GLOW_WINDOW,
@@ -344,10 +343,13 @@ export class MapView {
   }
 
   private resize(): void {
-    const parent = this.canvas.parentElement!;
+    const parent = this.canvas.parentElement;
+    if (!parent) return;
     this.canvas.width = parent.clientWidth;
     this.canvas.height = parent.clientHeight;
-    this.ctx = this.canvas.getContext('2d')!;
+    const ctx = this.canvas.getContext('2d');
+    if (!ctx) throw new Error('Failed to get 2d context');
+    this.ctx = ctx;
 
     // Adjust map dimensions based on canvas size
     this.mapWidth = Math.floor(this.canvas.width / PIXEL_SCALE);
@@ -409,7 +411,8 @@ export class MapView {
       this.zoomTarget = this.camera.zoom;
       this.initFireStates();
     });
-    resizeObserver.observe(this.canvas.parentElement!);
+    const parentEl = this.canvas.parentElement;
+    if (parentEl) resizeObserver.observe(parentEl);
 
     // Wheel: smooth zoom toward cursor
     this.canvas.addEventListener(
@@ -606,10 +609,14 @@ export class MapView {
 
     // Wire home button
     if (showHomeBtn) {
-      this.logsPanel.querySelector('.logs-panel-home-btn')!.addEventListener('click', () => {
-        this.currentPanelTeamId = null; // force re-render
-        this.renderLogsPanel(this.config.homeTeamId!);
-      });
+      const homeBtn = this.logsPanel.querySelector('.logs-panel-home-btn');
+      if (homeBtn && this.config.homeTeamId) {
+        const homeTeamId = this.config.homeTeamId;
+        homeBtn.addEventListener('click', () => {
+          this.currentPanelTeamId = null; // force re-render
+          this.renderLogsPanel(homeTeamId);
+        });
+      }
     }
 
     // Fetch and populate

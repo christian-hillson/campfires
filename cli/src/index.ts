@@ -385,11 +385,13 @@ async function main(): Promise<void> {
         if (agentActive) {
           connection.pushAgentActivityEvent('session_start');
         }
-        await gitWatcher!.start();
-        // Set initial branch in awareness
-        const branch = gitWatcher!.getCurrentBranch();
-        if (branch) connection.setCurrentBranch(branch);
-        fileWatcher!.start();
+        if (gitWatcher) {
+          await gitWatcher.start();
+          // Set initial branch in awareness
+          const branch = gitWatcher.getCurrentBranch();
+          if (branch) connection.setCurrentBranch(branch);
+        }
+        if (fileWatcher) fileWatcher.start();
       }
     });
   }
