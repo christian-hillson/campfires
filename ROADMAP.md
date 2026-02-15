@@ -127,7 +127,7 @@ Let people see into other campfires and temporarily visit them. The Map View alr
 
 | Feature                                                     | Status | Owner | Notes                                                                                     |
 | ----------------------------------------------------------- | ------ | ----- | ----------------------------------------------------------------------------------------- |
-| Map: click campfire to open detail overlay                  | Done   | —     | Team name, AI summary, member list with statuses, headcount                               |
+| Map: click campfire to show stories panel                   | Done   | —     | Persistent bottom-right panel with AI summary, member list, status dots, Home button      |
 | Campfire Stories: campfire detail as entry point for visits | Done   | —     | Existing detail drill-down gains a "Visit this campfire" action                           |
 | Server: cross-team read access for visitors                 | Done   | —     | Read-only awareness + activity for any team in your org                                   |
 | Server: visitor presence (lightweight)                      | Done   | —     | Visitors appear in awareness with a distinct `visitor` status, don't emit activity events |
@@ -238,7 +238,7 @@ These are explicitly deferred. Don't build them yet.
 - Map View: ambient display mode (TV in the office)
 - Map View: sprite customization
 - Map View: ambient sound (campfire crackling, proximity-based)
-- Map View: campfire detail side panel redesign (replace overlay with map-native panel)
+- ~~Map View: campfire detail side panel redesign~~ — Done (replaced centered overlay with persistent bottom-right stories panel)
 
 ## How to Use This Doc
 
