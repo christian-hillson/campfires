@@ -247,6 +247,24 @@ AI-powered cross-team connection detection. After each batch summarization cycle
 | Campfire Stories: spark log                             | Done   | —     | Historical log in Campfire Stories panel (org-wide summaries), all statuses, scrollable          |
 | Mockup: spark arc + badge + stories entry in simulation | Done   | —     | 2 spark events in 90s loop (Payments↔Platform t=35, Growth↔Infra t=65), amber #fbbf24 throughout |
 
+## Sprint 4d: Map Mockup — Dawn Sequence, New Campfire & Extended Loop
+
+Extended the map mockup simulation from 90s to 105s with two new visual sequences and fire-level reactivity tied to arrivals and departures. The loop now tells a story: quiet embers → arrivals wake fires → peak activity → new campfire born → wind-down → fires dim.
+
+| Feature                                          | Status | Owner | Notes                                                                                                         |
+| ------------------------------------------------ | ------ | ----- | ------------------------------------------------------------------------------------------------------------- |
+| Mockup: ember fire level (below low)             | Done   | —     | New lowest intensity: height 0.15, no sparks, faint glow. All fires start at ember                            |
+| Mockup: fire wakes on arrival (ember→low→steady) | Done   | —     | handleSessionStart triggers fire transition + "first catch" warm pulse ring                                   |
+| Mockup: fires dim on departure                   | Done   | —     | Fires step down through levels as people leave; dusk auto-lowers all fires toward ember                       |
+| Mockup: dawn/waking sequence (t=0-20)            | Done   | —     | Map starts quiet with ember fires. Christian arrives t=8, spawns golem t=13, JC at t=16, Alex (Platform) t=18 |
+| Mockup: new campfire sequence (t=35-45)          | Done   | —     | Natasha walks to clearing, fire-starting animation (kneeling + flint sparks + fizzles), tiny fire catches     |
+| Mockup: Hackathon team dynamically added         | Done   | —     | Team, fire state, summary entry, and header counter ("5 campfires") all added at t=40, removed on reset       |
+| Mockup: fire-starting pose + animation           | Done   | —     | drawFireStartingPose — kneeling, flint-strike sparks, distinct from golem spawn                               |
+| Mockup: tiny new campfire rendering              | Done   | —     | drawNewCampfire — fireSize 0.5, partial stone ring, small warm glow, "Hackathon" label fade-in                |
+| Mockup: dusk wind-down (t=85-95)                 | Done   | —     | All sprites get session_end events, fires lower step-by-step                                                  |
+| Mockup: extended loop (105s) + full reset        | Done   | —     | resetAllState clears Hackathon team, Natasha sprite, resets fires to ember, restores header counter           |
+| Mockup: background team session_start events     | Done   | —     | Priya, Kai, Sam arrive with session_start events so their fires wake up naturally                             |
+
 ## Sprint 13: Campfire Lifecycle — Cold Firepits, Kindle Animation & Founder Ceremony
 
 Full campfire lifecycle: firepits persist on the map even when nobody's around. Offline teams show cold firepits with stone rings and charred logs. Fire intensity is now 4-tier (cold/kindled/steady/roaring) based on online member count + activity. New teams get a founder pig ceremony. Map positions are persisted in SQLite.
