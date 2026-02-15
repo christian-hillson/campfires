@@ -209,6 +209,21 @@ Interactive camera controls, ambient day/night lighting, and removal of the Feed
 | Map: smooth zoom with easing                  | Done   | —     | Target-based zoom with per-frame lerp, anchor point preserved under cursor                |
 | Remove Feed view, map-only experience         | Done   | —     | Feed/Map toggle removed from header, app defaults to map view                             |
 
+## Sprint 11: Security Hardening
+
+Holistic security review and hardening pass across server, plugin, and client. No new features — focused on closing gaps identified in a full-stack security audit.
+
+**Explicitly deferred from this sprint:** password complexity rules, RBAC, SQLite encryption, CSP tightening, legacy SHA256 migration removal.
+
+| Feature                                              | Status | Owner | Notes                                                                                                      |
+| ---------------------------------------------------- | ------ | ----- | ---------------------------------------------------------------------------------------------------------- |
+| Server: tiered API rate limiting                     | Done   | —     | 60 req/min authenticated, 10 req/min unauthenticated via `express-rate-limit`. `/health` exempt. `authLimiter` applied to `/auth/refresh` |
+| Server: single-use WebSocket upgrade tokens          | Done   | —     | `POST /auth/ws-token` returns 30s opaque token (Map + TTL cleanup). `ws-server.ts` consumes on connect. JWT no longer in query string |
+| Server: CORS origin allowlist                        | Done   | —     | `ALLOWED_ORIGINS` env var (comma-separated, trimmed). Defaults to localhost for dev. Documented in `.env.example` |
+| Plugin: config file permission enforcement           | Done   | —     | `chmod 600` on `~/.campfires/config.json` in login command, share command, and config.sh loader            |
+| Server: structured audit logging                     | Done   | —     | `server/src/audit-log.ts` — JSON to stdout for auth failures, authorization denials, rate limit hits. Wired into auth middleware and all 403 responses |
+| Server: prompt injection defenses                    | Done   | —     | Control character stripping + 2000 char cap on org mission, roadmap, and team description via Zod transform. These fields flow into Claude API prompts |
+
 ## Not Yet Planned
 
 These are explicitly deferred. Don't build them yet.
