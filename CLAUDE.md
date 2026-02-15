@@ -8,9 +8,9 @@ Read campfires-build-spec-v3.md in the context folder for the original technical
 
 Campfires has three layers:
 
-1. **Source — Claude Code Plugin** captures developer activity (file edits, commands, sessions) and uploads session transcripts when Share is enabled. Plugin design is in progress.
+1. **Source — Claude Code Plugin** captures developer activity (file edits, commands, sessions) and uploads session transcripts when Share is enabled.
 2. **System — Campfires Server** stores activity, manages teams/orgs, and runs AI summarization via Claude API.
-3. **Surface — Campfire Stories (Web App)** displays a pixel-art organization map, Fireside Panel with AI summaries, and real-time activity log.
+3. **Surface — Campfire Stories (Web App)** displays a pixel-art organization map (with zoom/pan and day/night cycle) and a Fireside Updates sidebar with AI-generated summaries.
 
 ## Stack
 

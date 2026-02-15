@@ -55,19 +55,19 @@ AI-summarized org-wide view for non-dev stakeholders.
 
 **Tech approach:** Pure HTML5 canvas with pixel-art rendering, y-sorted depth, auto-layout. Feed/Map toggle in shared header. Awareness polling via REST endpoint every 10s.
 
-| Feature                                           | Status | Owner | Notes                                                                                        |
-| ------------------------------------------------- | ------ | ----- | -------------------------------------------------------------------------------------------- |
-| Campfire Stories: Feed/Map toggle + shared header | Done   | —     | `campfire-stories/src/components/header.ts`, Press Start 2P + Silkscreen fonts               |
-| Map: canvas renderer + campfire sprites           | Done   | —     | 3 intensity levels from event count, `campfire-stories/src/map/renderer.ts`                  |
-| Map: human user sprites + animations              | Done   | —     | smithing/scribing/mining + idle/zzz + draft/tent, `campfire-stories/src/map/sprites.ts`      |
-| Map: agent/golem sprites                          | Done   | —     | Blockier body, glowing eyes, color-matched to parent, `campfire-stories/src/map/sprites.ts`  |
-| Map: environmental art                            | Done   | —     | Trees, paths, woodpiles, barrels, crates, torches, `campfire-stories/src/map/environment.ts` |
-| Map: zoomed-out org view                          | Done   | —     | Elliptical auto-layout, AI summary one-liners overlay, `campfire-stories/src/map/layout.ts`  |
-| Map: hover tooltips                               | Done   | —     | Hit detection on sprites, name/role/team/file tooltip                                        |
-| Server: awareness REST endpoint                   | Done   | —     | `GET /api/teams/:id/awareness`, reads Yjs awareness state                                    |
-| Mockup: `campfires-map-mockup.html`               | Done   | —     | Visual direction established                                                                 |
+| Feature                                 | Status | Owner | Notes                                                                                                                            |
+| --------------------------------------- | ------ | ----- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Campfire Stories: shared header         | Done   | —     | `campfire-stories/src/components/header.ts`, Press Start 2P + Silkscreen fonts. Feed/Map toggle removed in Sprint 10 (map-only). |
+| Map: canvas renderer + campfire sprites | Done   | —     | 3 intensity levels from event count, `campfire-stories/src/map/renderer.ts`                                                      |
+| Map: human user sprites + animations    | Done   | —     | smithing/scribing/mining + idle/zzz + draft/tent, `campfire-stories/src/map/sprites.ts`                                          |
+| Map: agent/golem sprites                | Done   | —     | Blockier body, glowing eyes, color-matched to parent, `campfire-stories/src/map/sprites.ts`                                      |
+| Map: environmental art                  | Done   | —     | Trees, paths, woodpiles, barrels, crates, torches, `campfire-stories/src/map/environment.ts`                                     |
+| Map: zoomed-out org view                | Done   | —     | Elliptical auto-layout, AI summary one-liners overlay, `campfire-stories/src/map/layout.ts`                                      |
+| Map: hover tooltips                     | Done   | —     | Hit detection on sprites, name/role/team/file tooltip                                                                            |
+| Server: awareness REST endpoint         | Done   | —     | `GET /api/teams/:id/awareness`, reads Yjs awareness state                                                                        |
+| Mockup: `campfires-map-mockup.html`     | Done   | —     | Visual direction established                                                                                                     |
 
-**Deferred from Sprint 4:** Zoom/scroll interaction, ambient display mode (TV in office), sprite customization, day/night cycle.
+**Deferred from Sprint 4:** Ambient display mode (TV in office), sprite customization. _(Zoom/scroll and day/night cycle were implemented in Sprint 10.)_
 
 ## Sprint 4b: Map Enhancement — Event-Driven Animations & Golem Spawning
 
@@ -191,6 +191,22 @@ End-to-end flow: Claude Code Plugin → Server → AI Summarizer → Campfire St
 | Zero-config onboarding experience                  | Done   | —     | Login command handles signup + auto-provision org/team       |
 | Deprecate extension + CLI as primary inputs        | Done   | —     | Removed from workspaces + build pipeline, kept for reference |
 
+## Sprint 10: Map Enhancements — Camera Controls, Day/Night Cycle, Map-Only View
+
+Interactive camera controls, ambient day/night lighting, and removal of the Feed view in favor of a map-only experience. The Fireside Updates sidebar provides the text summaries previously shown in the Feed.
+
+| Feature                                       | Status | Owner | Notes                                                                                     |
+| --------------------------------------------- | ------ | ----- | ----------------------------------------------------------------------------------------- |
+| Map: zoom/pan camera system                   | Done   | —     | `campfire-stories/src/map/camera.ts` — mouse wheel zoom toward cursor, click-drag pan     |
+| Map: camera bounds clamping                   | Done   | —     | Viewport stays within world edges at all zoom levels                                      |
+| Map: Reset View button                        | Done   | —     | Smooth lerp animation back to center/zoom 1.0, styled top-left overlay                    |
+| Map: day/night cycle (120s period)            | Done   | —     | Night/dawn/day/dusk phases, ambient color overlay, `campfire-stories/src/map/renderer.ts` |
+| Map: campfire glow scales with time of day    | Done   | —     | `glowMultiplier` on `drawCampfire` — 2x glow at night, 1x during day                      |
+| Map: twinkling stars at night                 | Done   | —     | 60 deterministic stars in upper 40%, visible during night/dusk phases                     |
+| Map: world-space ground rendering             | Done   | —     | `drawGround` uses world dimensions for correct rendering under camera transform           |
+| Map: hit-testing works at all zoom/pan levels | Done   | —     | `screenToWorld()` conversion for tooltips and campfire clicks                             |
+| Remove Feed view, map-only experience         | Done   | —     | Feed/Map toggle removed from header, app defaults to map view                             |
+
 ## Not Yet Planned
 
 These are explicitly deferred. Don't build them yet.
@@ -201,10 +217,8 @@ These are explicitly deferred. Don't build them yet.
 - Campfire Stories notifications / follow
 - Daily digest emails
 - Agent identity config (naming, colors)
-- Map View: zoom/scroll interaction (add if needed, Phaser.js)
 - Map View: ambient display mode (TV in the office)
 - Map View: sprite customization
-- Map View: day/night cycle
 
 ## How to Use This Doc
 

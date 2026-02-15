@@ -50,6 +50,7 @@ export function drawCampfire(
   size: number,
   teamColor: string,
   time: number,
+  glowMultiplier: number = 1.0,
 ): void {
   const baseR = size * 5 + 4;
 
@@ -110,7 +111,7 @@ export function drawCampfire(
   }
 
   // Glow on ground
-  const glowR = baseR + size * 4;
+  const glowR = (baseR + size * 4) * glowMultiplier;
   ctx.save();
   const gradient = ctx.createRadialGradient(
     cx * PIXEL_SCALE,
@@ -120,8 +121,10 @@ export function drawCampfire(
     cy * PIXEL_SCALE,
     glowR * PIXEL_SCALE,
   );
-  gradient.addColorStop(0, teamColor + '18');
-  gradient.addColorStop(0.5, teamColor + '08');
+  const glowAlpha = Math.min(0xff, Math.round(0x18 * glowMultiplier));
+  const midAlpha = Math.min(0xff, Math.round(0x08 * glowMultiplier));
+  gradient.addColorStop(0, teamColor + glowAlpha.toString(16).padStart(2, '0'));
+  gradient.addColorStop(0.5, teamColor + midAlpha.toString(16).padStart(2, '0'));
   gradient.addColorStop(1, 'transparent');
   ctx.fillStyle = gradient;
   ctx.fillRect(
@@ -162,5 +165,121 @@ export function drawVignette(ctx: CanvasRenderingContext2D, width: number, heigh
   vignette.addColorStop(1, '#0a0e0a88');
   ctx.fillStyle = vignette;
   ctx.fillRect(0, 0, width, height);
+  ctx.restore();
+}
+
+// ============================================
+// Day/Night Cycle (120-second period)
+// ============================================
+
+const DAY_NIGHT_PERIOD = 120; // seconds
+
+export interface DayNightState {
+  phase: 'night' | 'dawn' | 'day' | 'dusk';
+  ambientAlpha: number;
+  ambientColor: string;
+  glowMultiplier: number;
+}
+
+function lerpHexColor(a: string, b: string, t: number): string {
+  const ar = parseInt(a.slice(1, 3), 16);
+  const ag = parseInt(a.slice(3, 5), 16);
+  const ab = parseInt(a.slice(5, 7), 16);
+  const br = parseInt(b.slice(1, 3), 16);
+  const bg = parseInt(b.slice(3, 5), 16);
+  const bb = parseInt(b.slice(5, 7), 16);
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg - ag) * t);
+  const blue = Math.round(ab + (bb - ab) * t);
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${blue.toString(16).padStart(2, '0')}`;
+}
+
+export function computeDayNight(time: number): DayNightState {
+  const cycle = ((time % DAY_NIGHT_PERIOD) + DAY_NIGHT_PERIOD) % DAY_NIGHT_PERIOD;
+  const t = cycle / DAY_NIGHT_PERIOD; // 0..1
+
+  const nightColor = '#0a1030';
+  const dawnColor = '#c09040';
+  const dayColor = '#d0c090';
+
+  if (t < 0.2) {
+    // Night
+    return { phase: 'night', ambientAlpha: 0.35, ambientColor: nightColor, glowMultiplier: 2.0 };
+  } else if (t < 0.3) {
+    // Dawn: night → day
+    const dt = (t - 0.2) / 0.1;
+    return {
+      phase: 'dawn',
+      ambientAlpha: 0.35 + (0.05 - 0.35) * dt,
+      ambientColor: lerpHexColor(nightColor, dawnColor, dt),
+      glowMultiplier: 2.0 + (1.0 - 2.0) * dt,
+    };
+  } else if (t < 0.7) {
+    // Day
+    return { phase: 'day', ambientAlpha: 0.05, ambientColor: dayColor, glowMultiplier: 1.0 };
+  } else if (t < 0.8) {
+    // Dusk: day → night
+    const dt = (t - 0.7) / 0.1;
+    return {
+      phase: 'dusk',
+      ambientAlpha: 0.05 + (0.35 - 0.05) * dt,
+      ambientColor: lerpHexColor(dawnColor, nightColor, dt),
+      glowMultiplier: 1.0 + (2.0 - 1.0) * dt,
+    };
+  } else {
+    // Night
+    return { phase: 'night', ambientAlpha: 0.35, ambientColor: nightColor, glowMultiplier: 2.0 };
+  }
+}
+
+export function drawDayNightOverlay(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  state: DayNightState,
+): void {
+  if (state.ambientAlpha <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = state.ambientAlpha;
+  ctx.fillStyle = state.ambientColor;
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
+}
+
+/** Draw deterministic twinkling stars during night and dusk phases */
+export function drawStars(
+  ctx: CanvasRenderingContext2D,
+  mapWidth: number,
+  mapHeight: number,
+  state: DayNightState,
+  time: number,
+): void {
+  if (state.phase !== 'night' && state.phase !== 'dusk') return;
+
+  const starAlpha = state.phase === 'night' ? 1.0 : state.glowMultiplier - 1.0; // fade in during dusk
+  if (starAlpha <= 0) return;
+
+  ctx.save();
+  const upperBound = mapHeight * 0.4;
+
+  for (let i = 0; i < 60; i++) {
+    // Deterministic positions using seed
+    const seed = i * 7919;
+    const sx = ((seed * 13) % (mapWidth * 100)) / 100;
+    const sy = ((seed * 17) % (upperBound * 100)) / 100;
+
+    // Twinkle
+    const twinkle = 0.4 + 0.6 * Math.abs(Math.sin(time * (1.5 + (i % 5) * 0.3) + seed));
+    const alpha = starAlpha * twinkle;
+
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = i % 7 === 0 ? '#a0c0f0' : '#e0e0d0';
+    ctx.fillRect(
+      Math.floor(sx * PIXEL_SCALE),
+      Math.floor(sy * PIXEL_SCALE),
+      PIXEL_SCALE,
+      PIXEL_SCALE,
+    );
+  }
   ctx.restore();
 }

@@ -242,7 +242,7 @@ async function init(): Promise<void> {
       members,
       awareness,
       eventSource: connectSSE(orgId),
-      currentView: 'feed',
+      currentView: 'map',
     };
 
     app.innerHTML = '';

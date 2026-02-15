@@ -1,5 +1,13 @@
 import type { Org, Team, Summary, User, AwarenessState } from '@campfires/shared';
-import { PIXEL_SCALE, drawCampfire, drawTeamLabel, drawVignette } from './renderer.js';
+import {
+  PIXEL_SCALE,
+  drawCampfire,
+  drawTeamLabel,
+  drawVignette,
+  computeDayNight,
+  drawDayNightOverlay,
+  drawStars,
+} from './renderer.js';
 import {
   drawGround,
   drawPath,
@@ -15,6 +23,17 @@ import {
   type SpriteData,
 } from './layout.js';
 import { drawHumanSprite, drawGolemSprite } from './sprites.js';
+import {
+  type Camera,
+  createCamera,
+  screenToWorld,
+  clampCamera,
+  applyCameraTransform,
+  lerpCamera,
+  MIN_ZOOM,
+  MAX_ZOOM,
+  ZOOM_SPEED,
+} from './camera.js';
 
 function esc(str: string): string {
   const div = document.createElement('div');
@@ -51,6 +70,16 @@ export class MapView {
   private mapWidth = 500;
   private mapHeight = 280;
 
+  // Camera state
+  private camera!: Camera;
+  private isDragging = false;
+  private dragStartX = 0;
+  private dragStartY = 0;
+  private dragCameraStartX = 0;
+  private dragCameraStartY = 0;
+  private dragDistance = 0;
+  private resetTarget: { x: number; y: number; zoom: number } | null = null;
+
   constructor(container: HTMLElement, config: MapViewConfig) {
     this.container = container;
     this.config = config;
@@ -60,6 +89,7 @@ export class MapView {
     this.buildDOM();
     this.computeLayout();
     this.environment = generateEnvironment(this.mapWidth, this.mapHeight, this.campfires);
+    this.camera = createCamera(this.mapWidth, this.mapHeight);
     this.attachEvents();
     this.render(0);
   }
@@ -120,6 +150,19 @@ export class MapView {
       <div class="map-legend-item"><div class="map-legend-swatch" style="background:#f97316; border-radius:50%"></div> Campfire</div>
     `;
     wrapper.appendChild(legend);
+
+    // Reset view button
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'map-reset-btn';
+    resetBtn.textContent = '\u2302 RESET VIEW';
+    resetBtn.addEventListener('click', () => {
+      this.resetTarget = {
+        x: this.mapWidth / 2,
+        y: this.mapHeight / 2,
+        zoom: 1.0,
+      };
+    });
+    wrapper.appendChild(resetBtn);
 
     this.container.appendChild(wrapper);
 
@@ -188,20 +231,110 @@ export class MapView {
       this.resize();
       this.computeLayout();
       this.environment = generateEnvironment(this.mapWidth, this.mapHeight, this.campfires);
+      this.camera = createCamera(this.mapWidth, this.mapHeight);
     });
     resizeObserver.observe(this.canvas.parentElement!);
 
-    // Hover
+    // Wheel: zoom toward cursor
+    this.canvas.addEventListener(
+      'wheel',
+      (e) => {
+        e.preventDefault();
+
+        const rect = this.canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        // World point under cursor before zoom
+        const before = screenToWorld(
+          mx,
+          my,
+          this.camera,
+          this.canvas.width,
+          this.canvas.height,
+          PIXEL_SCALE,
+        );
+
+        // Apply zoom
+        const delta = e.deltaY > 0 ? -ZOOM_SPEED : ZOOM_SPEED;
+        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, this.camera.zoom + delta));
+        this.camera.zoom = newZoom;
+
+        // World point under cursor after zoom
+        const after = screenToWorld(
+          mx,
+          my,
+          this.camera,
+          this.canvas.width,
+          this.canvas.height,
+          PIXEL_SCALE,
+        );
+
+        // Adjust camera so the world point stays under cursor
+        this.camera.x += before.wx - after.wx;
+        this.camera.y += before.wy - after.wy;
+
+        this.camera = clampCamera(
+          this.camera,
+          this.mapWidth,
+          this.mapHeight,
+          this.canvas.width,
+          this.canvas.height,
+          PIXEL_SCALE,
+        );
+        this.resetTarget = null;
+      },
+      { passive: false },
+    );
+
+    // Mousedown: start drag
+    this.canvas.addEventListener('mousedown', (e) => {
+      this.isDragging = true;
+      this.dragStartX = e.clientX;
+      this.dragStartY = e.clientY;
+      this.dragCameraStartX = this.camera.x;
+      this.dragCameraStartY = this.camera.y;
+      this.dragDistance = 0;
+      this.canvas.style.cursor = 'grabbing';
+    });
+
+    // Mousemove: drag pan + hover
     this.canvas.addEventListener('mousemove', (e) => {
+      if (this.isDragging) {
+        const dx = e.clientX - this.dragStartX;
+        const dy = e.clientY - this.dragStartY;
+        this.dragDistance = Math.hypot(dx, dy);
+
+        this.camera.x = this.dragCameraStartX - dx / (this.camera.zoom * PIXEL_SCALE);
+        this.camera.y = this.dragCameraStartY - dy / (this.camera.zoom * PIXEL_SCALE);
+        this.camera = clampCamera(
+          this.camera,
+          this.mapWidth,
+          this.mapHeight,
+          this.canvas.width,
+          this.canvas.height,
+          PIXEL_SCALE,
+        );
+        this.resetTarget = null;
+        return;
+      }
+
+      // Hover: convert to world coords
       const rect = this.canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
+      const { wx, wy } = screenToWorld(
+        mx,
+        my,
+        this.camera,
+        this.canvas.width,
+        this.canvas.height,
+        PIXEL_SCALE,
+      );
 
       this.hoveredSprite = null;
       for (const sprite of this.allSprites) {
-        const sx = sprite.px * PIXEL_SCALE;
-        const sy = sprite.py * PIXEL_SCALE;
-        if (Math.hypot(mx - sx, my - sy) < 20) {
+        if (Math.hypot(wx - sprite.px, wy - sprite.py) < 20 / (this.camera.zoom * PIXEL_SCALE)) {
           this.hoveredSprite = sprite;
           break;
         }
@@ -229,22 +362,38 @@ export class MapView {
       }
     });
 
+    // Mouseup: end drag
+    window.addEventListener('mouseup', () => {
+      if (this.isDragging) {
+        this.isDragging = false;
+        this.canvas.style.cursor = 'crosshair';
+      }
+    });
+
     this.canvas.addEventListener('mouseleave', () => {
       this.hoveredSprite = null;
       this.tooltip.style.display = 'none';
     });
 
-    // Click to show campfire overlay
+    // Click to show campfire overlay (suppress if dragged)
     this.canvas.addEventListener('click', (e) => {
+      if (this.dragDistance > 5) return;
+
       const rect = this.canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
+      const { wx, wy } = screenToWorld(
+        mx,
+        my,
+        this.camera,
+        this.canvas.width,
+        this.canvas.height,
+        PIXEL_SCALE,
+      );
 
       for (const cf of this.campfires) {
-        const cfx = cf.x * PIXEL_SCALE;
-        const cfy = cf.y * PIXEL_SCALE;
-        const hitRadius = (cf.fireSize * 6 + 10) * PIXEL_SCALE;
-        if (Math.hypot(mx - cfx, my - cfy) < hitRadius) {
+        const hitRadius = cf.fireSize * 6 + 10;
+        if (Math.hypot(wx - cf.x, wy - cf.y) < hitRadius) {
           this.showOverlay(cf);
           return;
         }
@@ -372,17 +521,42 @@ export class MapView {
     const time = timestamp / 1000;
     const { ctx, canvas } = this;
 
+    // Animate reset if active
+    if (this.resetTarget) {
+      this.camera = lerpCamera(
+        this.camera,
+        this.resetTarget.x,
+        this.resetTarget.y,
+        this.resetTarget.zoom,
+        0.08,
+      );
+      const dx = Math.abs(this.camera.x - this.resetTarget.x);
+      const dy = Math.abs(this.camera.y - this.resetTarget.y);
+      const dz = Math.abs(this.camera.zoom - this.resetTarget.zoom);
+      if (dx < 0.1 && dy < 0.1 && dz < 0.005) {
+        this.camera.x = this.resetTarget.x;
+        this.camera.y = this.resetTarget.y;
+        this.camera.zoom = this.resetTarget.zoom;
+        this.resetTarget = null;
+      }
+    }
+
+    // Day/night state
+    const dayNight = computeDayNight(time);
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // === World-space drawing (camera transform) ===
+    applyCameraTransform(ctx, this.camera, canvas.width, canvas.height, PIXEL_SCALE);
+
     // Ground + grass
-    drawGround(ctx, canvas.width, canvas.height, this.environment.grass);
+    drawGround(ctx, this.mapWidth, this.mapHeight, this.environment.grass);
 
     // Paths between campfires
     for (let i = 0; i < this.campfires.length; i++) {
       for (let j = i + 1; j < this.campfires.length; j++) {
         const a = this.campfires[i];
         const b = this.campfires[j];
-        // Only draw paths between nearby campfires
         const dist = Math.hypot(a.x - b.x, a.y - b.y);
         if (dist < this.mapWidth * 0.6) {
           drawPath(ctx, a.x, a.y, b.x, b.y);
@@ -424,7 +598,7 @@ export class MapView {
     for (const item of renderOrder) {
       if (item.type === 'fire') {
         const cf = item.data as CampfirePosition;
-        drawCampfire(ctx, cf.x, cf.y, cf.fireSize, cf.color, time);
+        drawCampfire(ctx, cf.x, cf.y, cf.fireSize, cf.color, time, dayNight.glowMultiplier);
         drawTeamLabel(ctx, cf.x, cf.y, cf.name, cf.fireSize);
       } else if (item.type === 'decoration') {
         const dec = item.data as { x: number; y: number; type: string };
@@ -444,8 +618,15 @@ export class MapView {
       if (tree.y >= midY) drawTree(ctx, tree, time);
     }
 
-    // Vignette
+    // Stars (world-space, so they scroll with the map)
+    drawStars(ctx, this.mapWidth, this.mapHeight, dayNight, time);
+
+    // === End world-space ===
+    ctx.restore();
+
+    // === Screen-space overlays ===
     drawVignette(ctx, canvas.width, canvas.height);
+    drawDayNightOverlay(ctx, canvas.width, canvas.height, dayNight);
 
     this.animFrameId = requestAnimationFrame(this.render);
   };

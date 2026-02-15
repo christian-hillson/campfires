@@ -40,24 +40,6 @@ export function renderHeader(container: HTMLElement, ctx: HeaderContext): void {
   const right = document.createElement('div');
   right.className = 'header-right';
 
-  // Feed/Map toggle
-  const toggle = document.createElement('div');
-  toggle.className = 'view-toggle';
-
-  const feedBtn = document.createElement('button');
-  feedBtn.textContent = 'Feed';
-  feedBtn.className = ctx.activeView === 'feed' ? 'active' : '';
-  feedBtn.addEventListener('click', () => ctx.onViewChange('feed'));
-  toggle.appendChild(feedBtn);
-
-  const mapBtn = document.createElement('button');
-  mapBtn.textContent = 'Map';
-  mapBtn.className = ctx.activeView === 'map' ? 'active' : '';
-  mapBtn.addEventListener('click', () => ctx.onViewChange('map'));
-  toggle.appendChild(mapBtn);
-
-  right.appendChild(toggle);
-
   // Online count
   if (ctx.onlineCount > 0) {
     const stat = document.createElement('div');

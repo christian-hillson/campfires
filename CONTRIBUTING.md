@@ -18,25 +18,29 @@ npm run build        # build everything
 
 ```
 campfires/
-  shared/     @campfires/shared   — types and protocol (build this first)
-  server/     @campfires/server   — Node.js + Express + SQLite
-  campfire-stories/  @campfires/campfire-stories  — Vite web app (Organization Map, Fireside Panel, Activity Log)
-  context/                        — specs, research, reference docs (read-only)
-  extension/  (archived, not built) — VS Code extension prototype
-  cli/        (archived, not built) — campfire watch terminal client prototype
+  shared/            @campfires/shared            — types and protocol (build this first)
+  server/            @campfires/server             — Node.js + Express + SQLite
+  campfire-stories/  @campfires/campfire-stories   — Vite web app (pixel-art map + Fireside Updates)
+  campfires-plugin/                                — Claude Code plugin (hooks, commands, skills)
+  context/                                         — specs, research, reference docs (read-only)
+  extension/         (archived, not built)          — VS Code extension prototype
+  cli/               (archived, not built)          — campfire watch terminal client prototype
 ```
 
 All packages import types from `@campfires/shared`. If you change `shared/src/types.ts`, rebuild shared before building dependents.
 
 ## Development
 
-| Task                       | Command                |
-| -------------------------- | ---------------------- |
-| Build everything           | `npm run build`        |
-| Build shared types         | `npm run build:shared` |
-| Build server               | `npm run build:server` |
-| Run server (dev)           | `npm run dev:server`   |
-| Run Campfire Stories (dev) | `npm run dev:stories`  |
+| Task                        | Command                |
+| --------------------------- | ---------------------- |
+| Build everything            | `npm run build:all`    |
+| Build shared types          | `npm run build:shared` |
+| Build server                | `npm run build:server` |
+| Run server (dev)            | `npm run dev:server`   |
+| Run Campfire Stories (dev)  | `npm run dev:stories`  |
+| Typecheck (shared + server) | `npm run typecheck`    |
+| Format check                | `npm run format:check` |
+| Format fix                  | `npm run format`       |
 
 The server uses `tsx watch` for hot reload in dev mode.
 
@@ -70,6 +74,7 @@ These are non-negotiable across all packages:
 | AI summarization changes       | `server/src/summarizer.ts`         |
 | Campfire Stories UI components | `campfire-stories/src/components/` |
 | Campfire Stories map view      | `campfire-stories/src/map/`        |
+| Claude Code plugin hooks/cmds  | `campfires-plugin/`                |
 
 ## Spec Reference
 

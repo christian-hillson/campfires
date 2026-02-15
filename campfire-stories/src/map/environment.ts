@@ -1,4 +1,12 @@
-import { px, GROUND_COLOR, GRASS_COLORS, PATH_COLOR, TREE_TRUNK, TREE_LEAVES } from './renderer.js';
+import {
+  px,
+  PIXEL_SCALE,
+  GROUND_COLOR,
+  GRASS_COLORS,
+  PATH_COLOR,
+  TREE_TRUNK,
+  TREE_LEAVES,
+} from './renderer.js';
 import type { CampfirePosition } from './layout.js';
 
 interface GrassPatch {
@@ -87,12 +95,12 @@ export function generateEnvironment(
 
 export function drawGround(
   ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
+  mapWidth: number,
+  mapHeight: number,
   grass: GrassPatch[],
 ): void {
   ctx.fillStyle = GROUND_COLOR;
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillRect(0, 0, mapWidth * PIXEL_SCALE, mapHeight * PIXEL_SCALE);
 
   for (const g of grass) {
     px(ctx, g.x, g.y, g.size, g.size, g.color);

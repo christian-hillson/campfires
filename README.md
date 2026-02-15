@@ -13,14 +13,14 @@ Campfires is real-time coordination infrastructure for teams building at AI spee
 ```
 Source                   System                    Surface
 ┌──────────────────┐   ┌──────────────────┐   ┌──────────────────┐
-│ Claude Code      │   │ Campfires        │   │ Campfires        │
+│ Claude Code      │   │ Campfires        │   │ Campfire Stories │
 │ Plugin           │──▶│ Server           │──▶│ Web App          │
 │                  │   │                  │   │                  │
 │ - File edits     │   │ - Activity       │   │ - Pixel-art map  │
-│ - Commands       │   │   storage        │   │ - Real-time      │
-│ - Sessions       │   │ - Team           │   │   activity log   │
-│                  │   │   organization   │   │ - Org summaries  │
-│                  │   │ - AI             │   │                  │
+│ - Commands       │   │   storage        │   │ - Zoom/pan       │
+│ - Sessions       │   │ - Team           │   │ - Day/night      │
+│                  │   │   organization   │   │   cycle          │
+│                  │   │ - AI             │   │ - AI summaries   │
 │                  │   │   summarization  │   │                  │
 └──────────────────┘   └──────────────────┘   └──────────────────┘
 ```
@@ -67,11 +67,10 @@ The key concepts of our platform include:
 
 <!-- TODO: Insert screenshot -->
 
-The Campfires web app has three main components:
+The Campfires web app ("Campfire Stories") is a full-screen pixel-art map view with two components:
 
-1. **Organization Map**: An RPG-style pixel-art map of your entire organization. Each campfire represents a team. Fire intensity reflects how active the team is. Developers appear as animated flames; AI agents appear as golems linked to their human. Click any campfire to see who's gathered and what they're building, or join as an observer.
-2. **Fireside Panel**: A summarized view of organization, with AI-generated summaries/status updates of each Campire's projects.
-3. **Activity Log**: A chronological feed of developer events — commits, branch switches, session starts — organized by team and summarized at the org level.
+1. **Organization Map**: An RPG-style pixel-art canvas of your entire organization. Each campfire represents a team. Fire intensity reflects how active the team is. Developers appear as animated sprites; AI agents appear as golems linked to their human. Click any campfire to see who's gathered and what they're building. Supports mouse-wheel zoom, click-drag panning, and a day/night cycle with twinkling stars and dynamic campfire glow.
+2. **Fireside Updates**: An overlay panel showing AI-generated one-liner summaries for each team, updated in real time via SSE.
 
 ### Naming Conventions
 
@@ -91,10 +90,11 @@ Campfires uses fire-themed naming throughout the app:
 
 ```
 campfires/
-├── shared/        # Types and protocol (build first)
-├── server/        # Node.js + Express + SQLite
+├── shared/            # Types and protocol (build first)
+├── server/            # Node.js + Express + SQLite
 ├── campfire-stories/  # Web app (Vite + vanilla TS)
-└── context/       # Specs and reference docs
+├── campfires-plugin/  # Claude Code plugin (hooks, commands, skills)
+└── context/           # Specs and reference docs
 ```
 
 For the full technical specification — architecture, data model, API surface, and how the packages connect — see [`context/campfires-build-spec-v3.md`](context/campfires-build-spec-v3.md).

@@ -537,6 +537,30 @@ body {
   flex-shrink: 0;
 }
 
+.map-reset-btn {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  background: var(--map-panel);
+  border: 1px solid var(--map-border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: var(--map-text-dim);
+  cursor: pointer;
+  z-index: 10;
+  letter-spacing: 1px;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.map-reset-btn:hover {
+  color: var(--map-text);
+  border-color: var(--map-text-muted);
+}
+
 .map-summary-bar {
   position: absolute;
   top: 12px;
