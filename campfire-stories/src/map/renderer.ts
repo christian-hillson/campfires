@@ -1,3 +1,7 @@
+import type { FireLevelMultipliers, FireLevel } from './animation-constants.js';
+import { PULSE_DURATION, PULSE_RADIUS_MULT } from './animation-constants.js';
+import type { PulseRing } from './fire-state.js';
+
 // Low-level pixel art drawing helpers
 
 export const PIXEL_SCALE = 3;
@@ -51,7 +55,9 @@ export function drawCampfire(
   teamColor: string,
   time: number,
   glowMultiplier: number = 1.0,
+  fireMultipliers?: FireLevelMultipliers,
 ): void {
+  const fm = fireMultipliers || { height: 1, sparks: 1, flicker: 1, glow: 1, embers: 1, flames: 1 };
   const baseR = size * 5 + 4;
 
   // Stone ring
@@ -68,8 +74,8 @@ export function drawCampfire(
     px(ctx, cx + 2, cy + 2, 3, 1, '#3a2818');
   }
 
-  // Embers
-  const emberCount = size * 3 + 2;
+  // Embers (scaled by fire multiplier)
+  const emberCount = Math.round((size * 3 + 2) * fm.embers);
   for (let i = 0; i < emberCount; i++) {
     const angle = (i / emberCount) * Math.PI * 2 + time * 0.5;
     const r = 2 + Math.sin(time * 3 + i) * 1.5;
@@ -78,14 +84,15 @@ export function drawCampfire(
     px(ctx, ex, ey, 1, 1, Math.random() > 0.3 ? '#f06020' : '#f0a030');
   }
 
-  // Fire
-  const fireHeight = size * 4 + 3;
-  const flames = size * 2 + 2;
+  // Fire (height and flame count scaled)
+  const fireHeight = Math.round((size * 4 + 3) * fm.height);
+  const flames = Math.round((size * 2 + 2) * (fm.flames || 1));
+  const flickerSpeed = 8 * fm.flicker;
   for (let f = 0; f < flames; f++) {
     const fx = cx - size + f * ((size * 2) / flames);
     for (let fy = 0; fy < fireHeight; fy++) {
       const t = fy / fireHeight;
-      const flicker = Math.sin(time * 8 + f * 2 + fy * 0.5) * (1 + t * 2);
+      const flicker = Math.sin(time * flickerSpeed + f * 2 + fy * 0.5) * (1 + t * 2);
       const width = (1 - t) * (size + 1) + flicker * 0.3;
       if (width > 0.3) {
         let color: string;
@@ -98,20 +105,23 @@ export function drawCampfire(
     }
   }
 
-  // Sparks
-  if (size >= 2) {
-    for (let s = 0; s < size; s++) {
+  // Sparks (count scaled)
+  const sparkCount = Math.round(size * fm.sparks);
+  if (sparkCount >= 1) {
+    for (let s = 0; s < sparkCount; s++) {
       const sparkT = (time * 2 + s * 1.7) % 3;
       if (sparkT < 2) {
-        const sx = cx + Math.sin(time * 3 + s * 5) * (3 + size);
+        const sparkSpread = (3 + size) * fm.sparks;
+        const sx = cx + Math.sin(time * 3 + s * 5) * sparkSpread;
         const sy = cy - fireHeight - sparkT * 8;
         px(ctx, sx, sy, 1, 1, Math.random() > 0.5 ? '#f0c040' : '#f0e8a0');
       }
     }
   }
 
-  // Glow on ground
-  const glowR = (baseR + size * 4) * glowMultiplier;
+  // Glow on ground (scaled by fire glow multiplier)
+  const effectiveGlow = glowMultiplier * fm.glow;
+  const glowR = (baseR + size * 4) * effectiveGlow;
   ctx.save();
   const gradient = ctx.createRadialGradient(
     cx * PIXEL_SCALE,
@@ -121,8 +131,8 @@ export function drawCampfire(
     cy * PIXEL_SCALE,
     glowR * PIXEL_SCALE,
   );
-  const glowAlpha = Math.min(0xff, Math.round(0x18 * glowMultiplier));
-  const midAlpha = Math.min(0xff, Math.round(0x08 * glowMultiplier));
+  const glowAlpha = Math.min(0xff, Math.round(0x18 * effectiveGlow));
+  const midAlpha = Math.min(0xff, Math.round(0x08 * effectiveGlow));
   gradient.addColorStop(0, teamColor + glowAlpha.toString(16).padStart(2, '0'));
   gradient.addColorStop(0.5, teamColor + midAlpha.toString(16).padStart(2, '0'));
   gradient.addColorStop(1, 'transparent');
@@ -281,5 +291,43 @@ export function drawStars(
       PIXEL_SCALE,
     );
   }
+  ctx.restore();
+}
+
+export function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+export function drawPulseRing(
+  ctx: CanvasRenderingContext2D,
+  ring: PulseRing,
+  time: number,
+  teamColor: string,
+  fireLevel: FireLevel,
+  fireSize: number,
+): void {
+  const elapsed = time - ring.startTime;
+  if (elapsed >= PULSE_DURATION) return;
+
+  const progress = elapsed / PULSE_DURATION;
+  const maxRadius = (fireSize * 5 + 4) * PULSE_RADIUS_MULT[fireLevel];
+  const radius = maxRadius * progress;
+  const alpha = (1 - progress) * 0.3;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(
+    ring.x * PIXEL_SCALE,
+    ring.y * PIXEL_SCALE,
+    radius * PIXEL_SCALE,
+    0,
+    Math.PI * 2,
+  );
+  ctx.strokeStyle = hexToRgba(teamColor, alpha);
+  ctx.lineWidth = 2;
+  ctx.stroke();
   ctx.restore();
 }

@@ -1,5 +1,14 @@
-import { px, darken } from './renderer.js';
+import { px, darken, PIXEL_SCALE } from './renderer.js';
 import type { SpriteData } from './layout.js';
+import { FLOATING_TEXT_DURATION } from './animation-constants.js';
+
+export interface FloatingText {
+  text: string;
+  x: number;
+  y: number;
+  startTime: number;
+  color: string;
+}
 
 export function drawHumanSprite(
   ctx: CanvasRenderingContext2D,
@@ -135,6 +144,107 @@ export function drawGolemSprite(
     px(ctx, x - 4, bobY + 1, 3, 2, '#4a4a50');
     if (swing < -0.5) {
       px(ctx, x - 4 + Math.random() * 2, bobY - 1 - Math.random() * 2, 1, 1, '#7a7a80');
+    }
+  }
+}
+
+/** Draw a file-save "strike" micro-animation */
+export function drawStrikeSprite(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  color: string,
+  progress: number,
+  time: number,
+): void {
+  const bobY = y;
+
+  // Base body
+  px(ctx, x, bobY + 2, 1, 1, '#2a2020');
+  px(ctx, x + 1, bobY + 2, 1, 1, '#2a2020');
+  px(ctx, x, bobY, 2, 2, color);
+  px(ctx, x, bobY - 1, 2, 1, '#e0d8c8');
+
+  if (progress < 0.5) {
+    // Arm up with tool
+    px(ctx, x + 2, bobY - 2, 1, 1, '#888');
+    px(ctx, x + 2, bobY - 1, 1, 1, '#5a4030');
+  } else {
+    // Arm down + sparks
+    px(ctx, x + 2, bobY + 1, 1, 1, '#888');
+    px(ctx, x + 2, bobY, 1, 1, '#5a4030');
+    // Sparks
+    const sparkIntensity = 1 - (progress - 0.5) / 0.5;
+    for (let i = 0; i < 3; i++) {
+      const sx = x + 2 + Math.sin(time * 10 + i * 2) * 2 * sparkIntensity;
+      const sy = bobY - 1 - Math.random() * 3 * sparkIntensity;
+      px(ctx, sx, sy, 1, 1, i % 2 === 0 ? '#f0c040' : '#f08020');
+    }
+  }
+}
+
+/** Draw a commit "toss" animation */
+export function drawTossSprite(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  color: string,
+  progress: number,
+  _time: number,
+): void {
+  const bobY = y;
+
+  // Base body
+  px(ctx, x, bobY + 2, 1, 1, '#2a2020');
+  px(ctx, x + 1, bobY + 2, 1, 1, '#2a2020');
+  px(ctx, x, bobY, 2, 2, color);
+  px(ctx, x, bobY - 1, 2, 1, '#e0d8c8');
+
+  if (progress < 0.4) {
+    // Arm raised with offering (glowing orb)
+    px(ctx, x + 2, bobY - 2, 1, 1, color);
+    px(ctx, x + 2, bobY - 3, 1, 1, '#f0e8a0');
+  } else if (progress < 0.7) {
+    // Arm extended, releasing
+    px(ctx, x + 3, bobY - 1, 1, 1, color);
+    // Orb flying
+    const flyT = (progress - 0.4) / 0.3;
+    const orbY = bobY - 3 - flyT * 4;
+    px(ctx, x + 2, orbY, 1, 1, '#f0e8a0');
+    px(ctx, x + 2, orbY + 1, 1, 1, '#f0c040');
+  } else {
+    // Follow through — arms lowered
+    px(ctx, x + 2, bobY, 1, 1, color);
+  }
+}
+
+/** Draw floating text that rises and fades */
+export function drawFloatingText(
+  ctx: CanvasRenderingContext2D,
+  ft: FloatingText,
+  time: number,
+): void {
+  const elapsed = time - ft.startTime;
+  if (elapsed >= FLOATING_TEXT_DURATION) return;
+
+  const progress = elapsed / FLOATING_TEXT_DURATION;
+  const alpha = 1 - progress;
+  const riseY = progress * 20; // rise 20 pixel-art units
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.font = '8px "Silkscreen", monospace';
+  ctx.fillStyle = ft.color || '#f0e8c0';
+  ctx.textAlign = 'center';
+  ctx.fillText(ft.text, ft.x * PIXEL_SCALE, (ft.y - riseY) * PIXEL_SCALE);
+  ctx.restore();
+}
+
+/** Remove expired floating texts in-place */
+export function cleanupFloatingTexts(texts: FloatingText[], time: number): void {
+  for (let i = texts.length - 1; i >= 0; i--) {
+    if (time - texts[i].startTime >= FLOATING_TEXT_DURATION) {
+      texts.splice(i, 1);
     }
   }
 }

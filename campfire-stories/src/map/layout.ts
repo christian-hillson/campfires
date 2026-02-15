@@ -17,7 +17,11 @@ export type SpriteTask =
   | 'chopping'
   | 'carrying'
   | 'sitting'
-  | 'tent';
+  | 'tent'
+  | 'walking'
+  | 'casting'
+  | 'strike'
+  | 'toss';
 
 export interface SpriteData {
   userId: string;
@@ -31,6 +35,9 @@ export interface SpriteData {
   teamName: string;
   px: number;
   py: number;
+  homeX: number;
+  homeY: number;
+  campfireIndex: number;
 }
 
 export const TEAM_COLORS = [
@@ -98,6 +105,7 @@ export function layoutSprites(
   campfire: CampfirePosition,
   members: User[],
   awarenessStates: AwarenessState[],
+  campfireIndex: number = 0,
 ): SpriteData[] {
   const sprites: SpriteData[] = [];
   const radius = campfire.fireSize * 8 + 14;
@@ -170,6 +178,9 @@ export function layoutSprites(
       teamName: campfire.name,
       px: spriteX,
       py: spriteY,
+      homeX: spriteX,
+      homeY: spriteY,
+      campfireIndex,
     });
   }
 
@@ -196,6 +207,9 @@ export function layoutSprites(
       teamName: campfire.name,
       px: vx,
       py: vy,
+      homeX: vx,
+      homeY: vy,
+      campfireIndex,
     });
   }
 

@@ -1,4 +1,4 @@
-import type { Org, Team, Summary, User, AwarenessState } from '@campfires/shared';
+import type { Org, Team, Summary, User, AwarenessState, ActivityEvent } from '@campfires/shared';
 import {
   PIXEL_SCALE,
   drawCampfire,
@@ -7,6 +7,7 @@ import {
   computeDayNight,
   drawDayNightOverlay,
   drawStars,
+  drawPulseRing,
 } from './renderer.js';
 import {
   drawGround,
@@ -22,7 +23,15 @@ import {
   type CampfirePosition,
   type SpriteData,
 } from './layout.js';
-import { drawHumanSprite, drawGolemSprite } from './sprites.js';
+import {
+  drawHumanSprite,
+  drawGolemSprite,
+  drawStrikeSprite,
+  drawTossSprite,
+  drawFloatingText,
+  cleanupFloatingTexts,
+  type FloatingText,
+} from './sprites.js';
 import {
   type Camera,
   createCamera,
@@ -36,6 +45,36 @@ import {
   ZOOM_LERP,
   PAN_SPEED,
 } from './camera.js';
+import {
+  type AnimatedSprite,
+  type SpriteRenderState,
+  tickSprite,
+  getSpriteRenderState,
+  reconcileSprites,
+} from './animations.js';
+import {
+  type CampfireFireState,
+  type FireFlare,
+  type PulseState,
+  createFireState,
+  createFireFlare,
+  createPulseState,
+  getFireMultipliers,
+  tickFireState,
+  tickPulses,
+  triggerFireFlare,
+  computeFireLevel,
+  setFireLevel,
+} from './fire-state.js';
+import {
+  COMMIT_WALK_DURATION,
+  COMMIT_TOSS_DURATION,
+  FILE_SAVE_DURATION,
+  BRANCH_WALK_DURATION,
+  COMMIT_FLARE_MULT,
+  FIRE_LEVEL_WINDOW,
+} from './animation-constants.js';
+import { ActivityFeed } from './activity-feed.js';
 
 function esc(str: string): string {
   const div = document.createElement('div');
@@ -68,6 +107,16 @@ export class MapView {
   private overlayElement: HTMLElement | null = null;
   private overlayPollInterval: ReturnType<typeof setInterval> | null = null;
 
+  // Animation system state
+  private animatedSprites = new Map<string, AnimatedSprite>();
+  private fireStates: CampfireFireState[] = [];
+  private fireFlares: FireFlare[] = [];
+  private pulseStates: PulseState[] = [];
+  private floatingTexts: FloatingText[] = [];
+  private activityFeed = new ActivityFeed();
+  private lastRenderTime = 0;
+  private recentEvents: { teamId: string; timestamp: number }[] = [];
+
   // Map dimensions in pixel-art units
   private mapWidth = 500;
   private mapHeight = 280;
@@ -96,8 +145,43 @@ export class MapView {
     this.environment = generateEnvironment(this.mapWidth, this.mapHeight, this.campfires);
     this.camera = createCamera(this.mapWidth, this.mapHeight);
     this.zoomTarget = this.camera.zoom;
+    this.initFireStates();
     this.attachEvents();
+    this.activityFeed.start(
+      this.config.teams,
+      this.config.serverUrl,
+      (events) => this.handleActivityEvents(events),
+    );
     this.render(0);
+
+    // Debug helper for manual event injection
+    (window as unknown as Record<string, unknown>).__simulateEvent = (
+      type: 'file_save' | 'commit' | 'branch_switch',
+      userId?: string,
+      message?: string,
+    ) => {
+      // Pick first available sprite if no userId given
+      const targetId = userId || this.animatedSprites.keys().next().value;
+      if (!targetId) return;
+      const sprite = this.animatedSprites.get(targetId);
+      if (!sprite) return;
+
+      const event: ActivityEvent = {
+        id: `debug-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        userId: targetId,
+        userType: sprite.type === 'agent' ? 'agent' : 'human',
+        parentUserId: null,
+        teamId: this.campfires[sprite.campfireIndex]?.teamId || '',
+        type,
+        file: null,
+        branch: null,
+        message: message || `debug ${type}`,
+        metadata: null,
+        sessionId: null,
+      };
+      this.handleActivityEvents([event]);
+    };
   }
 
   stop(): void {
@@ -105,6 +189,7 @@ export class MapView {
       cancelAnimationFrame(this.animFrameId);
       this.animFrameId = null;
     }
+    this.activityFeed.stop();
     this.hideOverlay();
   }
 
@@ -124,6 +209,7 @@ export class MapView {
   updateAwareness(awareness: Map<string, AwarenessState[]>): void {
     this.config.awareness = awareness;
     this.computeSprites();
+    this.animatedSprites = reconcileSprites(this.animatedSprites, this.allSprites, this.campfires);
   }
 
   private buildDOM(): void {
@@ -200,10 +286,11 @@ export class MapView {
 
   private computeSprites(): void {
     this.allSprites = [];
-    for (const cf of this.campfires) {
+    for (let i = 0; i < this.campfires.length; i++) {
+      const cf = this.campfires[i];
       const members = this.config.members.get(cf.teamId) || [];
       const awareness = this.config.awareness.get(cf.teamId) || [];
-      this.allSprites.push(...layoutSprites(cf, members, awareness));
+      this.allSprites.push(...layoutSprites(cf, members, awareness, i));
     }
   }
 
@@ -240,6 +327,7 @@ export class MapView {
       this.environment = generateEnvironment(this.mapWidth, this.mapHeight, this.campfires);
       this.camera = createCamera(this.mapWidth, this.mapHeight);
       this.zoomTarget = this.camera.zoom;
+      this.initFireStates();
     });
     resizeObserver.observe(this.canvas.parentElement!);
 
@@ -325,9 +413,27 @@ export class MapView {
       );
 
       this.hoveredSprite = null;
-      for (const sprite of this.allSprites) {
-        if (Math.hypot(wx - sprite.px, wy - sprite.py) < 20 / (this.camera.zoom * PIXEL_SCALE)) {
-          this.hoveredSprite = sprite;
+      for (const sprite of this.animatedSprites.values()) {
+        if (!sprite.visible) continue;
+        const rs = getSpriteRenderState(sprite);
+        if (Math.hypot(wx - rs.x, wy - rs.y) < 20 / (this.camera.zoom * PIXEL_SCALE)) {
+          // Convert to SpriteData for tooltip
+          this.hoveredSprite = {
+            userId: sprite.userId,
+            name: sprite.name,
+            type: sprite.type,
+            color: sprite.color,
+            status: sprite.status,
+            task: sprite.defaultTask,
+            file: sprite.file,
+            parentName: sprite.parentName,
+            teamName: sprite.teamName,
+            px: rs.x,
+            py: rs.y,
+            homeX: sprite.homeX,
+            homeY: sprite.homeY,
+            campfireIndex: sprite.campfireIndex,
+          };
           break;
         }
       }
@@ -498,6 +604,154 @@ export class MapView {
     }
   }
 
+  private initFireStates(): void {
+    this.fireStates = this.campfires.map(() => createFireState());
+    this.fireFlares = this.campfires.map(() => createFireFlare());
+    this.pulseStates = this.campfires.map(() => createPulseState());
+    // Initialize animated sprites from layout
+    this.animatedSprites = reconcileSprites(
+      new Map(),
+      this.allSprites,
+      this.campfires,
+    );
+  }
+
+  private handleActivityEvents(events: ActivityEvent[]): void {
+    const now = Date.now();
+
+    for (const event of events) {
+      // Track for fire level computation
+      const cfIndex = this.campfires.findIndex((cf) => cf.teamId === event.teamId);
+      if (cfIndex === -1) continue;
+
+      this.recentEvents.push({ teamId: event.teamId, timestamp: now });
+
+      const sprite = this.animatedSprites.get(event.userId);
+
+      switch (event.type) {
+        case 'file_save':
+          this.handleFileSave(sprite);
+          break;
+        case 'commit':
+          this.handleCommit(sprite, cfIndex, event.message || 'commit');
+          break;
+        case 'branch_switch':
+          this.handleBranchSwitch(sprite, cfIndex);
+          break;
+      }
+    }
+
+    // Prune old events and recalculate fire levels
+    this.recentEvents = this.recentEvents.filter((e) => now - e.timestamp < FIRE_LEVEL_WINDOW);
+    this.updateFireLevels();
+  }
+
+  private handleFileSave(sprite: AnimatedSprite | undefined): void {
+    if (!sprite) return;
+
+    // Queue strike micro-animation
+    sprite.animQueue.push({
+      type: 'file_save_strike',
+      duration: FILE_SAVE_DURATION,
+      elapsed: 0,
+    });
+  }
+
+  private handleCommit(
+    sprite: AnimatedSprite | undefined,
+    campfireIndex: number,
+    message: string,
+  ): void {
+    if (!sprite) return;
+
+    const cf = this.campfires[campfireIndex];
+    if (!cf) return;
+
+    const time = performance.now() / 1000;
+
+    // Walk to campfire → toss → walk back
+    const startX = sprite.homeX;
+    const startY = sprite.homeY;
+
+    sprite.animQueue.push({
+      type: 'walk',
+      duration: COMMIT_WALK_DURATION,
+      elapsed: 0,
+      startX,
+      startY,
+      endX: cf.x,
+      endY: cf.y + 5, // slightly below campfire center
+    });
+
+    sprite.animQueue.push({
+      type: 'commit_toss',
+      duration: COMMIT_TOSS_DURATION,
+      elapsed: 0,
+      message,
+    });
+
+    sprite.animQueue.push({
+      type: 'walk',
+      duration: COMMIT_WALK_DURATION,
+      elapsed: 0,
+      startX: cf.x,
+      startY: cf.y + 5,
+      endX: startX,
+      endY: startY,
+    });
+
+    // Floating text
+    const shortMsg = message.length > 30 ? message.slice(0, 27) + '...' : message;
+    this.floatingTexts.push({
+      text: shortMsg,
+      x: cf.x,
+      y: cf.y - 15,
+      startTime: time + COMMIT_WALK_DURATION, // appears when toss starts
+      color: '#f0e8c0',
+    });
+
+    // Fire flare
+    triggerFireFlare(this.fireFlares, campfireIndex, COMMIT_FLARE_MULT, time);
+  }
+
+  private handleBranchSwitch(
+    sprite: AnimatedSprite | undefined,
+    campfireIndex: number,
+  ): void {
+    if (!sprite || sprite.campfireIndex !== campfireIndex) return;
+
+    // Recompute home position from current layout data
+    const layoutSprite = this.allSprites.find((s) => s.userId === sprite.userId);
+    if (!layoutSprite) return;
+
+    const newHomeX = layoutSprite.homeX;
+    const newHomeY = layoutSprite.homeY;
+
+    // Walk to new position
+    sprite.animQueue.push({
+      type: 'walk',
+      duration: BRANCH_WALK_DURATION,
+      elapsed: 0,
+      startX: sprite.homeX,
+      startY: sprite.homeY,
+      endX: newHomeX,
+      endY: newHomeY,
+      onComplete: () => {
+        sprite.homeX = newHomeX;
+        sprite.homeY = newHomeY;
+      },
+    });
+  }
+
+  private updateFireLevels(): void {
+    for (let i = 0; i < this.campfires.length; i++) {
+      const teamId = this.campfires[i].teamId;
+      const count = this.recentEvents.filter((e) => e.teamId === teamId).length;
+      const newLevel = computeFireLevel(count);
+      setFireLevel(this.fireStates[i], newLevel);
+    }
+  }
+
   private hideOverlay(): void {
     if (this.overlayPollInterval) {
       clearInterval(this.overlayPollInterval);
@@ -511,7 +765,17 @@ export class MapView {
 
   private render = (timestamp: number): void => {
     const time = timestamp / 1000;
+    const dt = this.lastRenderTime > 0 ? time - this.lastRenderTime : 0.016;
+    this.lastRenderTime = time;
     const { ctx, canvas } = this;
+
+    // Tick animation systems
+    tickFireState(this.fireStates, this.fireFlares, dt, time);
+    tickPulses(this.pulseStates, this.fireStates, this.campfires, time);
+    for (const sprite of this.animatedSprites.values()) {
+      tickSprite(sprite, dt);
+    }
+    cleanupFloatingTexts(this.floatingTexts, time);
 
     // Animate reset if active
     if (this.resetTarget) {
@@ -627,25 +891,42 @@ export class MapView {
       if (tree.y < midY) drawTree(ctx, tree, time);
     }
 
+    // Draw pulse rings (behind everything else in the scene)
+    for (let i = 0; i < this.pulseStates.length; i++) {
+      const ps = this.pulseStates[i];
+      const cf = this.campfires[i];
+      if (!cf) continue;
+      for (const ring of ps.rings) {
+        drawPulseRing(ctx, ring, time, cf.color, this.fireStates[i]?.level || 'steady', cf.fireSize);
+      }
+    }
+
+    // Build animated sprite render states
+    const spriteRenders: { sprite: AnimatedSprite; state: SpriteRenderState }[] = [];
+    for (const sprite of this.animatedSprites.values()) {
+      if (!sprite.visible) continue;
+      spriteRenders.push({ sprite, state: getSpriteRenderState(sprite) });
+    }
+
     // Collect all render items for y-sorting
     interface RenderItem {
       type: 'fire' | 'decoration' | 'sprite';
       y: number;
-      data: CampfirePosition | { x: number; y: number; type: string } | SpriteData;
+      data: unknown;
     }
 
     const renderOrder: RenderItem[] = [];
 
-    for (const cf of this.campfires) {
-      renderOrder.push({ type: 'fire', y: cf.y, data: cf });
+    for (let i = 0; i < this.campfires.length; i++) {
+      renderOrder.push({ type: 'fire', y: this.campfires[i].y, data: i });
     }
 
     for (const dec of this.environment.decorations) {
       renderOrder.push({ type: 'decoration', y: dec.y, data: dec });
     }
 
-    for (const sprite of this.allSprites) {
-      renderOrder.push({ type: 'sprite', y: sprite.py, data: sprite });
+    for (const sr of spriteRenders) {
+      renderOrder.push({ type: 'sprite', y: sr.state.y, data: sr });
     }
 
     renderOrder.sort((a, b) => a.y - b.y);
@@ -653,20 +934,57 @@ export class MapView {
     // Render in depth order
     for (const item of renderOrder) {
       if (item.type === 'fire') {
-        const cf = item.data as CampfirePosition;
-        drawCampfire(ctx, cf.x, cf.y, cf.fireSize, cf.color, time, dayNight.glowMultiplier);
+        const cfIdx = item.data as number;
+        const cf = this.campfires[cfIdx];
+        const fm = this.fireStates[cfIdx]
+          ? getFireMultipliers(this.fireStates[cfIdx], this.fireFlares[cfIdx], time)
+          : undefined;
+        drawCampfire(ctx, cf.x, cf.y, cf.fireSize, cf.color, time, dayNight.glowMultiplier, fm);
         drawTeamLabel(ctx, cf.x, cf.y, cf.name, cf.fireSize);
       } else if (item.type === 'decoration') {
         const dec = item.data as { x: number; y: number; type: string };
         drawWorkstation(ctx, dec.x, dec.y, dec.type, time);
       } else if (item.type === 'sprite') {
-        const sprite = item.data as SpriteData;
-        if (sprite.type === 'agent') {
-          drawGolemSprite(ctx, sprite, time);
+        const { sprite, state } = item.data as { sprite: AnimatedSprite; state: SpriteRenderState };
+
+        ctx.save();
+        if (state.opacity < 1) ctx.globalAlpha = state.opacity;
+
+        // Create a temporary SpriteData-like object at the animated position
+        const renderSprite: SpriteData = {
+          userId: sprite.userId,
+          name: sprite.name,
+          type: sprite.type,
+          color: sprite.color,
+          status: sprite.status,
+          task: state.task,
+          file: sprite.file,
+          parentName: sprite.parentName,
+          teamName: sprite.teamName,
+          px: state.x,
+          py: state.y,
+          homeX: sprite.homeX,
+          homeY: sprite.homeY,
+          campfireIndex: sprite.campfireIndex,
+        };
+
+        if (state.task === 'strike') {
+          drawStrikeSprite(ctx, state.x, state.y, sprite.color, state.animProgress, time);
+        } else if (state.task === 'toss') {
+          drawTossSprite(ctx, state.x, state.y, sprite.color, state.animProgress, time);
+        } else if (sprite.type === 'agent') {
+          drawGolemSprite(ctx, renderSprite, time);
         } else {
-          drawHumanSprite(ctx, sprite, time);
+          drawHumanSprite(ctx, renderSprite, time);
         }
+
+        ctx.restore();
       }
+    }
+
+    // Draw floating texts (on top of everything in world-space)
+    for (const ft of this.floatingTexts) {
+      drawFloatingText(ctx, ft, time);
     }
 
     // Foreground trees
