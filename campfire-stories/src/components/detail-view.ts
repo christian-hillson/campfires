@@ -355,7 +355,9 @@ export async function renderDetailView(container: HTMLElement, ctx: DetailContex
       fetch(`${ctx.serverUrl}/api/teams/${ctx.team.teamId}/members`),
       fetch(`${ctx.serverUrl}/api/teams/${ctx.team.teamId}/activity?limit=20`),
       fetch(`${ctx.serverUrl}/api/orgs/${ctx.orgId}/summaries`),
-      fetch(`${ctx.serverUrl}/api/orgs/${ctx.orgId}/sparks?teamId=${ctx.team.teamId}&status=active`),
+      fetch(
+        `${ctx.serverUrl}/api/orgs/${ctx.orgId}/sparks?teamId=${ctx.team.teamId}&status=active`,
+      ),
     ]);
 
     const members: User[] = membersRes.ok ? await membersRes.json() : [];
@@ -374,7 +376,9 @@ export async function renderDetailView(container: HTMLElement, ctx: DetailContex
     try {
       const teamsRes = await fetch(`${ctx.serverUrl}/api/orgs/${ctx.orgId}/teams`);
       if (teamsRes.ok) allTeams = await teamsRes.json();
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     loading.remove();
 

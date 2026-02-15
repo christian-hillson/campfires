@@ -319,13 +319,7 @@ export function drawPulseRing(
 
   ctx.save();
   ctx.beginPath();
-  ctx.arc(
-    ring.x * PIXEL_SCALE,
-    ring.y * PIXEL_SCALE,
-    radius * PIXEL_SCALE,
-    0,
-    Math.PI * 2,
-  );
+  ctx.arc(ring.x * PIXEL_SCALE, ring.y * PIXEL_SCALE, radius * PIXEL_SCALE, 0, Math.PI * 2);
   ctx.strokeStyle = hexToRgba(teamColor, alpha);
   ctx.lineWidth = 2;
   ctx.stroke();
@@ -341,9 +335,12 @@ const SPARK_COLOR = '#fbbf24'; // amber
 /** Quadratic bezier point at parameter t */
 function bezierPoint(
   t: number,
-  x0: number, y0: number,
-  cx: number, cy: number,
-  x1: number, y1: number,
+  x0: number,
+  y0: number,
+  cx: number,
+  cy: number,
+  x1: number,
+  y1: number,
 ): { x: number; y: number } {
   const mt = 1 - t;
   return {
@@ -392,7 +389,7 @@ export function drawSparkArc(
   // Draw ember particles traveling along the bezier
   const particleCount = 4;
   for (let i = 0; i < particleCount; i++) {
-    const t = ((progress * 2 + i / particleCount) % 1);
+    const t = (progress * 2 + i / particleCount) % 1;
     if (t > progress * 1.5) continue; // particles appear progressively
     const pt = bezierPoint(t, fromX, fromY, midX, midY, toX, toY);
     const size = 1 + Math.sin(time * 5 + i * 2) * 0.5;
@@ -407,15 +404,21 @@ export function drawSparkArc(
     ctx.globalAlpha = flashAlpha;
     const flashR = 4 * PIXEL_SCALE;
     const gradient = ctx.createRadialGradient(
-      toX * PIXEL_SCALE, toY * PIXEL_SCALE, 0,
-      toX * PIXEL_SCALE, toY * PIXEL_SCALE, flashR,
+      toX * PIXEL_SCALE,
+      toY * PIXEL_SCALE,
+      0,
+      toX * PIXEL_SCALE,
+      toY * PIXEL_SCALE,
+      flashR,
     );
     gradient.addColorStop(0, SPARK_COLOR);
     gradient.addColorStop(1, 'transparent');
     ctx.fillStyle = gradient;
     ctx.fillRect(
-      (toX - 4) * PIXEL_SCALE, (toY - 4) * PIXEL_SCALE,
-      8 * PIXEL_SCALE, 8 * PIXEL_SCALE,
+      (toX - 4) * PIXEL_SCALE,
+      (toY - 4) * PIXEL_SCALE,
+      8 * PIXEL_SCALE,
+      8 * PIXEL_SCALE,
     );
   }
 

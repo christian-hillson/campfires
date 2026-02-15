@@ -1,10 +1,6 @@
 import type { Request } from 'express';
 
-type AuditEventType =
-  | 'auth_failure'
-  | 'auth_success'
-  | 'authorization_denied'
-  | 'rate_limit_hit';
+type AuditEventType = 'auth_failure' | 'auth_success' | 'authorization_denied' | 'rate_limit_hit';
 
 interface AuditEntry {
   timestamp: string;

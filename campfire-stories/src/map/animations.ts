@@ -189,7 +189,8 @@ export function getSpriteRenderState(sprite: AnimatedSprite): SpriteRenderState 
 
     // Determine phase from elapsed time using imported constants
     const elapsed = anim.elapsed;
-    const { SPAWN_SPARK_DETACH, SPAWN_CASTING, SPAWN_DESCENT, SPAWN_FORMATION } = getSpawnDurations();
+    const { SPAWN_SPARK_DETACH, SPAWN_CASTING, SPAWN_DESCENT, SPAWN_FORMATION } =
+      getSpawnDurations();
     if (elapsed < SPAWN_SPARK_DETACH) {
       base.spawnPhase = 'spark_detach';
       base.x = anim.fireX;
@@ -205,7 +206,8 @@ export function getSpriteRenderState(sprite: AnimatedSprite): SpriteRenderState 
       const dp = (elapsed - SPAWN_SPARK_DETACH - SPAWN_CASTING) / SPAWN_DESCENT;
       // Arc from spark position to target
       const arcX = anim.fireX + (anim.targetX - anim.fireX) * dp;
-      const arcY = (anim.fireY - 14) + (anim.targetY - (anim.fireY - 14)) * dp - Math.sin(dp * Math.PI) * 10;
+      const arcY =
+        anim.fireY - 14 + (anim.targetY - (anim.fireY - 14)) * dp - Math.sin(dp * Math.PI) * 10;
       base.x = arcX;
       base.y = arcY;
       base.opacity = 0;
@@ -218,7 +220,8 @@ export function getSpriteRenderState(sprite: AnimatedSprite): SpriteRenderState 
       base.animProgress = fp;
     } else {
       base.spawnPhase = 'activation';
-      const ap = (elapsed - SPAWN_SPARK_DETACH - SPAWN_CASTING - SPAWN_DESCENT - SPAWN_FORMATION) /
+      const ap =
+        (elapsed - SPAWN_SPARK_DETACH - SPAWN_CASTING - SPAWN_DESCENT - SPAWN_FORMATION) /
         (anim.duration - SPAWN_SPARK_DETACH - SPAWN_CASTING - SPAWN_DESCENT - SPAWN_FORMATION);
       base.x = anim.targetX;
       base.y = anim.targetY;

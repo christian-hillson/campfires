@@ -104,7 +104,10 @@ export function tickFireState(
   for (let i = 0; i < states.length; i++) {
     const state = states[i];
     if (state.transitionProgress < 1) {
-      state.transitionProgress = Math.min(1, state.transitionProgress + dt / FIRE_TRANSITION_DURATION);
+      state.transitionProgress = Math.min(
+        1,
+        state.transitionProgress + dt / FIRE_TRANSITION_DURATION,
+      );
     }
 
     // Decay flares
@@ -142,7 +145,12 @@ export function tickPulses(
 
 // ── Triggers ──
 
-export function triggerFireFlare(flares: FireFlare[], index: number, mult: number, time: number): void {
+export function triggerFireFlare(
+  flares: FireFlare[],
+  index: number,
+  mult: number,
+  time: number,
+): void {
   if (index < flares.length) {
     flares[index].active = true;
     flares[index].startTime = time;

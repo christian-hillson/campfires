@@ -10,11 +10,7 @@ export class ActivityFeed {
     this.lastSeenTimestamp = new Date().toISOString();
   }
 
-  start(
-    teams: Team[],
-    serverUrl: string,
-    onEvents: (events: ActivityEvent[]) => void,
-  ): void {
+  start(teams: Team[], serverUrl: string, onEvents: (events: ActivityEvent[]) => void): void {
     this.stop();
 
     const poll = async () => {

@@ -284,8 +284,12 @@ export function drawGolemSpawn(
     // Radial glow
     ctx.save();
     const grad = ctx.createRadialGradient(
-      fireX * PIXEL_SCALE, sparkY * PIXEL_SCALE, 0,
-      fireX * PIXEL_SCALE, sparkY * PIXEL_SCALE, sparkSize * 2 * PIXEL_SCALE,
+      fireX * PIXEL_SCALE,
+      sparkY * PIXEL_SCALE,
+      0,
+      fireX * PIXEL_SCALE,
+      sparkY * PIXEL_SCALE,
+      sparkSize * 2 * PIXEL_SCALE,
     );
     grad.addColorStop(0, 'rgba(255,240,180,0.3)');
     grad.addColorStop(1, 'transparent');
@@ -302,7 +306,14 @@ export function drawGolemSpawn(
     const brightness = 0.6 + p * 0.4;
     ctx.save();
     ctx.globalAlpha = brightness;
-    px(ctx, fireX - sparkSize / 2, sparkY - sparkSize / 2, Math.ceil(sparkSize), Math.ceil(sparkSize), '#f0e8a0');
+    px(
+      ctx,
+      fireX - sparkSize / 2,
+      sparkY - sparkSize / 2,
+      Math.ceil(sparkSize),
+      Math.ceil(sparkSize),
+      '#f0e8a0',
+    );
     ctx.restore();
   } else if (elapsed < SPAWN_SPARK_DETACH + SPAWN_CASTING) {
     // Phase 2: Human casting, particles flow to spark
@@ -314,7 +325,7 @@ export function drawGolemSpawn(
 
     // Particle lines from owner to spark
     for (let i = 0; i < 6; i++) {
-      const pt = ((time * 2 + i * 0.15) % 1);
+      const pt = (time * 2 + i * 0.15) % 1;
       const pxPos = ownerX + (sparkX - ownerX) * pt;
       const pyPos = ownerY + (sparkY - ownerY) * pt;
       ctx.save();
@@ -336,8 +347,12 @@ export function drawGolemSpawn(
       ctx.save();
       const flashR = 5;
       const grad = ctx.createRadialGradient(
-        targetX * PIXEL_SCALE, targetY * PIXEL_SCALE, 0,
-        targetX * PIXEL_SCALE, targetY * PIXEL_SCALE, flashR * PIXEL_SCALE,
+        targetX * PIXEL_SCALE,
+        targetY * PIXEL_SCALE,
+        0,
+        targetX * PIXEL_SCALE,
+        targetY * PIXEL_SCALE,
+        flashR * PIXEL_SCALE,
       );
       grad.addColorStop(0, 'rgba(255,255,220,0.9)');
       grad.addColorStop(1, 'transparent');
@@ -391,7 +406,8 @@ export function drawGolemSpawn(
     }
   } else {
     // Phase 5: Activation — full golem, eyes glow up
-    const p = (elapsed - SPAWN_SPARK_DETACH - SPAWN_CASTING - SPAWN_DESCENT - SPAWN_FORMATION) /
+    const p =
+      (elapsed - SPAWN_SPARK_DETACH - SPAWN_CASTING - SPAWN_DESCENT - SPAWN_FORMATION) /
       (SPAWN_TOTAL - SPAWN_SPARK_DETACH - SPAWN_CASTING - SPAWN_DESCENT - SPAWN_FORMATION);
 
     // Draw golem body
@@ -485,8 +501,12 @@ export function drawActivityGlow(
 
   ctx.save();
   const grad = ctx.createRadialGradient(
-    x * PIXEL_SCALE, y * PIXEL_SCALE, 0,
-    x * PIXEL_SCALE, y * PIXEL_SCALE, glowRadius * PIXEL_SCALE,
+    x * PIXEL_SCALE,
+    y * PIXEL_SCALE,
+    0,
+    x * PIXEL_SCALE,
+    y * PIXEL_SCALE,
+    glowRadius * PIXEL_SCALE,
   );
   grad.addColorStop(0, `rgba(255,180,60,${centerAlpha})`);
   grad.addColorStop(1, 'transparent');
@@ -544,8 +564,12 @@ export function drawCarryingOrb(
   if (orbBrightness > 0.3) {
     const glowR = 2 + orbBrightness * 2;
     const grad = ctx.createRadialGradient(
-      (x + 0.5) * PIXEL_SCALE, (y - 3) * PIXEL_SCALE, 0,
-      (x + 0.5) * PIXEL_SCALE, (y - 3) * PIXEL_SCALE, glowR * PIXEL_SCALE,
+      (x + 0.5) * PIXEL_SCALE,
+      (y - 3) * PIXEL_SCALE,
+      0,
+      (x + 0.5) * PIXEL_SCALE,
+      (y - 3) * PIXEL_SCALE,
+      glowR * PIXEL_SCALE,
     );
     grad.addColorStop(0, `rgba(255,200,100,${0.15 * orbBrightness})`);
     grad.addColorStop(1, 'transparent');

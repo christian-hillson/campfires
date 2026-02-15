@@ -1,4 +1,12 @@
-import type { Org, Team, Summary, User, AwarenessState, ActivityEvent, Spark } from '@campfires/shared';
+import type {
+  Org,
+  Team,
+  Summary,
+  User,
+  AwarenessState,
+  ActivityEvent,
+  Spark,
+} from '@campfires/shared';
 import {
   PIXEL_SCALE,
   drawCampfire,
@@ -186,10 +194,8 @@ export class MapView {
     this.zoomTarget = this.camera.zoom;
     this.initFireStates();
     this.attachEvents();
-    this.activityFeed.start(
-      this.config.teams,
-      this.config.serverUrl,
-      (events) => this.handleActivityEvents(events),
+    this.activityFeed.start(this.config.teams, this.config.serverUrl, (events) =>
+      this.handleActivityEvents(events),
     );
 
     // Set initial spark badges from config (no arc animation)
@@ -634,7 +640,9 @@ export class MapView {
         fetch(`${this.config.serverUrl}/api/teams/${teamId}/members`),
         fetch(`${this.config.serverUrl}/api/teams/${teamId}/awareness`),
         fetch(`${this.config.serverUrl}/api/orgs/${this.config.org.orgId}/summaries`),
-        fetch(`${this.config.serverUrl}/api/orgs/${this.config.org.orgId}/sparks?teamId=${teamId}&status=active`),
+        fetch(
+          `${this.config.serverUrl}/api/orgs/${this.config.org.orgId}/sparks?teamId=${teamId}&status=active`,
+        ),
       ]);
 
       const members: User[] = membersRes.ok ? await membersRes.json() : [];
@@ -681,33 +689,43 @@ export class MapView {
         : '<div class="panel-no-summary">No logs yet</div>';
 
       // Members section
-      const membersHtml = members.map((m) => {
-        const a = awareness.find((s) => s.userId === m.userId);
-        const status = a?.status || 'offline';
-        return `<div class="panel-member">${statusDot(status)}<span class="panel-member-dot" style="background:${esc(m.avatarColor)}"></span>${esc(m.displayName)}</div>`;
-      }).join('');
+      const membersHtml = members
+        .map((m) => {
+          const a = awareness.find((s) => s.userId === m.userId);
+          const status = a?.status || 'offline';
+          return `<div class="panel-member">${statusDot(status)}<span class="panel-member-dot" style="background:${esc(m.avatarColor)}"></span>${esc(m.displayName)}</div>`;
+        })
+        .join('');
 
       // Visitors
       const visitorsHtml = awareness
         .filter((a) => a.homeTeamId && !members.find((m) => m.userId === a.userId))
-        .map((a) => `<div class="panel-member">${statusDot('visitor')}<span class="panel-member-dot" style="background:${esc(a.color)}"></span>${esc(a.displayName)}</div>`)
+        .map(
+          (a) =>
+            `<div class="panel-member">${statusDot('visitor')}<span class="panel-member-dot" style="background:${esc(a.color)}"></span>${esc(a.displayName)}</div>`,
+        )
         .join('');
 
       // Sparks section
-      const sparksHtml = teamSparks.length > 0
-        ? `<div class="panel-sparks">${teamSparks.map((spark) => {
-            const otherTeams = spark.teamConnections
-              .filter((tc: { teamId: string }) => tc.teamId !== teamId)
-              .map((tc: { teamName: string }) => esc(tc.teamName))
-              .join(', ');
-            const myPerspective = spark.teamConnections.find((tc: { teamId: string }) => tc.teamId === teamId);
-            return `<div class="panel-spark-entry">
+      const sparksHtml =
+        teamSparks.length > 0
+          ? `<div class="panel-sparks">${teamSparks
+              .map((spark) => {
+                const otherTeams = spark.teamConnections
+                  .filter((tc: { teamId: string }) => tc.teamId !== teamId)
+                  .map((tc: { teamName: string }) => esc(tc.teamName))
+                  .join(', ');
+                const myPerspective = spark.teamConnections.find(
+                  (tc: { teamId: string }) => tc.teamId === teamId,
+                );
+                return `<div class="panel-spark-entry">
               <span class="spark-icon">\u26A1</span> <strong>${otherTeams}</strong>
               <div class="spark-perspective">${esc(myPerspective?.perspective || spark.summary)}</div>
               ${spark.suggestedAction && myPerspective?.actionRequired ? `<div class="spark-action">\u2192 ${esc(spark.suggestedAction)}</div>` : ''}
             </div>`;
-          }).join('')}</div>`
-        : '';
+              })
+              .join('')}</div>`
+          : '';
 
       body.innerHTML = `
         ${sparksHtml}
@@ -726,11 +744,7 @@ export class MapView {
     this.fireFlares = this.campfires.map(() => createFireFlare());
     this.pulseStates = this.campfires.map(() => createPulseState());
     // Initialize animated sprites from layout
-    this.animatedSprites = reconcileSprites(
-      new Map(),
-      this.allSprites,
-      this.campfires,
-    );
+    this.animatedSprites = reconcileSprites(new Map(), this.allSprites, this.campfires);
   }
 
   private handleActivityEvents(events: ActivityEvent[]): void {
@@ -845,9 +859,8 @@ export class MapView {
     });
 
     // Fire flare — golems with bright orbs get stronger flares
-    const flareMult = sprite.type === 'agent'
-      ? COMMIT_FLARE_MULT + sprite.orbBrightness * 0.3
-      : COMMIT_FLARE_MULT;
+    const flareMult =
+      sprite.type === 'agent' ? COMMIT_FLARE_MULT + sprite.orbBrightness * 0.3 : COMMIT_FLARE_MULT;
     triggerFireFlare(this.fireFlares, campfireIndex, flareMult, time);
 
     // Track activity and reset orb (PR3)
@@ -858,10 +871,7 @@ export class MapView {
     }
   }
 
-  private handleBranchSwitch(
-    sprite: AnimatedSprite | undefined,
-    campfireIndex: number,
-  ): void {
+  private handleBranchSwitch(sprite: AnimatedSprite | undefined, campfireIndex: number): void {
     if (!sprite || sprite.campfireIndex !== campfireIndex) return;
 
     // Recompute home position from current layout data
@@ -1069,9 +1079,8 @@ export class MapView {
     // Floating text at arc midpoint
     const midX = (cf0.x + cf1.x) / 2;
     const midY = (cf0.y + cf1.y) / 2 - 20;
-    const shortSummary = spark.summary.length > 40
-      ? spark.summary.slice(0, 37) + '...'
-      : spark.summary;
+    const shortSummary =
+      spark.summary.length > 40 ? spark.summary.slice(0, 37) + '...' : spark.summary;
     this.floatingTexts.push({
       text: `\u26A1 ${shortSummary}`,
       x: midX,
@@ -1238,7 +1247,14 @@ export class MapView {
       const cf = this.campfires[i];
       if (!cf) continue;
       for (const ring of ps.rings) {
-        drawPulseRing(ctx, ring, time, cf.color, this.fireStates[i]?.level || 'steady', cf.fireSize);
+        drawPulseRing(
+          ctx,
+          ring,
+          time,
+          cf.color,
+          this.fireStates[i]?.level || 'steady',
+          cf.fireSize,
+        );
       }
     }
 
@@ -1330,11 +1346,16 @@ export class MapView {
         // Golem spawn sequence — draw spawn effects instead of sprite
         if (sprite.currentAnim?.type === 'golem_spawn') {
           drawGolemSpawn(
-            ctx, sprite.currentAnim.elapsed,
-            state.spawnFireX, state.spawnFireY,
-            sprite.homeX, sprite.homeY,
-            state.spawnOwnerX, state.spawnOwnerY,
-            sprite.color, time,
+            ctx,
+            sprite.currentAnim.elapsed,
+            state.spawnFireX,
+            state.spawnFireY,
+            sprite.homeX,
+            sprite.homeY,
+            state.spawnOwnerX,
+            state.spawnOwnerY,
+            sprite.color,
+            time,
           );
           ctx.restore();
           continue;
@@ -1343,9 +1364,14 @@ export class MapView {
         // Golem despawn — draw dissolve particles
         if (sprite.currentAnim?.type === 'golem_despawn') {
           drawDespawnParticles(
-            ctx, state.x, state.y,
-            state.despawnFireX, state.despawnFireY,
-            sprite.color, state.animProgress, time,
+            ctx,
+            state.x,
+            state.y,
+            state.despawnFireX,
+            state.despawnFireY,
+            sprite.color,
+            state.animProgress,
+            time,
           );
           ctx.restore();
           continue;

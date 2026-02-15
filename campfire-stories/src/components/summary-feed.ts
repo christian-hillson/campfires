@@ -243,11 +243,7 @@ function renderSparkLog(container: HTMLElement, ctx: FeedContext): void {
     });
 }
 
-export function addSparkToFeed(
-  container: HTMLElement,
-  spark: Spark,
-  teams: Team[],
-): void {
+export function addSparkToFeed(container: HTMLElement, spark: Spark, teams: Team[]): void {
   const list = container.querySelector('.team-entries');
   if (!list) return;
 

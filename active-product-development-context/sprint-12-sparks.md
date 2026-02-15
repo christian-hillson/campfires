@@ -5,6 +5,7 @@ Cross-team intelligence layer that detects meaningful connections between campfi
 **Core concept:** After each batch summarization cycle, a second Claude API call analyzes all team summaries together and identifies cross-team connections. These are surfaced as Sparks — brief, high-signal notifications that appear on the map (animated arc between campfires), momentarily in the Campfire Stories panel, and persistently in the campfire detail panel until dismissed. Dismissed sparks are preserved in a searchable log.
 
 **Design principles:**
+
 - Sparks are precious, not noisy. Max 1 spark per campfire per 24-hour window.
 - Sparks can be asymmetric — informational for one team, actionable for another.
 - Any team member can dismiss a spark for their team. Dismissed sparks move to the log.
@@ -19,29 +20,29 @@ Cross-team intelligence layer that detects meaningful connections between campfi
 
 ```typescript
 interface Spark {
-  id: string;                    // UUID
-  orgId: string;                 // UUID
-  teamConnections: SparkTeamConnection[];  // 2+ teams involved
-  summary: string;               // AI-generated one-line connection description
-  details: string;               // AI-generated longer explanation (2-3 sentences)
-  suggestedAction?: string;      // Optional concrete suggestion ("Consider syncing on release timing")
-  confidence: number;            // 0-1 float from the detection model
+  id: string; // UUID
+  orgId: string; // UUID
+  teamConnections: SparkTeamConnection[]; // 2+ teams involved
+  summary: string; // AI-generated one-line connection description
+  details: string; // AI-generated longer explanation (2-3 sentences)
+  suggestedAction?: string; // Optional concrete suggestion ("Consider syncing on release timing")
+  confidence: number; // 0-1 float from the detection model
   status: 'active' | 'dismissed' | 'expired';
-  contentHash: string;           // Hash of team IDs + summary for dedup across batch cycles
-  relatedSummaryIds: string[];   // Which batch summaries triggered this spark
-  createdAt: string;             // ISO timestamp
-  updatedAt: string;             // ISO timestamp — bumped when re-detected in subsequent batch
-  expiresAt: string;             // ISO timestamp — 72 hours from creation/last refresh
-  dismissedAt?: string;          // ISO timestamp — when dismissed
-  dismissedBy?: string;          // userId of who dismissed
+  contentHash: string; // Hash of team IDs + summary for dedup across batch cycles
+  relatedSummaryIds: string[]; // Which batch summaries triggered this spark
+  createdAt: string; // ISO timestamp
+  updatedAt: string; // ISO timestamp — bumped when re-detected in subsequent batch
+  expiresAt: string; // ISO timestamp — 72 hours from creation/last refresh
+  dismissedAt?: string; // ISO timestamp — when dismissed
+  dismissedBy?: string; // userId of who dismissed
 }
 
 interface SparkTeamConnection {
   teamId: string;
   teamName: string;
-  perspective: string;           // Team-specific framing of the connection
-  actionRequired: boolean;       // Whether this team should take action vs. just be aware
-  viewedBy: string[];            // userIds who have viewed this spark in detail
+  perspective: string; // Team-specific framing of the connection
+  actionRequired: boolean; // Whether this team should take action vs. just be aware
+  viewedBy: string[]; // userIds who have viewed this spark in detail
 }
 ```
 
@@ -83,12 +84,14 @@ At the end of the existing batch summarization cycle in `server/src/summarizer.t
 ### Detection prompt structure
 
 The detection call receives:
+
 - All team summaries from the current batch cycle
 - Org context (mission, roadmap, team descriptions) — already available from the existing summarizer
 - Active sparks (to avoid re-surfacing the same connection)
 - Recent dismissed sparks (to avoid re-surfacing connections teams already rejected)
 
 The prompt asks Claude to:
+
 1. Identify 0-N cross-team connections (where N is bounded by the rate limit)
 2. For each connection, provide: a one-line summary, a 2-3 sentence detail, optional suggested action, confidence score (0-1), and a per-team perspective that may be asymmetric
 3. Classify whether each team's involvement is informational or action-required
@@ -123,6 +126,7 @@ The prompt asks Claude to:
 Returns active sparks for the org. Used by the Campfire Stories web app to render sparks on the map and in the Campfire Stories panel (org-wide summaries).
 
 Query params:
+
 - `status` — filter by status (`active`, `dismissed`, `expired`, `all`). Default: `active`
 - `teamId` — filter to sparks involving a specific team
 - `limit` — max results (default 20)
@@ -134,6 +138,7 @@ Response: `{ sparks: Spark[] }`
 Returns all sparks (active + dismissed + expired) in reverse chronological order. Powers the spark log UI.
 
 Query params:
+
 - `limit` — max results (default 50)
 - `before` — cursor-based pagination by `createdAt`
 
@@ -146,6 +151,7 @@ Dismisses a spark for a specific team. Any team member can dismiss for their who
 Request body: `{ teamId: string }`
 
 Behavior:
+
 - Sets `status: 'dismissed'`, `dismissedAt`, `dismissedBy` on the spark
 - If the spark connects more than 2 teams, only dismiss for the requesting team's side (future consideration — for v1, dismissing affects the whole spark since we only support 2-team connections)
 
@@ -172,6 +178,7 @@ When a new spark is first detected (not on page load for existing sparks — onl
 The persistent spark icon on each campfire remains visible until the spark is dismissed or expires. It should be small enough not to compete with the campfire itself — think of it as a badge, not a feature.
 
 Implementation notes:
+
 - The arc animation uses the existing animation system in `campfire-stories/src/map/`
 - Particle follows a quadratic bezier curve between the two campfire world positions
 - Use the existing ember/spark particle style from the campfire rendering
@@ -180,6 +187,7 @@ Implementation notes:
 ### Campfire Stories panel (org-wide summaries): Momentary spark entry
 
 When a new spark is detected:
+
 1. A spark entry appears at the top of the Campfire Stories panel (org-wide summaries, top-right)
 2. Styled distinctly from regular updates — spark/lightning icon, yellow accent text (`#fbbf24`), slightly different background
 3. Shows the one-line summary: "⚡ Spark: Payments ↔ Growth — converging on faster payment rollout for new SMBs"
@@ -193,7 +201,7 @@ When a user clicks on a campfire that has active sparks:
 1. A "Sparks" section appears in the Logs panel, above or below the member list
 2. Each spark shows:
    - Spark icon + yellow accent styling
-   - The team-specific perspective text (asymmetric — what's relevant to *this* team)
+   - The team-specific perspective text (asymmetric — what's relevant to _this_ team)
    - The suggested action if one exists and `actionRequired` is true for this team
    - If the user is active in this campfire's team: "Visit [other team]'s campfire?" link that triggers the existing cross-team visit flow
    - A dismiss button (small X or "Dismiss" text link)
@@ -230,21 +238,21 @@ data: { spark: Spark, isNew: boolean }
 
 ## Feature Table
 
-| Feature | Status | Owner | Notes |
-| --- | --- | --- | --- |
-| Shared: Spark type definition | Not started | — | `shared/src/types.ts` — Spark, SparkTeamConnection |
-| Server: sparks table + persistence methods | Not started | — | `server/src/persistence.ts` — CRUD, dedup queries, expiration |
-| Server: spark detection prompt | Not started | — | `server/src/summarizer.ts` — second Claude API call after team summaries |
-| Server: spark rate limiter | Not started | — | 1 spark/campfire/24h, select highest confidence when over limit |
-| Server: spark deduplication | Not started | — | Content hash + active spark check before creation |
-| Server: spark expiration | Not started | — | 72h TTL, check-on-read or background cleanup |
-| Server: spark API endpoints | Not started | — | GET sparks, GET log, POST dismiss, POST view |
-| Server: SSE spark events | Not started | — | Extend existing summary stream with spark event type |
-| Campfire Stories: map arc animation | Not started | — | Bezier particle arc between campfires, plays once on new spark |
-| Campfire Stories: persistent spark icon on campfires | Not started | — | Yellow lightning badge on campfires with active sparks |
-| Campfire Stories: momentary spark in stories panel | Not started | — | 15s fade-out spark notification in Campfire Stories panel (org-wide summaries) |
-| Campfire Stories: Logs panel spark section | Not started | — | Persistent spark display in Logs panel (team detail), with dismiss, view tracking, visit prompt |
-| Campfire Stories: spark log | Not started | — | Historical log in Campfire Stories panel (org-wide summaries), all statuses, scrollable |
+| Feature                                              | Status      | Owner | Notes                                                                                           |
+| ---------------------------------------------------- | ----------- | ----- | ----------------------------------------------------------------------------------------------- |
+| Shared: Spark type definition                        | Not started | —     | `shared/src/types.ts` — Spark, SparkTeamConnection                                              |
+| Server: sparks table + persistence methods           | Not started | —     | `server/src/persistence.ts` — CRUD, dedup queries, expiration                                   |
+| Server: spark detection prompt                       | Not started | —     | `server/src/summarizer.ts` — second Claude API call after team summaries                        |
+| Server: spark rate limiter                           | Not started | —     | 1 spark/campfire/24h, select highest confidence when over limit                                 |
+| Server: spark deduplication                          | Not started | —     | Content hash + active spark check before creation                                               |
+| Server: spark expiration                             | Not started | —     | 72h TTL, check-on-read or background cleanup                                                    |
+| Server: spark API endpoints                          | Not started | —     | GET sparks, GET log, POST dismiss, POST view                                                    |
+| Server: SSE spark events                             | Not started | —     | Extend existing summary stream with spark event type                                            |
+| Campfire Stories: map arc animation                  | Not started | —     | Bezier particle arc between campfires, plays once on new spark                                  |
+| Campfire Stories: persistent spark icon on campfires | Not started | —     | Yellow lightning badge on campfires with active sparks                                          |
+| Campfire Stories: momentary spark in stories panel   | Not started | —     | 15s fade-out spark notification in Campfire Stories panel (org-wide summaries)                  |
+| Campfire Stories: Logs panel spark section           | Not started | —     | Persistent spark display in Logs panel (team detail), with dismiss, view tracking, visit prompt |
+| Campfire Stories: spark log                          | Not started | —     | Historical log in Campfire Stories panel (org-wide summaries), all statuses, scrollable         |
 
 ---
 

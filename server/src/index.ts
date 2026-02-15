@@ -34,7 +34,9 @@ app.use(
   }),
 );
 const corsOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+  ? process.env.ALLOWED_ORIGINS.split(',')
+      .map((o) => o.trim())
+      .filter(Boolean)
   : ['http://localhost:5173', 'http://localhost:3000'];
 app.use(
   cors({

@@ -163,7 +163,7 @@ Iterative pass on the map mockup (`active-product-development-context/campfires-
 | -------------------------------------------------------- | ------ | ----- | ------------------------------------------------------------------------- |
 | Mockup: remove legend panel                              | Done   | —     | Legend was unnecessary clutter, removed HTML + CSS                        |
 | Mockup: remove orphaned minimap CSS                      | Done   | —     | CSS rules existed with no corresponding HTML element                      |
-| Mockup: rename FIRESIDE → CAMPFIRE STORIES                | Done   | —     | Org-wide summary panel in top-right                                       |
+| Mockup: rename FIRESIDE → CAMPFIRE STORIES               | Done   | —     | Org-wide summary panel in top-right                                       |
 | Mockup: add "Logs — Payments" panel                      | Done   | —     | Bottom-right panel with detailed, multi-line team updates over 90s loop   |
 | Mockup: story_update events in simulation timeline       | Done   | —     | 6 narrative entries for Payments team spread across the cycle             |
 | Mockup: handleStoryUpdate() with fade-in + max 4 entries | Done   | —     | Prepend with relative timestamps, oldest fades out, clears on cycle reset |
@@ -172,14 +172,14 @@ Iterative pass on the map mockup (`active-product-development-context/campfires-
 
 Replace the stubbed summarizer with real Claude API integration. Transcripts provide much richer context than raw file events.
 
-| Feature                                                     | Status | Owner | Notes                                                                              |
-| ----------------------------------------------------------- | ------ | ----- | ---------------------------------------------------------------------------------- |
-| Server: Claude API integration replacing stub               | Done   | —     | `server/src/summarizer.ts`, Claude API wired up                                    |
-| Server: transcript → summary pipeline                       | Done   | —     | `preprocessTranscript()` strips noise, display names in headers                    |
-| Server: summary quality tuning                              | Done   | —     | Plain-text prompt, narrative voice, smart chunking for long sessions               |
+| Feature                                                       | Status | Owner | Notes                                                                              |
+| ------------------------------------------------------------- | ------ | ----- | ---------------------------------------------------------------------------------- |
+| Server: Claude API integration replacing stub                 | Done   | —     | `server/src/summarizer.ts`, Claude API wired up                                    |
+| Server: transcript → summary pipeline                         | Done   | —     | `preprocessTranscript()` strips noise, display names in headers                    |
+| Server: summary quality tuning                                | Done   | —     | Plain-text prompt, narrative voice, smart chunking for long sessions               |
 | Campfire Stories: Campfire Stories panel (org-wide summaries) | Done   | —     | Restyled summary feed to pixel-art aesthetic with CAMPFIRE STORIES branding        |
 | Campfire Stories: Logs panel (team detail)                    | Done   | —     | Narrative log entries from activity events, pixel-art restyled detail view         |
-| Campfire Stories: richer summary cards from transcript data | Done   | —     | Content preview on feed cards, one-liner headline in detail view, plain-text stubs |
+| Campfire Stories: richer summary cards from transcript data   | Done   | —     | Content preview on feed cards, one-liner headline in detail view, plain-text stubs |
 
 ## Sprint 9: Integration & Polish
 
@@ -215,14 +215,14 @@ Holistic security review and hardening pass across server, plugin, and client. N
 
 **Explicitly deferred from this sprint:** password complexity rules, RBAC, SQLite encryption, CSP tightening, legacy SHA256 migration removal.
 
-| Feature                                              | Status | Owner | Notes                                                                                                      |
-| ---------------------------------------------------- | ------ | ----- | ---------------------------------------------------------------------------------------------------------- |
-| Server: tiered API rate limiting                     | Done   | —     | 60 req/min authenticated, 10 req/min unauthenticated via `express-rate-limit`. `/health` exempt. `authLimiter` applied to `/auth/refresh` |
-| Server: single-use WebSocket upgrade tokens          | Done   | —     | `POST /auth/ws-token` returns 30s opaque token (Map + TTL cleanup). `ws-server.ts` consumes on connect. JWT no longer in query string |
-| Server: CORS origin allowlist                        | Done   | —     | `ALLOWED_ORIGINS` env var (comma-separated, trimmed). Defaults to localhost for dev. Documented in `.env.example` |
-| Plugin: config file permission enforcement           | Done   | —     | `chmod 600` on `~/.campfires/config.json` in login command, share command, and config.sh loader            |
-| Server: structured audit logging                     | Done   | —     | `server/src/audit-log.ts` — JSON to stdout for auth failures, authorization denials, rate limit hits. Wired into auth middleware and all 403 responses |
-| Server: prompt injection defenses                    | Done   | —     | Control character stripping + 2000 char cap on org mission, roadmap, and team description via Zod transform. These fields flow into Claude API prompts |
+| Feature                                     | Status | Owner | Notes                                                                                                                                                  |
+| ------------------------------------------- | ------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Server: tiered API rate limiting            | Done   | —     | 60 req/min authenticated, 10 req/min unauthenticated via `express-rate-limit`. `/health` exempt. `authLimiter` applied to `/auth/refresh`              |
+| Server: single-use WebSocket upgrade tokens | Done   | —     | `POST /auth/ws-token` returns 30s opaque token (Map + TTL cleanup). `ws-server.ts` consumes on connect. JWT no longer in query string                  |
+| Server: CORS origin allowlist               | Done   | —     | `ALLOWED_ORIGINS` env var (comma-separated, trimmed). Defaults to localhost for dev. Documented in `.env.example`                                      |
+| Plugin: config file permission enforcement  | Done   | —     | `chmod 600` on `~/.campfires/config.json` in login command, share command, and config.sh loader                                                        |
+| Server: structured audit logging            | Done   | —     | `server/src/audit-log.ts` — JSON to stdout for auth failures, authorization denials, rate limit hits. Wired into auth middleware and all 403 responses |
+| Server: prompt injection defenses           | Done   | —     | Control character stripping + 2000 char cap on org mission, roadmap, and team description via Zod transform. These fields flow into Claude API prompts |
 
 ## Sprint 12: Sparks — Cross-Team Intelligence Layer
 
@@ -230,22 +230,22 @@ AI-powered cross-team connection detection. After each batch summarization cycle
 
 **Core concept:** Sparks are precious, not noisy. Max 1 per campfire per 24h. They appear as an animated arc on the map, a momentary stories entry, and persistent badges on connected campfires. Dismissed sparks are preserved in a searchable log.
 
-| Feature                                                   | Status      | Owner | Notes                                                                                             |
-| --------------------------------------------------------- | ----------- | ----- | ------------------------------------------------------------------------------------------------- |
-| Shared: Spark + SparkTeamConnection types                 | Done        | —     | `shared/src/types.ts` — Spark, SparkTeamConnection                                               |
-| Server: sparks table + persistence methods                | Not started | —     | `server/src/persistence.ts` — CRUD, dedup queries, expiration                                     |
-| Server: spark detection prompt                            | Not started | —     | `server/src/summarizer.ts` — second Claude API call after team summaries                          |
-| Server: spark rate limiter                                | Not started | —     | 1 spark/campfire/24h, select highest confidence when over limit                                   |
-| Server: spark deduplication                               | Not started | —     | Content hash + active spark check before creation                                                 |
-| Server: spark expiration                                  | Not started | —     | 72h TTL, check-on-read or background cleanup                                                     |
-| Server: spark API endpoints                               | Not started | —     | GET sparks, GET log, POST dismiss, POST view                                                      |
-| Server: SSE spark events                                  | Not started | —     | Extend existing summary stream with spark event type                                              |
-| Campfire Stories: map arc animation                       | Not started | —     | Bezier particle arc between campfires, plays once on new spark                                    |
-| Campfire Stories: persistent spark badge on campfires     | Not started | —     | Amber lightning badge on campfires with active sparks                                             |
-| Campfire Stories: momentary spark in stories panel         | Not started | —     | 15s fade-out spark notification in Campfire Stories panel (org-wide summaries)                     |
-| Campfire Stories: campfire detail spark section           | Not started | —     | Persistent spark display in Logs panel, with dismiss, view tracking, visit prompt                  |
-| Campfire Stories: spark log                               | Not started | —     | Historical log in Campfire Stories panel (org-wide summaries), all statuses, scrollable            |
-| Mockup: spark arc + badge + stories entry in simulation   | Done        | —     | 2 spark events in 90s loop (Payments↔Platform t=35, Growth↔Infra t=65), amber #fbbf24 throughout |
+| Feature                                                 | Status      | Owner | Notes                                                                                            |
+| ------------------------------------------------------- | ----------- | ----- | ------------------------------------------------------------------------------------------------ |
+| Shared: Spark + SparkTeamConnection types               | Done        | —     | `shared/src/types.ts` — Spark, SparkTeamConnection                                               |
+| Server: sparks table + persistence methods              | Not started | —     | `server/src/persistence.ts` — CRUD, dedup queries, expiration                                    |
+| Server: spark detection prompt                          | Not started | —     | `server/src/summarizer.ts` — second Claude API call after team summaries                         |
+| Server: spark rate limiter                              | Not started | —     | 1 spark/campfire/24h, select highest confidence when over limit                                  |
+| Server: spark deduplication                             | Not started | —     | Content hash + active spark check before creation                                                |
+| Server: spark expiration                                | Not started | —     | 72h TTL, check-on-read or background cleanup                                                     |
+| Server: spark API endpoints                             | Not started | —     | GET sparks, GET log, POST dismiss, POST view                                                     |
+| Server: SSE spark events                                | Not started | —     | Extend existing summary stream with spark event type                                             |
+| Campfire Stories: map arc animation                     | Not started | —     | Bezier particle arc between campfires, plays once on new spark                                   |
+| Campfire Stories: persistent spark badge on campfires   | Not started | —     | Amber lightning badge on campfires with active sparks                                            |
+| Campfire Stories: momentary spark in stories panel      | Not started | —     | 15s fade-out spark notification in Campfire Stories panel (org-wide summaries)                   |
+| Campfire Stories: campfire detail spark section         | Not started | —     | Persistent spark display in Logs panel, with dismiss, view tracking, visit prompt                |
+| Campfire Stories: spark log                             | Not started | —     | Historical log in Campfire Stories panel (org-wide summaries), all statuses, scrollable          |
+| Mockup: spark arc + badge + stories entry in simulation | Done        | —     | 2 spark events in 90s loop (Payments↔Platform t=35, Growth↔Infra t=65), amber #fbbf24 throughout |
 
 ## Not Yet Planned
 

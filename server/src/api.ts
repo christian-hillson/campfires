@@ -39,8 +39,7 @@ function stripControlChars(s: string): string {
 }
 
 // Sanitized string for AI-facing fields: length limit + control char stripping
-const aiSafeString = (maxLen: number) =>
-  z.string().max(maxLen).transform(stripControlChars);
+const aiSafeString = (maxLen: number) => z.string().max(maxLen).transform(stripControlChars);
 
 const SignupSchema = z.object({
   email: z.string().email().max(255),

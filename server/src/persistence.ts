@@ -930,9 +930,7 @@ export class Persistence {
     const sparks = rows.map((r) => this.rowToSpark(r));
 
     if (teamId) {
-      return sparks.filter((s) =>
-        s.teamConnections.some((tc) => tc.teamId === teamId),
-      );
+      return sparks.filter((s) => s.teamConnections.some((tc) => tc.teamId === teamId));
     }
 
     return sparks;
@@ -1002,9 +1000,9 @@ export class Persistence {
   }
 
   markViewedSpark(sparkId: string, teamId: string, userId: string): void {
-    const row = this.db
-      .prepare(`SELECT teamConnections FROM sparks WHERE id = ?`)
-      .get(sparkId) as { teamConnections: string } | undefined;
+    const row = this.db.prepare(`SELECT teamConnections FROM sparks WHERE id = ?`).get(sparkId) as
+      | { teamConnections: string }
+      | undefined;
 
     if (!row) return;
 
@@ -1034,9 +1032,7 @@ export class Persistence {
   countRecentSparksForTeam(teamId: string, windowMs: number): number {
     const since = new Date(Date.now() - windowMs).toISOString();
     const rows = this.db
-      .prepare(
-        `SELECT teamConnections FROM sparks WHERE status = 'active' AND createdAt > ?`,
-      )
+      .prepare(`SELECT teamConnections FROM sparks WHERE status = 'active' AND createdAt > ?`)
       .all(since) as Array<{ teamConnections: string }>;
 
     return rows.filter((r) => {

@@ -660,7 +660,9 @@ body {
   border-radius: 4px;
   cursor: pointer;
   letter-spacing: 1px;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
   flex-shrink: 0;
 }
 
@@ -772,19 +774,32 @@ body {
   border-left: 3px solid #fbbf24;
   background: #1a1a10;
   margin-bottom: 2px;
-  transition: opacity 0.5s, border-color 0.5s, background 0.5s;
+  transition:
+    opacity 0.5s,
+    border-color 0.5s,
+    background 0.5s;
 }
 
 .spark-entry-new {
   background: #1f1a0a;
   border-color: #fbbf24;
-  box-shadow: 0 0 8px #fbbf2433, inset 0 0 12px #fbbf2411;
+  box-shadow:
+    0 0 8px #fbbf2433,
+    inset 0 0 12px #fbbf2411;
   animation: sparkGlow 2s ease-in-out infinite alternate;
 }
 
 @keyframes sparkGlow {
-  from { box-shadow: 0 0 6px #fbbf2422, inset 0 0 8px #fbbf2411; }
-  to { box-shadow: 0 0 12px #fbbf2444, inset 0 0 16px #fbbf2422; }
+  from {
+    box-shadow:
+      0 0 6px #fbbf2422,
+      inset 0 0 8px #fbbf2411;
+  }
+  to {
+    box-shadow:
+      0 0 12px #fbbf2444,
+      inset 0 0 16px #fbbf2422;
+  }
 }
 
 .spark-entry-icon {
@@ -907,7 +922,9 @@ body {
   padding: 2px 4px;
   border-radius: 2px;
   opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
 }
 
 .panel-spark-entry:hover .spark-dismiss-btn,
@@ -937,7 +954,9 @@ body {
   cursor: pointer;
   font-family: 'Silkscreen', monospace;
   font-size: 10px;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 
 .spark-log-btn:hover {
@@ -982,12 +1001,12 @@ body {
   background: #1a1a10;
 }
 
-.spark-log-entry[data-status="dismissed"] {
+.spark-log-entry[data-status='dismissed'] {
   opacity: 0.5;
   border-left-color: #6e7681;
 }
 
-.spark-log-entry[data-status="expired"] {
+.spark-log-entry[data-status='expired'] {
   opacity: 0.4;
   border-left-color: #484f58;
 }

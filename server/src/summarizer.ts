@@ -1,6 +1,13 @@
 import { createHash } from 'crypto';
 import Anthropic from '@anthropic-ai/sdk';
-import type { ActivityEvent, SessionTranscript, Team, User, Summary, Spark } from '@campfires/shared';
+import type {
+  ActivityEvent,
+  SessionTranscript,
+  Team,
+  User,
+  Summary,
+  Spark,
+} from '@campfires/shared';
 import { CONFIG } from '@campfires/shared';
 import { getPersistence, type Persistence } from './persistence.js';
 
@@ -690,9 +697,7 @@ export class Summarizer {
 
         // Check for continuation of existing spark between same team pair
         if (candidate.isContinuationOf) {
-          const existingSpark = activeSparks.find(
-            (s) => s.id === candidate.isContinuationOf,
-          );
+          const existingSpark = activeSparks.find((s) => s.id === candidate.isContinuationOf);
           if (existingSpark) {
             db.refreshSpark(existingSpark.id);
             refreshed++;
@@ -734,9 +739,7 @@ export class Summarizer {
         created++;
       }
 
-      console.log(
-        `[Sparks] Detection complete — ${created} created, ${refreshed} refreshed`,
-      );
+      console.log(`[Sparks] Detection complete — ${created} created, ${refreshed} refreshed`);
     } catch (err) {
       console.error('[Sparks] Detection API call failed:', err);
     }

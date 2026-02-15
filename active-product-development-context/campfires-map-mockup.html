@@ -77,7 +77,6 @@
         box-shadow: 0 0 4px #4ade8088;
       }
 
-
       .canvas-container {
         flex: 1;
         width: 100%;
@@ -591,7 +590,8 @@
           type: 'spark',
           fromTeam: 'payments',
           toTeam: 'platform',
-          summary: 'Payments \u2194 Platform \u2014 webhook auth changes may conflict with OAuth migration',
+          summary:
+            'Payments \u2194 Platform \u2014 webhook auth changes may conflict with OAuth migration',
         },
         // Draft mode
         { time: 36, type: 'draft_mode_on', userId: 'jc' },
@@ -685,7 +685,8 @@
           type: 'spark',
           fromTeam: 'growth',
           toTeam: 'infra',
-          summary: 'Growth \u2194 Infra \u2014 new SMB onboarding load will hit the connection pool changes',
+          summary:
+            'Growth \u2194 Infra \u2014 new SMB onboarding load will hit the connection pool changes',
         },
         {
           time: 70,
@@ -2984,27 +2985,25 @@
           // Draw 3-4 ember particles traveling along the curve
           const particleCount = 4;
           for (let p = 0; p < particleCount; p++) {
-            const particleT = ((progress * 2 + p / particleCount) % 1.0);
+            const particleT = (progress * 2 + p / particleCount) % 1.0;
             // Only show particles that have "launched"
             if (particleT > progress * 1.5) continue;
             const t = Math.min(1, particleT);
             // Quadratic bezier position
-            const bx =
-              (1 - t) * (1 - t) * arc.fromX +
-              2 * (1 - t) * t * midX +
-              t * t * arc.toX;
-            const by =
-              (1 - t) * (1 - t) * arc.fromY +
-              2 * (1 - t) * t * midY +
-              t * t * arc.toY;
+            const bx = (1 - t) * (1 - t) * arc.fromX + 2 * (1 - t) * t * midX + t * t * arc.toX;
+            const by = (1 - t) * (1 - t) * arc.fromY + 2 * (1 - t) * t * midY + t * t * arc.toY;
 
             ctx.save();
             ctx.globalAlpha = arcAlpha * (0.7 + Math.sin(time * 8 + p) * 0.3);
             // Particle glow
             const glowR = 3;
             const pGrad = ctx.createRadialGradient(
-              bx * PIXEL_SCALE, by * PIXEL_SCALE, 0,
-              bx * PIXEL_SCALE, by * PIXEL_SCALE, glowR * PIXEL_SCALE,
+              bx * PIXEL_SCALE,
+              by * PIXEL_SCALE,
+              0,
+              bx * PIXEL_SCALE,
+              by * PIXEL_SCALE,
+              glowR * PIXEL_SCALE,
             );
             pGrad.addColorStop(0, 'rgba(251,191,36,0.6)');
             pGrad.addColorStop(0.5, 'rgba(251,191,36,0.2)');
@@ -3029,8 +3028,12 @@
             ctx.save();
             ctx.globalAlpha = flashAlpha * 0.5;
             const flashGrad = ctx.createRadialGradient(
-              arc.toX * PIXEL_SCALE, arc.toY * PIXEL_SCALE, 0,
-              arc.toX * PIXEL_SCALE, arc.toY * PIXEL_SCALE, flashR * PIXEL_SCALE,
+              arc.toX * PIXEL_SCALE,
+              arc.toY * PIXEL_SCALE,
+              0,
+              arc.toX * PIXEL_SCALE,
+              arc.toY * PIXEL_SCALE,
+              flashR * PIXEL_SCALE,
             );
             flashGrad.addColorStop(0, 'rgba(251,191,36,0.8)');
             flashGrad.addColorStop(0.4, 'rgba(251,191,36,0.3)');
