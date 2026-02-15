@@ -248,10 +248,74 @@ function summarizeToolInput(toolName: string, input: Record<string, unknown> | u
   return '';
 }
 
-// --- Transcript data formatting ---
+// --- Transcript chunking for long sessions ---
 
 const MAX_TRANSCRIPT_BYTES = 50 * 1024;
 const MAX_TOTAL_TRANSCRIPT_BYTES = 150 * 1024;
+
+const TURN_MARKER = /^\[(User|Assistant|Tool)\] /;
+
+function chunkTranscript(content: string, maxBytes: number): string {
+  if (content.length <= maxBytes) return content;
+
+  // Split into turns on line boundaries
+  const lines = content.split('\n');
+  const turns: string[][] = [];
+  let current: string[] = [];
+
+  for (const line of lines) {
+    if (TURN_MARKER.test(line) && current.length > 0) {
+      turns.push(current);
+      current = [];
+    }
+    current.push(line);
+  }
+  if (current.length > 0) turns.push(current);
+
+  // If we couldn't split into turns, fall back to line-level split
+  if (turns.length <= 2) {
+    const half = Math.floor(maxBytes / 2);
+    const headEnd = content.lastIndexOf('\n', half);
+    const tailStart = content.indexOf('\n', content.length - half);
+    return (
+      content.slice(0, headEnd > 0 ? headEnd : half) +
+      '\n\n... [middle of session omitted] ...\n\n' +
+      content.slice(tailStart > 0 ? tailStart + 1 : content.length - half)
+    );
+  }
+
+  // Keep first turns and last turns that fit within budget
+  const ellipsis = '\n\n... [middle of session omitted] ...\n\n';
+  const budget = maxBytes - ellipsis.length;
+  const headBudget = Math.floor(budget * 0.4);
+  const tailBudget = budget - headBudget;
+
+  const headTurns: string[] = [];
+  let headSize = 0;
+  for (const turn of turns) {
+    const block = turn.join('\n');
+    if (headSize + block.length > headBudget) break;
+    headTurns.push(block);
+    headSize += block.length + 1;
+  }
+
+  const tailTurns: string[] = [];
+  let tailSize = 0;
+  for (let i = turns.length - 1; i >= 0; i--) {
+    const block = turns[i].join('\n');
+    if (tailSize + block.length > tailBudget) break;
+    tailTurns.unshift(block);
+    tailSize += block.length + 1;
+  }
+
+  // Ensure we kept at least something from each end
+  if (headTurns.length === 0) headTurns.push(turns[0].join('\n'));
+  if (tailTurns.length === 0) tailTurns.push(turns[turns.length - 1].join('\n'));
+
+  return headTurns.join('\n') + ellipsis + tailTurns.join('\n');
+}
+
+// --- Transcript data formatting ---
 
 function prepareTranscriptData(transcripts: SessionTranscript[], members?: User[]): string {
   if (transcripts.length === 0) return '';
@@ -273,10 +337,7 @@ function prepareTranscriptData(transcripts: SessionTranscript[], members?: User[
   const included: string[] = [];
   for (const t of reversed) {
     const cleaned = preprocessTranscript(t.content);
-    const truncatedContent =
-      cleaned.length > MAX_TRANSCRIPT_BYTES
-        ? cleaned.slice(0, MAX_TRANSCRIPT_BYTES) + '\n... [truncated]'
-        : cleaned;
+    const truncatedContent = chunkTranscript(cleaned, MAX_TRANSCRIPT_BYTES);
 
     const userName = nameMap.get(t.userId) || t.userId;
 
@@ -329,17 +390,27 @@ async function callClaude(
   const eventData = prepareEventData(events);
   const transcriptData = prepareTranscriptData(transcripts, members);
 
-  const systemPrompt = `You are the Campfires activity summarizer. Your job is to turn developer activity data into concise, business-legible project summaries.
+  const systemPrompt = `You are the Campfires activity summarizer. You turn developer activity data into concise, business-legible project status updates.
 
-You will receive two types of data:
-1. **Session transcripts** — full records of developer coding sessions, showing what was discussed, decided, and accomplished. This is your PRIMARY source of insight.
-2. **Activity events** — structured signals like commits, file saves, and branch switches. Use these as supporting context (which files changed, how many commits).
+You receive two types of data:
+1. Session transcripts — full records of developer coding sessions showing what was discussed, decided, and accomplished. This is your PRIMARY source of insight. Transcript headers include the developer's display name — use names naturally to attribute work (e.g. "Sarah rebuilt the auth flow" not "a developer worked on auth").
+2. Activity events — structured signals like commits, file saves, and branch switches. Use these as supporting context only.
 
 Prioritize transcript content over raw events. Transcripts reveal the narrative — what developers were working on, what problems they solved, and what decisions they made. Events provide quantitative backing.
 
+When only activity events are available (no transcripts), write a brief factual summary of what happened based on commits and file changes. Do not fabricate narrative or speculate about intent — just report the observable facts.
+
 Respond with a JSON object containing exactly two fields:
-- "oneLiner": A single-line summary under 80 characters, no markdown formatting. Capture the most significant accomplishment or focus area.
-- "content": A markdown summary of 2-4 paragraphs, under 500 words. Write a narrative of progress — what was accomplished, what challenges were addressed, and what direction the work is heading. Write for a non-technical audience who wants to understand project progress.
+
+"oneLiner": A single headline-style sentence under 80 characters. No markdown. Capture the most significant accomplishment or focus area. Write it like a project update headline.
+  Good: "Rebuilt auth flow and fixed login regression"
+  Good: "Shipped dark mode with theme persistence"
+  Bad: "3 commits, 5 file saves"
+  Bad: "Various development activity"
+
+"content": A plain text summary of 2-4 paragraphs, under 500 words. NO markdown formatting — no headers (##), no bold (**), no bullets (-), no backticks. Write in plain prose paragraphs only, since the UI renders this as plain text.
+
+Write like a project status update for a product manager. Focus on accomplishments, decisions made, problems solved, and where the work is heading. Avoid listing filenames or technical implementation details unless they are essential to understanding the work. A non-technical reader should understand what progress was made and why it matters.
 
 Respond ONLY with valid JSON. No other text.`;
 
