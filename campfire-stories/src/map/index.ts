@@ -7,6 +7,7 @@ import type {
   ActivityEvent,
   Spark,
 } from '@campfires/shared';
+import { CONFIG } from '@campfires/shared';
 import {
   PIXEL_SCALE,
   px,
@@ -111,6 +112,8 @@ import {
   KINDLE_DURATION,
   KINDLE_STAGGER_DELAY,
   FOUNDER_CEREMONY_DURATION,
+  FIRE_LEVELS,
+  type FireLevelMultipliers,
 } from './animation-constants.js';
 import { ActivityFeed } from './activity-feed.js';
 
@@ -177,7 +180,11 @@ export class MapView {
   private pendingKindles: { teamId: string; requestedAt: number }[] = [];
   private lastKindleStart = 0;
   private leftoverTools = new Map<string, string[]>(); // teamId → tool types
-  private decayingCampfires = new Map<string, { startTime: number; gracePeriodEnd: number }>(); // teamId → decay state
+  private gracePeriodTeams = new Map<string, number>(); // teamId → timestamp when grace period started (Date.now())
+  private decayingCampfires = new Map<
+    string,
+    { startTime: number; startLevel: 'kindled' | 'steady' | 'roaring' }
+  >(); // teamId → decay animation state (startTime in render seconds)
   private founderCeremonies = new Map<
     string,
     { startTime: number; edgeX: number; edgeY: number; targetX: number; targetY: number }
@@ -300,6 +307,7 @@ export class MapView {
 
   private updateOnlineCounts(): void {
     const time = performance.now() / 1000;
+    const now = Date.now();
     for (const cf of this.campfires) {
       const awarenessStates = this.config.awareness.get(cf.teamId) || [];
       const onlineCount = awarenessStates.filter(
@@ -308,12 +316,23 @@ export class MapView {
       const prevCount = this.onlineMemberCounts.get(cf.teamId) || 0;
       this.onlineMemberCounts.set(cf.teamId, onlineCount);
 
-      // Detect cold → online transition for kindle animation
       if (prevCount === 0 && onlineCount > 0) {
+        // Someone came online — cancel any grace period or decay
+        this.gracePeriodTeams.delete(cf.teamId);
+        this.decayingCampfires.delete(cf.teamId);
+
+        // Trigger kindle animation if fire is cold
         const cfIndex = this.campfires.indexOf(cf);
         const fireState = this.fireStates[cfIndex];
         if (fireState && fireState.level === 'cold') {
           this.pendingKindles.push({ teamId: cf.teamId, requestedAt: time });
+          // Clear leftover tools on kindle
+          this.leftoverTools.delete(cf.teamId);
+        }
+      } else if (prevCount > 0 && onlineCount === 0) {
+        // Everyone went offline — start grace period
+        if (!this.gracePeriodTeams.has(cf.teamId) && !this.decayingCampfires.has(cf.teamId)) {
+          this.gracePeriodTeams.set(cf.teamId, now);
         }
       }
     }
@@ -943,6 +962,19 @@ export class MapView {
       const teamId = this.campfires[i].teamId;
       const count = this.recentEvents.filter((e) => e.teamId === teamId).length;
       const onlineCount = this.onlineMemberCounts.get(teamId) || 0;
+
+      // During grace period, keep fire at kindled minimum
+      if (this.gracePeriodTeams.has(teamId)) {
+        const naturalLevel = computeFireLevel(count, 1); // pretend 1 online
+        setFireLevel(this.fireStates[i], naturalLevel === 'cold' ? 'kindled' : naturalLevel);
+        continue;
+      }
+
+      // During decay, don't update fire level — decay tick handles it
+      if (this.decayingCampfires.has(teamId)) {
+        continue;
+      }
+
       const newLevel = computeFireLevel(count, onlineCount);
       setFireLevel(this.fireStates[i], newLevel);
     }
@@ -1277,6 +1309,46 @@ export class MapView {
         this.founderCeremonies.delete(teamId);
       }
     }
+
+    // Tick grace periods → start decay when grace expires
+    const now = Date.now();
+    for (const [teamId, graceStart] of this.gracePeriodTeams) {
+      if (now - graceStart >= CONFIG.GRACE_PERIOD_MS) {
+        this.gracePeriodTeams.delete(teamId);
+        // Start decay animation
+        const cfIndex = this.campfires.findIndex((c) => c.teamId === teamId);
+        const fireState = this.fireStates[cfIndex];
+        if (fireState && fireState.level !== 'cold') {
+          const startLevel = fireState.level === 'cold' ? 'kindled' : fireState.level;
+          this.decayingCampfires.set(teamId, {
+            startTime: time,
+            startLevel: startLevel as 'kindled' | 'steady' | 'roaring',
+          });
+        }
+      }
+    }
+
+    // Tick decay animations
+    const decayDurationSec = CONFIG.DECAY_DURATION_MS / 1000;
+    for (const [teamId, decay] of this.decayingCampfires) {
+      const elapsed = time - decay.startTime;
+      if (elapsed >= decayDurationSec) {
+        // Decay complete — switch to cold
+        this.decayingCampfires.delete(teamId);
+        const cfIndex = this.campfires.findIndex((c) => c.teamId === teamId);
+        if (cfIndex >= 0) {
+          setFireLevel(this.fireStates[cfIndex], 'cold');
+        }
+        // Spawn leftover tools
+        const toolTypes = ['woodpile', 'barrel', 'crates'];
+        const tools: string[] = [];
+        const count = 1 + Math.floor(Math.random() * 2); // 1-2 tools
+        for (let i = 0; i < count; i++) {
+          tools.push(toolTypes[Math.floor(Math.random() * toolTypes.length)]);
+        }
+        this.leftoverTools.set(teamId, tools);
+      }
+    }
     for (const sprite of this.animatedSprites.values()) {
       tickSprite(sprite, dt);
 
@@ -1483,9 +1555,25 @@ export class MapView {
 
         // Check for active kindle animation
         const kindle = this.kindleAnimations.get(cf.teamId);
+        const decay = this.decayingCampfires.get(cf.teamId);
         if (kindle) {
           const kindleProgress = (time - kindle.startTime) / KINDLE_DURATION;
           drawKindleAnimation(ctx, cf.x, cf.y, Math.min(1, kindleProgress), time);
+        } else if (decay) {
+          // Decay animation: interpolate multipliers from startLevel → cold over DECAY_DURATION_MS
+          const decayDurationSec = CONFIG.DECAY_DURATION_MS / 1000;
+          const elapsed = time - decay.startTime;
+          const t = Math.min(1, elapsed / decayDurationSec);
+          const startMult = FIRE_LEVELS[decay.startLevel];
+          const fm: FireLevelMultipliers = {
+            height: startMult.height * (1 - t),
+            sparks: startMult.sparks * (1 - t),
+            flicker: startMult.flicker * (1 - t),
+            glow: startMult.glow * (1 - t),
+            embers: startMult.embers * (1 - t),
+            flames: startMult.flames * (1 - t),
+          };
+          drawCampfire(ctx, cf.x, cf.y, cf.fireSize, cf.color, time, dayNight.glowMultiplier, fm);
         } else if (fireLevel === 'cold') {
           // Cold firepit rendering
           const tools = this.leftoverTools.get(cf.teamId) || [];
