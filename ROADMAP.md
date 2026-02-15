@@ -247,6 +247,22 @@ AI-powered cross-team connection detection. After each batch summarization cycle
 | Campfire Stories: spark log                             | Not started | —     | Historical log in Campfire Stories panel (org-wide summaries), all statuses, scrollable          |
 | Mockup: spark arc + badge + stories entry in simulation | Done        | —     | 2 spark events in 90s loop (Payments↔Platform t=35, Growth↔Infra t=65), amber #fbbf24 throughout |
 
+## Sprint 13: Campfire Lifecycle — Cold Firepits, Kindle Animation & Founder Ceremony
+
+Full campfire lifecycle: firepits persist on the map even when nobody's around. Offline teams show cold firepits with stone rings and charred logs. Fire intensity is now 4-tier (cold/kindled/steady/roaring) based on online member count + activity. New teams get a founder pig ceremony. Map positions are persisted in SQLite.
+
+| Feature                                               | Status | Owner | Notes                                                                                                    |
+| ----------------------------------------------------- | ------ | ----- | -------------------------------------------------------------------------------------------------------- |
+| Shared: Team mapX/mapY/firstSeenAt fields             | Done   | —     | `shared/src/types.ts` — FireTier type, GRACE_PERIOD_MS + DECAY_DURATION_MS in CONFIG                     |
+| Server: teams table migration + position methods      | Done   | —     | `server/src/persistence.ts` — mapX/mapY/firstSeenAt columns, updateTeamPosition, setTeamFirstSeen        |
+| Server: auto-layout migration + SSE team_registered   | Done   | —     | `server/src/api.ts` — position calc on GET teams + POST teams, broadcastOrgEvent for new teams           |
+| Map: persisted layout + gap-finding                   | Done   | —     | `campfire-stories/src/map/layout.ts` — uses persisted positions, findGapPosition for new teams           |
+| Map: 4-tier fire system (cold/kindled/steady/roaring) | Done   | —     | `animation-constants.ts` + `fire-state.ts` — member count drives cold/kindled, events drive higher tiers |
+| Map: cold firepit rendering                           | Done   | —     | `renderer.ts` — drawColdFirepit with stone ring, charred logs, smoke wisp, night ember glow              |
+| Map: kindle animation (spark→catch→grow)              | Done   | —     | `renderer.ts` — drawKindleAnimation, stagger queue in index.ts                                           |
+| Map: founder pig ceremony                             | Done   | —     | `sprites.ts` — drawFounderPig with hard hat, 4-phase ceremony (entrance/building/lighting/exit)          |
+| Campfire Stories: team_registered SSE handling        | Done   | —     | `main.ts` — adds team to state, triggers founder ceremony on map                                         |
+
 ## Not Yet Planned
 
 These are explicitly deferred. Don't build them yet.
