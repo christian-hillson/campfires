@@ -30,13 +30,13 @@ All packages import types from `@campfires/shared`. If you change `shared/src/ty
 
 ## Development
 
-| Task                       | Command                              |
-| -------------------------- | ------------------------------------ |
-| Build everything           | `npm run build`                      |
-| Build shared types         | `npm run build:shared`               |
-| Build server               | `npm run build:server`               |
-| Run server (dev)           | `npm run dev:server`                 |
-| Run Campfire Stories (dev) | `npm run dev:stories`                |
+| Task                       | Command                |
+| -------------------------- | ---------------------- |
+| Build everything           | `npm run build`        |
+| Build shared types         | `npm run build:shared` |
+| Build server               | `npm run build:server` |
+| Run server (dev)           | `npm run dev:server`   |
+| Run Campfire Stories (dev) | `npm run dev:stories`  |
 
 The server uses `tsx watch` for hot reload in dev mode.
 

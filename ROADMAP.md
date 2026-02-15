@@ -172,24 +172,24 @@ Iterative pass on the map mockup (`context/campfires-map-mockup.html`). Added th
 
 Replace the stubbed summarizer with real Claude API integration. Transcripts provide much richer context than raw file events.
 
-| Feature                                                     | Status      | Owner | Notes                                                                        |
-| ----------------------------------------------------------- | ----------- | ----- | ---------------------------------------------------------------------------- |
-| Server: Claude API integration replacing stub               | Done        | —     | `server/src/summarizer.ts`, Claude API wired up                              |
-| Server: transcript → summary pipeline                       | Done        | —     | `preprocessTranscript()` strips noise, display names in headers              |
-| Server: summary quality tuning                              | Done        | —     | Plain-text prompt, narrative voice, smart chunking for long sessions          |
-| Campfire Stories: Fireside Updates panel (org-wide)         | Done        | —     | Restyled summary feed to pixel-art aesthetic with FIRESIDE UPDATES branding  |
-| Campfire Stories: Campfire Stories panel (team detail)      | Done        | —     | Narrative story entries from activity events, pixel-art restyled detail view |
-| Campfire Stories: richer summary cards from transcript data | Done        | —     | Content preview on feed cards, one-liner headline in detail view, plain-text stubs |
+| Feature                                                     | Status | Owner | Notes                                                                              |
+| ----------------------------------------------------------- | ------ | ----- | ---------------------------------------------------------------------------------- |
+| Server: Claude API integration replacing stub               | Done   | —     | `server/src/summarizer.ts`, Claude API wired up                                    |
+| Server: transcript → summary pipeline                       | Done   | —     | `preprocessTranscript()` strips noise, display names in headers                    |
+| Server: summary quality tuning                              | Done   | —     | Plain-text prompt, narrative voice, smart chunking for long sessions               |
+| Campfire Stories: Fireside Updates panel (org-wide)         | Done   | —     | Restyled summary feed to pixel-art aesthetic with FIRESIDE UPDATES branding        |
+| Campfire Stories: Campfire Stories panel (team detail)      | Done   | —     | Narrative story entries from activity events, pixel-art restyled detail view       |
+| Campfire Stories: richer summary cards from transcript data | Done   | —     | Content preview on feed cards, one-liner headline in detail view, plain-text stubs |
 
 ## Sprint 9: Integration & Polish
 
 End-to-end flow: Claude Code Plugin → Server → AI Summarizer → Campfire Stories. Driven by real usage and dogfooding.
 
-| Feature                                            | Status      | Owner | Notes                                               |
-| -------------------------------------------------- | ----------- | ----- | --------------------------------------------------- |
-| End-to-end plugin → server → campfire-stories flow | Done        | —     | Static serving, SPA fallback, sessionId threading   |
-| Zero-config onboarding experience                  | Done        | —     | Login command handles signup + auto-provision org/team |
-| Deprecate extension + CLI as primary inputs        | Done        | —     | Removed from workspaces + build pipeline, kept for reference |
+| Feature                                            | Status | Owner | Notes                                                        |
+| -------------------------------------------------- | ------ | ----- | ------------------------------------------------------------ |
+| End-to-end plugin → server → campfire-stories flow | Done   | —     | Static serving, SPA fallback, sessionId threading            |
+| Zero-config onboarding experience                  | Done   | —     | Login command handles signup + auto-provision org/team       |
+| Deprecate extension + CLI as primary inputs        | Done   | —     | Removed from workspaces + build pipeline, kept for reference |
 
 ## Not Yet Planned
 

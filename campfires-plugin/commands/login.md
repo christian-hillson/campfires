@@ -54,6 +54,7 @@ Create `~/.campfires/` directory if it doesn't exist, then write `~/.campfires/c
 ## Step 7: Confirm success
 
 Show a success message including:
+
 - Server URL
 - Organization name
 - Team name

@@ -52,22 +52,22 @@ function generateStubSummary(
 
   const paragraphs: string[] = [];
 
-  paragraphs.push(
-    `The ${teamContext.name} team recorded ${oneLiner} during this period.`,
-  );
+  paragraphs.push(`The ${teamContext.name} team recorded ${oneLiner} during this period.`);
 
   if (commitMessages.length > 0) {
-    paragraphs.push(
-      `Recent commits include: ${commitMessages.join('; ')}.`,
-    );
+    paragraphs.push(`Recent commits include: ${commitMessages.join('; ')}.`);
   }
 
   const details: string[] = [];
   if (uniqueFiles.size > 0) {
-    details.push(`${uniqueFiles.size} unique file${uniqueFiles.size !== 1 ? 's were' : ' was'} modified`);
+    details.push(
+      `${uniqueFiles.size} unique file${uniqueFiles.size !== 1 ? 's were' : ' was'} modified`,
+    );
   }
   if (branches.size > 0) {
-    details.push(`work spanned ${branches.size === 1 ? 'the' : ''} ${[...branches].join(', ')} branch${branches.size !== 1 ? 'es' : ''}`);
+    details.push(
+      `work spanned ${branches.size === 1 ? 'the' : ''} ${[...branches].join(', ')} branch${branches.size !== 1 ? 'es' : ''}`,
+    );
   }
   if (details.length > 0) {
     paragraphs.push(details.join(' and ') + '.');
