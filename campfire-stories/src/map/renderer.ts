@@ -251,12 +251,23 @@ export function drawKindleAnimation(
   time: number,
 ): void {
   if (progress < 0.2) {
-    // Phase 1: Spark — tiny bright point appears in the ashes
+    // Phase 1: Spark — tiny bright point with position jitters
     const sparkAlpha = progress / 0.2;
     const sparkSize = 1 + sparkAlpha;
+    // 2-3 quick jitters: cycle through offsets using time
+    const jitterIdx = Math.floor(time * 12) % 3;
+    const jitterX = [0, 1, -1][jitterIdx];
+    const jitterY = [0, -0.5, 0.5][jitterIdx];
     ctx.save();
     ctx.globalAlpha = sparkAlpha;
-    px(ctx, cx - 0.5, cy - sparkSize, Math.ceil(sparkSize), Math.ceil(sparkSize), '#f0e8a0');
+    px(
+      ctx,
+      cx - 0.5 + jitterX,
+      cy - sparkSize + jitterY,
+      Math.ceil(sparkSize),
+      Math.ceil(sparkSize),
+      '#f0e8a0',
+    );
     // Glow
     const grad = ctx.createRadialGradient(
       cx * PIXEL_SCALE,
