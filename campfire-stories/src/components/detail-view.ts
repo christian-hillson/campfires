@@ -81,10 +81,24 @@ function renderSummaryContent(summaries: Summary[]): HTMLElement {
   }
 
   const latest = summaries[0];
+
+  if (latest.oneLiner) {
+    const headline = document.createElement('div');
+    headline.className = 'summary-one-liner';
+    headline.textContent = latest.oneLiner;
+    section.appendChild(headline);
+  }
+
   const content = document.createElement('div');
   content.className = 'summary-content';
   content.textContent = latest.content;
   section.appendChild(content);
+
+  const meta = document.createElement('div');
+  meta.className = 'summary-meta';
+  const period = `${timeAgo(latest.periodStart)} — ${timeAgo(latest.periodEnd)}`;
+  meta.textContent = `${period} · ${latest.eventCount} event${latest.eventCount !== 1 ? 's' : ''}`;
+  section.appendChild(meta);
 
   return section;
 }

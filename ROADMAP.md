@@ -179,7 +179,7 @@ Replace the stubbed summarizer with real Claude API integration. Transcripts pro
 | Server: summary quality tuning                              | Done        | —     | Plain-text prompt, narrative voice, smart chunking for long sessions          |
 | Campfire Stories: Fireside Updates panel (org-wide)         | Done        | —     | Restyled summary feed to pixel-art aesthetic with FIRESIDE UPDATES branding  |
 | Campfire Stories: Campfire Stories panel (team detail)      | Done        | —     | Narrative story entries from activity events, pixel-art restyled detail view |
-| Campfire Stories: richer summary cards from transcript data | Not started | —     | Summaries powered by "what was accomplished" vs raw file saves               |
+| Campfire Stories: richer summary cards from transcript data | Done        | —     | Content preview on feed cards, one-liner headline in detail view, plain-text stubs |
 
 ## Sprint 9: Integration & Polish
 

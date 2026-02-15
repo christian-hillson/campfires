@@ -44,28 +44,36 @@ function generateStubSummary(
 
   const commitMessages = commits
     .filter((e) => e.message)
-    .map((e) => `- ${e.message}`)
+    .map((e) => e.message!)
     .slice(0, 10);
 
   const uniqueFiles = new Set(events.filter((e) => e.file).map((e) => e.file));
   const branches = new Set(events.filter((e) => e.branch).map((e) => e.branch));
 
-  let content = `## ${teamContext.name} Activity Summary\n\n`;
-  content += `**${oneLiner}**\n\n`;
+  const paragraphs: string[] = [];
+
+  paragraphs.push(
+    `The ${teamContext.name} team recorded ${oneLiner} during this period.`,
+  );
 
   if (commitMessages.length > 0) {
-    content += `### Recent Commits\n${commitMessages.join('\n')}\n\n`;
+    paragraphs.push(
+      `Recent commits include: ${commitMessages.join('; ')}.`,
+    );
   }
 
+  const details: string[] = [];
   if (uniqueFiles.size > 0) {
-    content += `### Files Touched\n${uniqueFiles.size} unique file${uniqueFiles.size !== 1 ? 's' : ''} modified\n\n`;
+    details.push(`${uniqueFiles.size} unique file${uniqueFiles.size !== 1 ? 's were' : ' was'} modified`);
   }
-
   if (branches.size > 0) {
-    content += `### Active Branches\n${[...branches].join(', ')}\n`;
+    details.push(`work spanned ${branches.size === 1 ? 'the' : ''} ${[...branches].join(', ')} branch${branches.size !== 1 ? 'es' : ''}`);
+  }
+  if (details.length > 0) {
+    paragraphs.push(details.join(' and ') + '.');
   }
 
-  return { content, oneLiner };
+  return { content: paragraphs.join('\n\n'), oneLiner };
 }
 
 // --- Anthropic client singleton ---

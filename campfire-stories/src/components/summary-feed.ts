@@ -33,6 +33,12 @@ function getLatestSummaryForTeam(summaries: Summary[], teamId: string): Summary 
   );
 }
 
+function truncateAtWord(text: string, maxLen: number): string {
+  if (text.length <= maxLen) return text;
+  const cut = text.lastIndexOf(' ', maxLen);
+  return (cut > 0 ? text.slice(0, cut) : text.slice(0, maxLen)) + '...';
+}
+
 function getTeamColor(index: number): string {
   return TEAM_COLORS[index % TEAM_COLORS.length];
 }
@@ -51,6 +57,13 @@ function createTeamEntry(
   mainLine.className = 'entry-main';
   mainLine.innerHTML = `<span class="team-dot" style="background:${esc(getTeamColor(teamIndex))}"></span><strong>${esc(team.name)}</strong> — <span class="entry-one-liner">${esc(summary?.oneLiner || 'No activity yet')}</span>`;
   entry.appendChild(mainLine);
+
+  if (summary?.content) {
+    const preview = document.createElement('div');
+    preview.className = 'entry-preview';
+    preview.textContent = truncateAtWord(summary.content, 150);
+    entry.appendChild(preview);
+  }
 
   if (summary) {
     const meta = document.createElement('div');
@@ -131,6 +144,20 @@ export function updateSummaryFeed(container: HTMLElement, newSummaries: Summary[
     const oneLiner = entry.querySelector('.entry-one-liner');
     if (oneLiner) {
       oneLiner.textContent = summary.oneLiner || 'Activity recorded';
+    }
+
+    // Update or create content preview
+    if (summary.content) {
+      let preview = entry.querySelector('.entry-preview');
+      if (preview) {
+        preview.textContent = truncateAtWord(summary.content, 150);
+      } else {
+        preview = document.createElement('div');
+        preview.className = 'entry-preview';
+        preview.textContent = truncateAtWord(summary.content, 150);
+        const metaEl = entry.querySelector('.entry-meta');
+        entry.insertBefore(preview, metaEl);
+      }
     }
 
     const countEl = entry.querySelector('.entry-event-count');
