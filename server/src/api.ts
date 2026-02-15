@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { CONFIG, type ActivityEventType } from '@campfires/shared';
@@ -11,6 +11,7 @@ import {
   authMiddleware,
   optionalAuthMiddleware,
   generateToken,
+  verifyToken,
 } from './auth.js';
 
 // ============================================
@@ -115,6 +116,37 @@ export function createRouter(): Router {
     message: { error: 'Too many attempts, please try again later' },
   });
 
+  // Tiered rate limiter: authenticated users get higher limits
+  const apiLimiter = rateLimit({
+    windowMs: CONFIG.API_RATE_LIMIT_WINDOW_MS,
+    max: (req: Request) => {
+      const authHeader = req.headers.authorization;
+      if (authHeader?.startsWith('Bearer ')) {
+        const payload = verifyToken(authHeader.slice(7));
+        if (payload) return CONFIG.API_RATE_LIMIT_AUTHENTICATED;
+      }
+      return CONFIG.API_RATE_LIMIT_UNAUTHENTICATED;
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later' },
+    keyGenerator: (req: Request) => {
+      // Use userId for authenticated, IP for anonymous
+      const authHeader = req.headers.authorization;
+      if (authHeader?.startsWith('Bearer ')) {
+        const payload = verifyToken(authHeader.slice(7));
+        if (payload) return `user:${payload.userId}`;
+      }
+      return req.ip || 'unknown';
+    },
+  });
+
+  // Apply API rate limiter to all routes except /health
+  router.use((req: Request, _res: Response, next: NextFunction) => {
+    if (req.path === '/health') return next();
+    apiLimiter(req, _res, next);
+  });
+
   // ============================================
   // Health Check
   // ============================================
@@ -175,7 +207,7 @@ export function createRouter(): Router {
     }
   });
 
-  router.post('/auth/refresh', (req: Request, res: Response) => {
+  router.post('/auth/refresh', authLimiter, (req: Request, res: Response) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

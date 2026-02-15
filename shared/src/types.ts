@@ -262,6 +262,11 @@ export const CONFIG = {
   AUTH_RATE_LIMIT_WINDOW_MS: 15 * 60 * 1000, // 15 minutes
   AUTH_RATE_LIMIT_MAX_ATTEMPTS: 5,
 
+  // API rate limiting (per minute)
+  API_RATE_LIMIT_WINDOW_MS: 60 * 1000, // 1 minute
+  API_RATE_LIMIT_AUTHENTICATED: 60, // 60 req/min for authenticated users
+  API_RATE_LIMIT_UNAUTHENTICATED: 10, // 10 req/min for unauthenticated users
+
   // Session tracking
   SESSION_STALE_TIMEOUT: 10 * 60 * 1000, // 10 min without heartbeat = stale
   TRANSCRIPT_DELTA_MAX_SIZE: 500_000, // 500KB per delta
