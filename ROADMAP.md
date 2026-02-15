@@ -175,7 +175,7 @@ Replace the stubbed summarizer with real Claude API integration. Transcripts pro
 | Feature                                                     | Status      | Owner | Notes                                                                        |
 | ----------------------------------------------------------- | ----------- | ----- | ---------------------------------------------------------------------------- |
 | Server: Claude API integration replacing stub               | Done        | —     | `server/src/summarizer.ts`, Claude API wired up                              |
-| Server: transcript → summary pipeline                       | Not started | —     | Process transcripts into business-legible team summaries                     |
+| Server: transcript → summary pipeline                       | Done        | —     | `preprocessTranscript()` strips noise, display names in headers              |
 | Server: summary quality tuning                              | Not started | —     | Prompt engineering, chunking for long sessions                               |
 | Campfire Stories: Fireside Updates panel (org-wide)         | Done        | —     | Restyled summary feed to pixel-art aesthetic with FIRESIDE UPDATES branding  |
 | Campfire Stories: Campfire Stories panel (team detail)      | Done        | —     | Narrative story entries from activity events, pixel-art restyled detail view |

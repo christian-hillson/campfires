@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { ActivityEvent, SessionTranscript, Team } from '@campfires/shared';
+import type { ActivityEvent, SessionTranscript, Team, User } from '@campfires/shared';
 import { CONFIG } from '@campfires/shared';
 import { getPersistence } from './persistence.js';
 
@@ -127,13 +127,142 @@ function prepareEventData(events: ActivityEvent[]): string {
   return lines.join('\n');
 }
 
+// --- Transcript preprocessing ---
+
+// TODO: refine as we learn the exact transcript schema
+function preprocessTranscript(content: string): string {
+  const lines = content.split('\n').filter((l) => l.trim());
+  if (lines.length === 0) return content;
+
+  // Check if this looks like JSONL — first non-empty line should parse as JSON
+  try {
+    JSON.parse(lines[0]);
+  } catch {
+    // Not JSONL, return as-is
+    return content;
+  }
+
+  const output: string[] = [];
+
+  for (const line of lines) {
+    let obj: Record<string, unknown>;
+    try {
+      obj = JSON.parse(line) as Record<string, unknown>;
+    } catch {
+      // Skip unparseable lines
+      continue;
+    }
+
+    const role = obj.role as string | undefined;
+
+    // Handle message objects with a role field
+    if (role === 'user') {
+      const text = extractText(obj);
+      if (text) output.push(`[User] ${text}`);
+      continue;
+    }
+
+    if (role === 'assistant') {
+      const contentArr = obj.content;
+      if (Array.isArray(contentArr)) {
+        for (const block of contentArr) {
+          const b = block as Record<string, unknown>;
+          if (b.type === 'text' && typeof b.text === 'string') {
+            output.push(`[Assistant] ${b.text}`);
+          } else if (b.type === 'tool_use') {
+            const toolName = (b.name as string) || 'unknown';
+            const inputSummary = summarizeToolInput(toolName, b.input as Record<string, unknown>);
+            output.push(`[Tool] ${toolName}: ${inputSummary}`);
+          }
+        }
+      } else {
+        const text = extractText(obj);
+        if (text) output.push(`[Assistant] ${text}`);
+      }
+      continue;
+    }
+
+    // Drop tool_result / tool role messages entirely (verbose outputs)
+    if (role === 'tool') continue;
+
+    // Handle nested message wrapper: { type: "message", message: { role, content } }
+    if (obj.type === 'message' && typeof obj.message === 'object' && obj.message !== null) {
+      const inner = obj.message as Record<string, unknown>;
+      const preprocessed = preprocessTranscript(JSON.stringify(inner));
+      if (preprocessed.trim()) output.push(preprocessed);
+      continue;
+    }
+  }
+
+  // If we parsed lines but got no output, return original content
+  return output.length > 0 ? output.join('\n') : content;
+}
+
+function extractText(obj: Record<string, unknown>): string {
+  // Simple string content
+  if (typeof obj.content === 'string') return obj.content;
+
+  // Content array with text blocks
+  if (Array.isArray(obj.content)) {
+    const texts = (obj.content as Record<string, unknown>[])
+      .filter((b) => b.type === 'text' && typeof b.text === 'string')
+      .map((b) => b.text as string);
+    return texts.join('\n');
+  }
+
+  return '';
+}
+
+function summarizeToolInput(toolName: string, input: Record<string, unknown> | undefined): string {
+  if (!input) return '';
+
+  // Common tool patterns from Claude Code
+  const lowerName = toolName.toLowerCase();
+  if (lowerName === 'read' || lowerName.includes('read')) {
+    return (input.file_path as string) || (input.path as string) || '';
+  }
+  if (lowerName === 'edit' || lowerName.includes('edit')) {
+    return (input.file_path as string) || (input.path as string) || '';
+  }
+  if (lowerName === 'write' || lowerName.includes('write')) {
+    return (input.file_path as string) || (input.path as string) || '';
+  }
+  if (lowerName === 'bash' || lowerName.includes('bash')) {
+    const cmd = (input.command as string) || '';
+    // Truncate long commands
+    return cmd.length > 80 ? cmd.slice(0, 80) + '...' : cmd;
+  }
+  if (lowerName === 'glob' || lowerName.includes('glob')) {
+    return (input.pattern as string) || '';
+  }
+  if (lowerName === 'grep' || lowerName.includes('grep')) {
+    return (input.pattern as string) || '';
+  }
+
+  // Fallback: show first string value
+  for (const val of Object.values(input)) {
+    if (typeof val === 'string' && val.length > 0) {
+      return val.length > 80 ? val.slice(0, 80) + '...' : val;
+    }
+  }
+  return '';
+}
+
 // --- Transcript data formatting ---
 
 const MAX_TRANSCRIPT_BYTES = 50 * 1024;
 const MAX_TOTAL_TRANSCRIPT_BYTES = 150 * 1024;
 
-function prepareTranscriptData(transcripts: SessionTranscript[]): string {
+function prepareTranscriptData(transcripts: SessionTranscript[], members?: User[]): string {
   if (transcripts.length === 0) return '';
+
+  // Build userId → displayName map if members provided
+  const nameMap = new Map<string, string>();
+  if (members) {
+    for (const m of members) {
+      nameMap.set(m.userId, m.displayName);
+    }
+  }
 
   const lines: string[] = [];
   let totalBytes = 0;
@@ -143,14 +272,17 @@ function prepareTranscriptData(transcripts: SessionTranscript[]): string {
 
   const included: string[] = [];
   for (const t of reversed) {
+    const cleaned = preprocessTranscript(t.content);
     const truncatedContent =
-      t.content.length > MAX_TRANSCRIPT_BYTES
-        ? t.content.slice(0, MAX_TRANSCRIPT_BYTES) + '\n... [truncated]'
-        : t.content;
+      cleaned.length > MAX_TRANSCRIPT_BYTES
+        ? cleaned.slice(0, MAX_TRANSCRIPT_BYTES) + '\n... [truncated]'
+        : cleaned;
+
+    const userName = nameMap.get(t.userId) || t.userId;
 
     const block = [
       `--- Session: ${t.sessionId} ---`,
-      `User: ${t.userId}`,
+      `User: ${userName}`,
       t.repo ? `Repo: ${t.repo}` : null,
       t.branch ? `Branch: ${t.branch}` : null,
       `Time: ${t.createdAt} → ${t.updatedAt}`,
@@ -190,11 +322,12 @@ async function callClaude(
   transcripts: SessionTranscript[],
   orgContext: { mission: string; roadmap: string },
   teamContext: { name: string; description: string },
+  members?: User[],
 ): Promise<SummaryResult> {
   const client = getAnthropicClient()!;
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20250514';
   const eventData = prepareEventData(events);
-  const transcriptData = prepareTranscriptData(transcripts);
+  const transcriptData = prepareTranscriptData(transcripts, members);
 
   const systemPrompt = `You are the Campfires activity summarizer. Your job is to turn developer activity data into concise, business-legible project summaries.
 
@@ -253,6 +386,7 @@ async function generateSummary(
   transcripts: SessionTranscript[],
   orgContext: { mission: string; roadmap: string },
   teamContext: { name: string; description: string },
+  members?: User[],
 ): Promise<SummaryResult> {
   const client = getAnthropicClient();
   if (!client) {
@@ -264,7 +398,7 @@ async function generateSummary(
   }
 
   try {
-    return await callClaude(events, transcripts, orgContext, teamContext);
+    return await callClaude(events, transcripts, orgContext, teamContext, members);
   } catch (err) {
     console.error('[Summarizer] Claude API error, falling back to stub:', err);
     return generateStubSummary(events, transcripts, orgContext, teamContext);
@@ -344,12 +478,14 @@ export class Summarizer {
       name: team.name,
       description: team.description,
     };
+    const members = db.getTeamMembers(team.teamId);
 
     const { content, oneLiner } = await generateSummary(
       events,
       transcripts,
       orgContext,
       teamContext,
+      members,
     );
 
     const periodStart = since;
