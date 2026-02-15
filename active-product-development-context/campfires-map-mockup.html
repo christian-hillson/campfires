@@ -340,13 +340,50 @@
 
       // ─── FIRE LEVEL CONFIG ───
       const FIRE_LEVELS = {
-        high: { height: 1.5, sparks: 2.0, flicker: 1.5, glow: 1.3, embers: 1.5, flames: 1.0 },
-        steady: { height: 1.0, sparks: 1.0, flicker: 1.0, glow: 1.0, embers: 1.0, flames: 1.0 },
+        ember: { height: 0.15, sparks: 0.0, flicker: 0.3, glow: 0.3, embers: 0.3, flames: 0.2 },
         low: { height: 0.5, sparks: 0.3, flicker: 0.6, glow: 0.7, embers: 0.5, flames: 0.5 },
+        steady: { height: 1.0, sparks: 1.0, flicker: 1.0, glow: 1.0, embers: 1.0, flames: 1.0 },
+        high: { height: 1.5, sparks: 2.0, flicker: 1.5, glow: 1.3, embers: 1.5, flames: 1.0 },
       };
-      const PULSE_INTERVALS = { high: 2, steady: 5, low: 10 };
-      const PULSE_RADIUS_MULT = { high: 3, steady: 2, low: 1.5 };
+      const PULSE_INTERVALS = { ember: 20, low: 10, steady: 5, high: 2 };
+      const PULSE_RADIUS_MULT = { ember: 1.0, low: 1.5, steady: 2, high: 3 };
       const PULSE_DURATION = 2.0;
+
+      // ─── FIRE STARTING TIMING ───
+      const FIRE_STARTING_FIZZLE_DURATION = 0.5;
+      const FIRE_STARTING_CATCH_DURATION = 1.0;
+      const FIRST_CATCH_PULSE_DURATION = 2.0;
+
+      // ─── DAY/NIGHT CYCLE ───
+      function getDayPhase(t) {
+        if (t < 5) return 'night';
+        if (t < 15) return 'dawn';
+        if (t < 85) return 'day';
+        if (t < 95) return 'dusk';
+        return 'night';
+      }
+
+      function getSkyOverlay(t) {
+        if (t < 5) return { color: '#0a0e0a', alpha: 0.7, starAlpha: 1.0 };
+        if (t < 10) {
+          const p = (t - 5) / 5;
+          return { color: '#1a1520', alpha: 0.7 * (1 - p * 0.6), starAlpha: 1.0 - p };
+        }
+        if (t < 15) {
+          const p = (t - 10) / 5;
+          return { color: '#2a1a15', alpha: 0.28 * (1 - p), starAlpha: 0 };
+        }
+        if (t < 85) return { color: '#000000', alpha: 0, starAlpha: 0 };
+        if (t < 90) {
+          const p = (t - 85) / 5;
+          return { color: '#2a1a15', alpha: p * 0.28, starAlpha: 0 };
+        }
+        if (t < 95) {
+          const p = (t - 90) / 5;
+          return { color: '#1a1520', alpha: 0.28 + p * 0.42, starAlpha: p };
+        }
+        return { color: '#0a0e0a', alpha: 0.7, starAlpha: 1.0 };
+      }
 
       // ─── TEAM DEFINITIONS (agents removed — they spawn dynamically) ───
       const teams = [
@@ -535,253 +572,135 @@
 
       // ─── MOCK EVENT STREAM ───
       const mainEvents = [
-        // Session & Presence
-        { time: 0, type: 'session_start', userId: 'christian', teamId: 'payments' },
-        { time: 2, type: 'session_start', userId: 'jc', teamId: 'payments' },
-        // Basic file activity
-        { time: 5, type: 'file_save', userId: 'christian', file: 'server/api.ts' },
-        { time: 8, type: 'file_save', userId: 'christian', file: 'server/api.ts' },
-        { time: 10, type: 'file_save', userId: 'jc', file: 'reel/app.ts' },
-        // Branch switch
-        { time: 14, type: 'branch_switch', userId: 'jc', branch: 'feat/reel-ui' },
-        // --- Agent spawning (spark-to-golem sequence) ---
-        {
-          time: 18,
-          type: 'agent_spawn',
-          userId: 'christian',
-          agentId: 'golem-1',
-          teamId: 'payments',
-        },
-        // --- Agent working (golem file saves, orb grows) ---
-        {
-          time: 21,
-          type: 'file_save',
-          userId: 'golem-1',
-          file: 'server/summarizer.ts',
-          userType: 'agent',
-        },
-        {
-          time: 23,
-          type: 'file_save',
-          userId: 'golem-1',
-          file: 'server/summarizer.ts',
-          userType: 'agent',
-        },
-        {
-          time: 25,
-          type: 'file_save',
-          userId: 'golem-1',
-          file: 'server/batch-job.ts',
-          userType: 'agent',
-        },
+        // ═══ DAWN / WAKING UP (t=0-20) ═══
+        // t=0-5: Night. Embers only. Map asleep.
+        // t=5: Dawn begins (sky overlay handles this)
+        // t=8: First person arrives — Christian walks in, fire wakes up
+        { time: 8, type: 'session_start', userId: 'christian', teamId: 'payments' },
+        { time: 10, type: 'file_save', userId: 'christian', file: 'server/api.ts' },
+        // t=13: First golem spawn
+        { time: 13, type: 'agent_spawn', userId: 'christian', agentId: 'golem-1', teamId: 'payments' },
+        // t=16: JC arrives
+        { time: 16, type: 'session_start', userId: 'jc', teamId: 'payments' },
+        // t=18: Platform team wakes up — Alex arrives
+        { time: 18, type: 'session_start', userId: 'alex', teamId: 'platform' },
+        // t=20: Dawn complete
+
+        // ═══ RAMP-UP (t=20-35) — existing events shifted +20 ═══
+        { time: 22, type: 'session_start', userId: 'sam', teamId: 'platform' },
+        { time: 25, type: 'file_save', userId: 'christian', file: 'server/api.ts' },
+        { time: 28, type: 'file_save', userId: 'christian', file: 'server/api.ts' },
+        { time: 30, type: 'file_save', userId: 'jc', file: 'reel/app.ts' },
+        { time: 34, type: 'branch_switch', userId: 'jc', branch: 'feat/reel-ui' },
+
+        // ═══ NEW CAMPFIRE (t=35-45) ═══
+        { time: 35, type: 'new_campfire_start' },
+        { time: 37, type: 'new_campfire_arrived' },
+        { time: 38, type: 'new_campfire_striking' },
+        { time: 40, type: 'new_campfire_caught' },
+        { time: 42, type: 'new_campfire_working' },
+        { time: 43, type: 'story_update', text: '🔥 New campfire: <strong style="color:#fbbf24">Hackathon</strong> — Natasha started a new project' },
+
+        // ═══ PEAK ACTIVITY (t=45-85) — existing events shifted +20 ═══
+        // Agent working
+        { time: 41, type: 'file_save', userId: 'golem-1', file: 'server/summarizer.ts', userType: 'agent' },
+        { time: 43, type: 'file_save', userId: 'golem-1', file: 'server/summarizer.ts', userType: 'agent' },
+        { time: 45, type: 'file_save', userId: 'golem-1', file: 'server/batch-job.ts', userType: 'agent' },
         // Commit
-        { time: 28, type: 'commit', userId: 'christian', message: 'add JWT refresh endpoint' },
-        // --- Agent commit (golem deposits orb, fire flares) ---
-        {
-          time: 32,
-          type: 'commit',
-          userId: 'golem-1',
-          message: 'wire up batch summarizer',
-          userType: 'agent',
-        },
-        // --- Cross-team spark: Payments ↔ Platform ---
-        {
-          time: 35,
-          type: 'spark',
-          fromTeam: 'payments',
-          toTeam: 'platform',
-          summary:
-            'Payments \u2194 Platform \u2014 webhook auth changes may conflict with OAuth migration',
-        },
+        { time: 48, type: 'commit', userId: 'christian', message: 'add JWT refresh endpoint' },
+        // Agent commit
+        { time: 52, type: 'commit', userId: 'golem-1', message: 'wire up batch summarizer', userType: 'agent' },
+        // Cross-team spark
+        { time: 55, type: 'spark', fromTeam: 'payments', toTeam: 'platform', summary: 'Payments \u2194 Platform \u2014 webhook auth changes may conflict with OAuth migration' },
         // Draft mode
-        { time: 36, type: 'draft_mode_on', userId: 'jc' },
-        // --- Multiple rapid agent spawns (staggered pop-pop-pop) ---
-        {
-          time: 40,
-          type: 'agent_spawn',
-          userId: 'christian',
-          agentId: 'golem-2',
-          teamId: 'payments',
-        },
-        {
-          time: 40.5,
-          type: 'agent_spawn',
-          userId: 'christian',
-          agentId: 'golem-3',
-          teamId: 'payments',
-        },
-        { time: 44, type: 'draft_mode_off', userId: 'jc' },
+        { time: 56, type: 'draft_mode_on', userId: 'jc' },
+        // Multiple agent spawns
+        { time: 60, type: 'agent_spawn', userId: 'christian', agentId: 'golem-2', teamId: 'payments' },
+        { time: 60.5, type: 'agent_spawn', userId: 'christian', agentId: 'golem-3', teamId: 'payments' },
+        { time: 64, type: 'draft_mode_off', userId: 'jc' },
         // Summary updates
-        {
-          time: 20,
-          type: 'summary_update',
-          teamId: 'infra',
-          activityLevel: 'steady',
-          milestone: false,
-          mood: 'building',
-          oneLiner: 'Redis cluster failover tested successfully',
-        },
-        {
-          time: 30,
-          type: 'summary_update',
-          teamId: 'growth',
-          activityLevel: 'steady',
-          milestone: false,
-          mood: 'building',
-          oneLiner: 'Conversion up 12% with new onboarding flow',
-        },
-        {
-          time: 48,
-          type: 'summary_update',
-          teamId: 'payments',
-          activityLevel: 'high',
-          milestone: false,
-          mood: 'building',
-          oneLiner: 'Webhook handler passing integration tests',
-        },
-        {
-          time: 48,
-          type: 'summary_update',
-          teamId: 'platform',
-          activityLevel: 'low',
-          milestone: false,
-          mood: 'fixing',
-          oneLiner: 'Debugging OAuth token refresh race condition',
-        },
+        { time: 40, type: 'summary_update', teamId: 'infra', activityLevel: 'steady', milestone: false, mood: 'building', oneLiner: 'Redis cluster failover tested successfully' },
+        { time: 50, type: 'summary_update', teamId: 'growth', activityLevel: 'steady', milestone: false, mood: 'building', oneLiner: 'Conversion up 12% with new onboarding flow' },
+        { time: 68, type: 'summary_update', teamId: 'payments', activityLevel: 'high', milestone: false, mood: 'building', oneLiner: 'Webhook handler passing integration tests' },
+        { time: 68, type: 'summary_update', teamId: 'platform', activityLevel: 'low', milestone: false, mood: 'fixing', oneLiner: 'Debugging OAuth token refresh race condition' },
         // Milestone
-        {
-          time: 52,
-          type: 'summary_update',
-          teamId: 'payments',
-          activityLevel: 'high',
-          milestone: true,
-          mood: 'building',
-          oneLiner: 'Stripe billing migration v1 shipped!',
-        },
-        // --- Agent despawn (golem dissolves back into fire) ---
-        { time: 56, type: 'agent_despawn', agentId: 'golem-1', teamId: 'payments' },
+        { time: 72, type: 'summary_update', teamId: 'payments', activityLevel: 'high', milestone: true, mood: 'building', oneLiner: 'Stripe billing migration v1 shipped!' },
+        // Agent despawn
+        { time: 76, type: 'agent_despawn', agentId: 'golem-1', teamId: 'payments' },
         // Session end
-        { time: 62, type: 'session_end', userId: 'jc', teamId: 'payments' },
-        // Idle
-        { time: 68, type: 'idle', userId: 'christian' },
-        // Activity resumes
-        { time: 74, type: 'file_save', userId: 'christian', file: 'server/auth.ts' },
-        // --- Remaining agents despawn ---
-        { time: 78, type: 'agent_despawn', agentId: 'golem-2', teamId: 'payments' },
-        { time: 80, type: 'agent_despawn', agentId: 'golem-3', teamId: 'payments' },
+        { time: 82, type: 'session_end', userId: 'jc', teamId: 'payments' },
         // More summary updates
-        {
-          time: 60,
-          type: 'summary_update',
-          teamId: 'infra',
-          activityLevel: 'steady',
-          milestone: false,
-          mood: 'building',
-          oneLiner: 'Connection pool tuning under load test',
-        },
-        // --- Cross-team spark: Growth ↔ Infra ---
-        {
-          time: 65,
-          type: 'spark',
-          fromTeam: 'growth',
-          toTeam: 'infra',
-          summary:
-            'Growth \u2194 Infra \u2014 new SMB onboarding load will hit the connection pool changes',
-        },
-        {
-          time: 70,
-          type: 'summary_update',
-          teamId: 'growth',
-          activityLevel: 'steady',
-          milestone: false,
-          mood: 'building',
-          oneLiner: 'Finalizing copy for SMB signup experiment',
-        },
-        // Wind down
-        {
-          time: 84,
-          type: 'summary_update',
-          teamId: 'payments',
-          activityLevel: 'steady',
-          milestone: false,
-          mood: 'exploring',
-          oneLiner: 'Exploring edge cases in refund flow',
-        },
-        {
-          time: 84,
-          type: 'summary_update',
-          teamId: 'platform',
-          activityLevel: 'steady',
-          milestone: false,
-          mood: 'building',
-          oneLiner: 'Auth service migration 80% complete',
-        },
+        { time: 80, type: 'summary_update', teamId: 'infra', activityLevel: 'steady', milestone: false, mood: 'building', oneLiner: 'Connection pool tuning under load test' },
+        // Cross-team spark
+        { time: 85, type: 'spark', fromTeam: 'growth', toTeam: 'infra', summary: 'Growth \u2194 Infra \u2014 new SMB onboarding load will hit the connection pool changes' },
+
+        // ═══ DUSK / WIND-DOWN (t=85-95) ═══
+        { time: 86, type: 'idle', userId: 'christian' },
+        { time: 88, type: 'agent_despawn', agentId: 'golem-2', teamId: 'payments' },
+        { time: 89, type: 'agent_despawn', agentId: 'golem-3', teamId: 'payments' },
+        { time: 90, type: 'summary_update', teamId: 'payments', activityLevel: 'low', milestone: false, mood: 'exploring', oneLiner: 'Exploring edge cases in refund flow' },
+        { time: 90, type: 'summary_update', teamId: 'platform', activityLevel: 'low', milestone: false, mood: 'building', oneLiner: 'Auth service migration 80% complete' },
+        { time: 90, type: 'summary_update', teamId: 'growth', activityLevel: 'low', milestone: false, mood: 'building', oneLiner: 'Finalizing copy for SMB signup experiment' },
+        { time: 91, type: 'session_end', userId: 'christian', teamId: 'payments' },
+        { time: 92, type: 'session_end', userId: 'alex', teamId: 'platform' },
+        { time: 92, type: 'session_end', userId: 'sam', teamId: 'platform' },
+        { time: 93, type: 'session_end', userId: 'priya', teamId: 'growth' },
+        { time: 94, type: 'session_end', userId: 'kai', teamId: 'infra' },
+
         // Logs panel — Payments team detail updates
-        {
-          time: 5,
-          type: 'story_update',
-          text: 'Christian started a new session on <code>server/api.ts</code> — working on the webhook handler for Stripe billing events',
-        },
-        {
-          time: 15,
-          type: 'story_update',
-          text: 'JC joined the Payments campfire and switched to <code>feat/billing-v2</code> branch',
-        },
-        {
-          time: 35,
-          type: 'story_update',
-          text: 'A golem was summoned to help Christian with auth middleware refactoring',
-        },
-        {
-          time: 52,
-          type: 'story_update',
-          text: 'Milestone reached! Stripe billing migration v1 has shipped — the team has been focused on webhook integration and billing flow testing',
-        },
-        {
-          time: 68,
-          type: 'story_update',
-          text: 'Christian went idle after a productive session. 3 golems assisted across the sprint',
-        },
-        {
-          time: 80,
-          type: 'story_update',
-          text: 'Session winding down — edge cases in the refund flow are next on the backlog',
-        },
+        { time: 9, type: 'story_update', text: 'The sun rises over Gusto Engineering — Christian is first to arrive at the Payments campfire' },
+        { time: 17, type: 'story_update', text: 'JC joined the Payments campfire and switched to <code>feat/billing-v2</code> branch' },
+        { time: 36, type: 'story_update', text: 'Natasha walks into an empty clearing — looks like a new campfire is about to be born' },
+        { time: 55, type: 'story_update', text: 'A golem was summoned to help Christian with auth middleware refactoring' },
+        { time: 72, type: 'story_update', text: 'Milestone reached! Stripe billing migration v1 has shipped — the team has been focused on webhook integration and billing flow testing' },
+        { time: 87, type: 'story_update', text: 'Dusk settles over the campfires. Christian went idle after a productive session' },
+        { time: 95, type: 'story_update', text: 'The fires burn low as the team signs off for the night' },
       ];
 
-      // Background activity for other teams
+      // Background activity for other teams (shifted +20)
       const backgroundEvents = [
-        { time: 3, type: 'file_save', userId: 'alex', file: 'auth/oauth.ts' },
-        { time: 7, type: 'file_save', userId: 'priya', file: 'onboarding/flow.tsx' },
-        { time: 12, type: 'file_save', userId: 'kai', file: 'infra/redis.ts' },
-        { time: 15, type: 'file_save', userId: 'sam', file: 'auth/middleware.ts' },
-        { time: 20, type: 'file_save', userId: 'alex', file: 'auth/oauth.ts' },
-        { time: 25, type: 'file_save', userId: 'priya', file: 'onboarding/step2.tsx' },
-        { time: 30, type: 'commit', userId: 'alex', message: 'fix token refresh flow' },
-        { time: 35, type: 'file_save', userId: 'kai', file: 'infra/pool.ts' },
-        { time: 42, type: 'commit', userId: 'priya', message: 'wire up step 2 analytics' },
-        { time: 45, type: 'file_save', userId: 'sam', file: 'auth/scopes.ts' },
-        { time: 55, type: 'commit', userId: 'kai', message: 'tune connection pool sizes' },
-        { time: 60, type: 'file_save', userId: 'alex', file: 'auth/oauth.ts' },
-        { time: 65, type: 'file_save', userId: 'priya', file: 'onboarding/flow.tsx' },
-        { time: 70, type: 'file_save', userId: 'kai', file: 'infra/redis.ts' },
-        { time: 75, type: 'commit', userId: 'sam', message: 'add scope validation' },
+        { time: 20, type: 'session_start', userId: 'priya', teamId: 'growth' },
+        { time: 21, type: 'session_start', userId: 'kai', teamId: 'infra' },
+        { time: 23, type: 'file_save', userId: 'alex', file: 'auth/oauth.ts' },
+        { time: 27, type: 'file_save', userId: 'priya', file: 'onboarding/flow.tsx' },
+        { time: 32, type: 'file_save', userId: 'kai', file: 'infra/redis.ts' },
+        { time: 35, type: 'file_save', userId: 'sam', file: 'auth/middleware.ts' },
+        { time: 40, type: 'file_save', userId: 'alex', file: 'auth/oauth.ts' },
+        { time: 45, type: 'file_save', userId: 'priya', file: 'onboarding/step2.tsx' },
+        { time: 50, type: 'commit', userId: 'alex', message: 'fix token refresh flow' },
+        { time: 55, type: 'file_save', userId: 'kai', file: 'infra/pool.ts' },
+        { time: 62, type: 'commit', userId: 'priya', message: 'wire up step 2 analytics' },
+        { time: 65, type: 'file_save', userId: 'sam', file: 'auth/scopes.ts' },
+        { time: 75, type: 'commit', userId: 'kai', message: 'tune connection pool sizes' },
         { time: 80, type: 'file_save', userId: 'alex', file: 'auth/oauth.ts' },
+        { time: 83, type: 'file_save', userId: 'priya', file: 'onboarding/flow.tsx' },
       ];
 
       const allEvents = [...mainEvents, ...backgroundEvents].sort((a, b) => a.time - b.time);
       const lastEventTime = allEvents[allEvents.length - 1].time;
 
-      // Which sprites arrive via session_start (start invisible)
-      const sessionStartIds = new Set(
-        allEvents.filter((e) => e.type === 'session_start').map((e) => e.userId),
-      );
+      // ─── NEW CAMPFIRE STATE ───
+      let newCampfireState = {
+        active: false,
+        phase: 'none', // 'walking', 'arrived', 'striking', 'caught', 'established'
+        startTime: 0,
+        x: 230,
+        y: 200,
+        strikeAttempts: 0,
+        strikeStartTime: 0,
+        fireSize: 0.5,
+        fireAlpha: 0,
+        labelAlpha: 0,
+        natashaSprite: null,
+        teamAdded: false,
+        summaryAdded: false,
+      };
 
       // ─── STATE ───
       const sprites = new Map();
       const fireState = teams.map(() => ({
-        level: 'steady',
-        prevLevel: 'steady',
+        level: 'ember',
+        prevLevel: 'ember',
         transitionProgress: 1.0,
       }));
       const fireFlares = teams.map(() => ({ active: false, startTime: 0, mult: 1.0 }));
@@ -923,7 +842,6 @@
           const count = team.members.length;
           team.members.forEach((member, i) => {
             const home = computeHomePosition(team, i, count, member);
-            const startsHidden = sessionStartIds.has(member.id);
             sprites.set(member.id, {
               ...member,
               teamIndex,
@@ -931,8 +849,8 @@
               homeY: home.y,
               defaultTask: member.task,
               originalStatus: member.status,
-              visible: !startsHidden,
-              opacity: startsHidden ? 0 : 1,
+              visible: false,
+              opacity: 0,
               inDraftMode: member.status === 'draft',
               tentX: home.x + 4,
               tentY: home.y,
@@ -965,8 +883,8 @@
         pendingDespawns = [];
         golemIdCounter = 0;
         for (let i = 0; i < teams.length; i++) {
-          fireState[i].level = 'steady';
-          fireState[i].prevLevel = 'steady';
+          fireState[i].level = 'ember';
+          fireState[i].prevLevel = 'ember';
           fireState[i].transitionProgress = 1.0;
           fireFlares[i].active = false;
           milestoneState[i].celebrating = false;
@@ -983,6 +901,33 @@
           el.remove();
         }
         sparkStoriesEntries = [];
+
+        // Reset new campfire state
+        newCampfireState = {
+          active: false, phase: 'none', startTime: 0,
+          x: 230, y: 200, strikeAttempts: 0, strikeStartTime: 0,
+          fireSize: 0.5, fireAlpha: 0, labelAlpha: 0,
+          natashaSprite: null, teamAdded: false, summaryAdded: false,
+        };
+        // Remove Natasha sprite if present
+        sprites.delete('natasha');
+        delete spriteTeamIndex['natasha'];
+        // Remove hackathon team if added
+        const hackIdx = teams.findIndex(t => t.id === 'hackathon');
+        if (hackIdx !== -1) {
+          teams.splice(hackIdx, 1);
+          // Rebuild lookup
+          Object.keys(teamIndexById).forEach(k => delete teamIndexById[k]);
+          teams.forEach((t, i) => { teamIndexById[t.id] = i; });
+          // Trim fire/milestone/pulse state arrays
+          fireState.splice(hackIdx, 1);
+          fireFlares.splice(hackIdx, 1);
+          milestoneState.splice(hackIdx, 1);
+          pulseState.splice(hackIdx, 1);
+        }
+        // Remove hackathon summary DOM element if present
+        const hackSummaryEl = document.getElementById('summary-text-hackathon');
+        if (hackSummaryEl) hackSummaryEl.parentElement.remove();
 
         // Clear logs panel entries
         storyStartTime = null;
@@ -1047,6 +992,19 @@
             sway: Math.random() * Math.PI * 2,
           });
         }
+      }
+
+      // ─── STARS ───
+      const stars = [];
+      for (let i = 0; i < 60; i++) {
+        stars.push({
+          x: Math.random() * MAP_W,
+          y: Math.random() * MAP_H * 0.7,
+          size: Math.random() > 0.7 ? 2 : 1,
+          twinkleOffset: Math.random() * Math.PI * 2,
+          twinkleSpeed: 1.5 + Math.random() * 2,
+          brightness: 0.5 + Math.random() * 0.5,
+        });
       }
 
       const decorations = [
@@ -1768,6 +1726,148 @@
         }
       }
 
+      // ─── DRAWING: FIRE STARTING POSE ───
+      function drawFireStartingPose(x, y, color, time, phase, ncs) {
+        const bY = y;
+        // Kneeling pose — body lower, arms forward
+        px(x, bY + 2, 2, 1, '#2a2020'); // knees on ground
+        px(x - 1, bY + 1, 3, 1, color); // lower body
+        px(x, bY, 2, 1, color); // torso
+        px(x, bY - 1, 2, 1, '#e0d8c8'); // head
+
+        if (phase === 'striking') {
+          // Arms forward, striking motion
+          const strikePhase = Math.sin(time * 12) > 0;
+          if (strikePhase) {
+            px(x + 2, bY + 1, 1, 1, color); // arm forward
+            px(x + 3, bY + 1, 1, 1, '#888'); // flint
+          } else {
+            px(x + 2, bY, 1, 1, color); // arm up
+            px(x + 3, bY, 1, 1, '#888'); // flint raised
+          }
+
+          // Flint spark particles
+          const elapsed = time - ncs.strikeStartTime;
+          const attemptIdx = Math.floor(elapsed / FIRE_STARTING_FIZZLE_DURATION);
+          const attemptProgress = (elapsed % FIRE_STARTING_FIZZLE_DURATION) / FIRE_STARTING_FIZZLE_DURATION;
+
+          if (strikePhase && attemptProgress < 0.6) {
+            // Sparks at ground level
+            const numSparks = 3 + Math.floor(Math.random() * 3);
+            for (let i = 0; i < numSparks; i++) {
+              const sx = x + 2 + Math.random() * 3;
+              const sy = bY + 1 - Math.random() * 2;
+              const sparkAlpha = (1 - attemptProgress) * 0.8;
+              ctx.save();
+              ctx.globalAlpha = sparkAlpha;
+              px(sx, sy, 1, 1, Math.random() > 0.5 ? '#f0e8a0' : '#f0c040');
+              ctx.restore();
+            }
+          }
+        } else {
+          // Just kneeling, blowing on tinder
+          px(x + 2, bY, 1, 1, color); // arm extended
+        }
+      }
+
+      // ─── DRAWING: NEW CAMPFIRE (tiny) ───
+      function drawNewCampfire(cx, cy, time, ncs) {
+        if (ncs.fireAlpha <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = ncs.fireAlpha;
+
+        // Partial stone ring (just 3-4 stones)
+        const stoneAngles = [0, Math.PI * 0.6, Math.PI * 1.2, Math.PI * 1.8];
+        for (const angle of stoneAngles) {
+          const r = 6;
+          px(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r * 0.5, 2, 1, '#3a3830');
+        }
+
+        // Tiny flame
+        const fireHeight = 4;
+        for (let fy = 0; fy < fireHeight; fy++) {
+          const t = fy / fireHeight;
+          const flicker = Math.sin(time * 8 + fy * 0.5) * 0.5;
+          const width = (1 - t) * 2 + flicker * 0.2;
+          if (width > 0.2) {
+            let color;
+            if (t < 0.3) color = '#f0e8a0';
+            else if (t < 0.6) color = '#f0c040';
+            else color = '#fbbf24';
+            px(cx + flicker * 0.3 - 0.5, cy - fy - 1, Math.max(1, width), 1, color);
+          }
+        }
+
+        // Small warm glow
+        const glowR = 10;
+        const gradient = ctx.createRadialGradient(
+          cx * PIXEL_SCALE, cy * PIXEL_SCALE, 0,
+          cx * PIXEL_SCALE, cy * PIXEL_SCALE, glowR * PIXEL_SCALE,
+        );
+        gradient.addColorStop(0, '#fbbf2418');
+        gradient.addColorStop(0.5, '#fbbf2408');
+        gradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(
+          (cx - glowR) * PIXEL_SCALE, (cy - glowR) * PIXEL_SCALE,
+          glowR * 2 * PIXEL_SCALE, glowR * 2 * PIXEL_SCALE,
+        );
+
+        ctx.restore();
+
+        // Team label with fade
+        if (ncs.labelAlpha > 0) {
+          ctx.save();
+          ctx.globalAlpha = ncs.labelAlpha;
+          ctx.font = `${10}px 'Silkscreen', monospace`;
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#fbbf24aa';
+          ctx.fillText('Hackathon', cx * PIXEL_SCALE, (cy + 14) * PIXEL_SCALE);
+          ctx.restore();
+        }
+      }
+
+      // ─── DRAWING: STARS ───
+      function drawStars(time, starAlpha) {
+        if (starAlpha <= 0) return;
+        ctx.save();
+        for (const star of stars) {
+          const twinkle = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(time * star.twinkleSpeed + star.twinkleOffset));
+          ctx.globalAlpha = starAlpha * twinkle * star.brightness;
+          const color = Math.random() > 0.9 ? '#fffde0' : '#ffffff';
+          px(star.x, star.y, star.size, star.size, color);
+        }
+        ctx.restore();
+      }
+
+      // ─── DRAWING: FIRST CATCH PULSE ───
+      function drawFirstCatchPulse(ring, time, teamColor) {
+        const elapsed = time - ring.startTime;
+        if (elapsed > FIRST_CATCH_PULSE_DURATION) return;
+        const progress = elapsed / FIRST_CATCH_PULSE_DURATION;
+        const radius = 30 * progress;
+        const alpha = (1.0 - progress) * 0.25;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(ring.x * PIXEL_SCALE, ring.y * PIXEL_SCALE, radius * PIXEL_SCALE, 0, Math.PI * 2);
+        ctx.strokeStyle = hexToRgba('#f0a030', alpha);
+        ctx.lineWidth = 3 * PIXEL_SCALE;
+        ctx.stroke();
+        // Warm fill
+        const grad = ctx.createRadialGradient(
+          ring.x * PIXEL_SCALE, ring.y * PIXEL_SCALE, 0,
+          ring.x * PIXEL_SCALE, ring.y * PIXEL_SCALE, radius * PIXEL_SCALE,
+        );
+        grad.addColorStop(0, `rgba(240,160,48,${alpha * 0.3})`);
+        grad.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad;
+        ctx.fillRect(
+          (ring.x - radius) * PIXEL_SCALE, (ring.y - radius) * PIXEL_SCALE,
+          radius * 2 * PIXEL_SCALE, radius * 2 * PIXEL_SCALE,
+        );
+        ctx.restore();
+      }
+
       // ─── ANIMATION SYSTEM ───
       function tickSprite(sprite, dt) {
         if (!sprite.currentAnim && sprite.animQueue.length > 0) {
@@ -1940,6 +2040,8 @@
       }
 
       function renderSprite(sprite, time) {
+        // Skip Natasha during fire-starting — she has special rendering
+        if (sprite.id === 'natasha' && newCampfireState.phase === 'striking') return;
         const rs = getSpriteRenderState(sprite, time);
         if (rs.opacity <= 0 && rs.renderType !== 'tent') return;
 
@@ -2156,6 +2258,21 @@
           case 'spark':
             handleSpark(event);
             break;
+          case 'new_campfire_start':
+            handleNewCampfireStart(event);
+            break;
+          case 'new_campfire_arrived':
+            handleNewCampfireArrived(event);
+            break;
+          case 'new_campfire_striking':
+            handleNewCampfireStriking(event);
+            break;
+          case 'new_campfire_caught':
+            handleNewCampfireCaught(event);
+            break;
+          case 'new_campfire_working':
+            handleNewCampfireWorking(event);
+            break;
         }
       }
 
@@ -2173,6 +2290,35 @@
           endX: sprite.homeX,
           endY: sprite.homeY,
           fadeIn: true,
+          onComplete: () => {
+            // Wake up fire if it's at ember level — arrival lights the fire
+            const ti = sprite.teamIndex;
+            if (fireState[ti].level === 'ember') {
+              fireState[ti].prevLevel = 'ember';
+              fireState[ti].level = 'low';
+              fireState[ti].transitionProgress = 0;
+              // "First catch" warm pulse
+              pulseState[ti].rings.push({
+                startTime: lastRenderTime,
+                x: teams[ti].x,
+                y: teams[ti].y,
+                firstCatch: true,
+              });
+              // Quickly ramp to steady after 1.5s
+              setTimeout(() => {
+                if (fireState[ti].level === 'low') {
+                  fireState[ti].prevLevel = 'low';
+                  fireState[ti].level = 'steady';
+                  fireState[ti].transitionProgress = 0;
+                }
+              }, 1500);
+            } else if (fireState[ti].level === 'low') {
+              // Additional arrival bumps fire
+              fireState[ti].prevLevel = 'low';
+              fireState[ti].level = 'steady';
+              fireState[ti].transitionProgress = 0;
+            }
+          },
         });
       }
 
@@ -2551,6 +2697,106 @@
         }
       }
 
+      // ─── NEW CAMPFIRE HANDLERS ───
+      function handleNewCampfireStart(event) {
+        newCampfireState.active = true;
+        newCampfireState.phase = 'walking';
+        newCampfireState.startTime = lastRenderTime;
+        // Create Natasha sprite walking in from bottom
+        const natasha = {
+          id: 'natasha', name: 'Natasha', type: 'human', color: '#e8a040',
+          status: 'active', task: 'walking', file: 'starting new project',
+          owner: null, teamIndex: -1, homeX: newCampfireState.x, homeY: newCampfireState.y,
+          defaultTask: 'scribing', originalStatus: 'active', visible: true, opacity: 1,
+          inDraftMode: false, tentX: 0, tentY: 0, animQueue: [], currentAnim: null,
+          jumpUntil: 0, teamName: 'Hackathon',
+          orbBrightness: 0, orbSaveCount: 0, recentEventTimes: [],
+          afterimages: [], isGolemIdle: false, castingUntil: 0,
+          castingTargetX: 0, castingTargetY: 0,
+        };
+        sprites.set('natasha', natasha);
+        newCampfireState.natashaSprite = natasha;
+        // Walk from bottom edge to clearing
+        natasha.animQueue.push({
+          type: 'walk', duration: 2.0,
+          startX: newCampfireState.x, startY: MAP_H + 10,
+          endX: newCampfireState.x, endY: newCampfireState.y,
+          fadeIn: true,
+        });
+      }
+
+      function handleNewCampfireArrived(event) {
+        newCampfireState.phase = 'arrived';
+      }
+
+      function handleNewCampfireStriking(event) {
+        newCampfireState.phase = 'striking';
+        newCampfireState.strikeStartTime = lastRenderTime;
+        newCampfireState.strikeAttempts = 0;
+      }
+
+      function handleNewCampfireCaught(event) {
+        newCampfireState.phase = 'caught';
+        newCampfireState.fireAlpha = 1;
+        newCampfireState.startTime = lastRenderTime;
+
+        // Add the hackathon team to the teams array
+        const newTeam = {
+          id: 'hackathon', name: 'Hackathon', description: 'New project',
+          color: '#fbbf24', x: newCampfireState.x, y: newCampfireState.y,
+          fireSize: 0.5, members: [],
+        };
+        teams.push(newTeam);
+        const newIdx = teams.length - 1;
+        teamIndexById['hackathon'] = newIdx;
+        fireState.push({ level: 'low', prevLevel: 'ember', transitionProgress: 0 });
+        fireFlares.push({ active: false, startTime: 0, mult: 1.0 });
+        milestoneState.push({
+          celebrating: false, startTime: 0, hasFlag: false,
+          flagX: newTeam.x + 12, flagY: newTeam.y - 2, particles: [], goldUntil: 0,
+        });
+        pulseState.push({ lastPulse: 0, rings: [] });
+        newCampfireState.teamAdded = true;
+
+        // Update Natasha's team index
+        const natasha = sprites.get('natasha');
+        if (natasha) {
+          natasha.teamIndex = newIdx;
+          spriteTeamIndex['natasha'] = newIdx;
+        }
+
+        // "First catch" pulse
+        pulseState[newIdx].rings.push({
+          startTime: lastRenderTime, x: newTeam.x, y: newTeam.y, firstCatch: true,
+        });
+
+        // Trigger fire flare
+        triggerFireFlare(newIdx, 1.3);
+
+        // Add summary entry to Campfire Stories panel
+        const summaryBar = document.querySelector('.ai-summary-bar');
+        if (summaryBar && !newCampfireState.summaryAdded) {
+          const line = document.createElement('div');
+          line.className = 'ai-summary-line';
+          line.style.opacity = '0';
+          line.innerHTML = `<span class="team-dot" style="background: #fbbf24"></span><span id="summary-text-hackathon"><strong style="color: #fbbf24">Hackathon</strong> — Natasha started a new project</span>`;
+          summaryBar.appendChild(line);
+          requestAnimationFrame(() => { line.style.opacity = '1'; });
+          newCampfireState.summaryAdded = true;
+        }
+      }
+
+      function handleNewCampfireWorking(event) {
+        newCampfireState.phase = 'established';
+        newCampfireState.labelAlpha = 1;
+        const natasha = sprites.get('natasha');
+        if (natasha) {
+          natasha.task = 'scribing';
+          natasha.defaultTask = 'scribing';
+          natasha.status = 'active';
+        }
+      }
+
       // ─── FIRE FLARE ───
       function triggerFireFlare(teamIndex, mult) {
         fireFlares[teamIndex].active = true;
@@ -2640,8 +2886,8 @@
           streamIndex++;
         }
 
-        // Check cycle end
-        if (streamIndex >= allEvents.length && streamTime >= lastEventTime + 1) {
+        // Check cycle end — loop runs to ~100s then pauses
+        if (streamIndex >= allEvents.length && streamTime >= 100) {
           cycleComplete = true;
           cycleEndTime = 0;
         }
@@ -2663,6 +2909,21 @@
             flare.active = false;
           }
         }
+        // During dusk (t=90-95), lower fires toward ember
+        if (streamTime >= 93 && streamTime < 96) {
+          for (let i = 0; i < teams.length; i++) {
+            const fs = fireState[i];
+            if (fs.level !== 'ember' && fs.transitionProgress >= 1) {
+              const levelOrder = ['ember', 'low', 'steady', 'high'];
+              const curIdx = levelOrder.indexOf(fs.level);
+              if (curIdx > 0) {
+                fs.prevLevel = fs.level;
+                fs.level = levelOrder[curIdx - 1];
+                fs.transitionProgress = 0;
+              }
+            }
+          }
+        }
       }
 
       // ─── PULSE TICK ───
@@ -2682,7 +2943,10 @@
           }
 
           // Clean up expired rings
-          ps.rings = ps.rings.filter((r) => time - r.startTime < PULSE_DURATION);
+          ps.rings = ps.rings.filter((r) => {
+            const dur = r.firstCatch ? FIRST_CATCH_PULSE_DURATION : PULSE_DURATION;
+            return time - r.startTime < dur;
+          });
         }
       }
 
@@ -2817,7 +3081,11 @@
         // Pulse rings (behind everything)
         for (let i = 0; i < teams.length; i++) {
           for (const ring of pulseState[i].rings) {
-            drawPulseRing(ring, time, teams[i].color, i);
+            if (ring.firstCatch) {
+              drawFirstCatchPulse(ring, time, teams[i].color);
+            } else {
+              drawPulseRing(ring, time, teams[i].color, i);
+            }
           }
         }
 
@@ -2904,6 +3172,21 @@
           });
         }
 
+        // New campfire in render order
+        if (newCampfireState.active && newCampfireState.phase !== 'none') {
+          renderOrder.push({
+            type: 'new_campfire',
+            y: newCampfireState.y,
+          });
+          // Natasha's fire-starting pose (if striking)
+          if (newCampfireState.phase === 'striking') {
+            renderOrder.push({
+              type: 'fire_starting',
+              y: newCampfireState.y,
+            });
+          }
+        }
+
         // Sort by y
         renderOrder.sort((a, b) => a.y - b.y);
 
@@ -2924,6 +3207,15 @@
             drawSpawnAnim(item.spawn, time);
           } else if (item.type === 'despawn') {
             drawDespawnAnim(item.despawn, time);
+          } else if (item.type === 'new_campfire') {
+            if (newCampfireState.phase === 'caught' || newCampfireState.phase === 'established') {
+              drawNewCampfire(newCampfireState.x, newCampfireState.y, time, newCampfireState);
+            }
+          } else if (item.type === 'fire_starting') {
+            const nat = sprites.get('natasha');
+            if (nat) {
+              drawFireStartingPose(nat.homeX, nat.homeY, nat.color, time, newCampfireState.phase, newCampfireState);
+            }
           }
         }
 
@@ -3083,6 +3375,19 @@
         ctx.fillStyle = vignette;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.restore();
+
+        // Stars (drawn after vignette, before sky overlay)
+        const skyState = getSkyOverlay(streamTime);
+        drawStars(time, skyState.starAlpha);
+
+        // Sky overlay (very last — tints everything)
+        if (skyState.alpha > 0) {
+          ctx.save();
+          ctx.globalAlpha = skyState.alpha;
+          ctx.fillStyle = skyState.color;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.restore();
+        }
 
         requestAnimationFrame(render);
       }
