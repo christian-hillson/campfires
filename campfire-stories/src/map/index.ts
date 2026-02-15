@@ -9,7 +9,10 @@ import type {
 } from '@campfires/shared';
 import {
   PIXEL_SCALE,
+  px,
   drawCampfire,
+  drawColdFirepit,
+  drawKindleAnimation,
   drawTeamLabel,
   drawVignette,
   computeDayNight,
@@ -50,6 +53,7 @@ import {
   drawMilestoneCelebration,
   createMilestoneCelebration,
   isMilestoneExpired,
+  drawFounderPig,
   type FloatingText,
   type MilestoneCelebration,
 } from './sprites.js';
@@ -104,6 +108,9 @@ import {
   GOLEM_GLOW_WINDOW,
   SPARK_ARC_DURATION,
   SPARK_BADGE_PERSIST,
+  KINDLE_DURATION,
+  KINDLE_STAGGER_DELAY,
+  FOUNDER_CEREMONY_DURATION,
 } from './animation-constants.js';
 import { ActivityFeed } from './activity-feed.js';
 
@@ -163,6 +170,18 @@ export class MapView {
   private castingSprites = new Set<string>(); // userId of humans currently casting for golem spawn
   private sparkArcs: SparkArcState[] = [];
   private sparkBadges = new Map<string, number>(); // teamId → badge start time
+
+  // Campfire lifecycle state
+  private onlineMemberCounts = new Map<string, number>(); // teamId → online count
+  private kindleAnimations = new Map<string, { startTime: number }>(); // teamId → kindle state
+  private pendingKindles: { teamId: string; requestedAt: number }[] = [];
+  private lastKindleStart = 0;
+  private leftoverTools = new Map<string, string[]>(); // teamId → tool types
+  private decayingCampfires = new Map<string, { startTime: number; gracePeriodEnd: number }>(); // teamId → decay state
+  private founderCeremonies = new Map<
+    string,
+    { startTime: number; edgeX: number; edgeY: number; targetX: number; targetY: number }
+  >();
 
   // Map dimensions in pixel-art units
   private mapWidth = 500;
@@ -276,6 +295,28 @@ export class MapView {
     this.config.awareness = awareness;
     this.computeSprites();
     this.animatedSprites = reconcileSprites(this.animatedSprites, this.allSprites, this.campfires);
+    this.updateOnlineCounts();
+  }
+
+  private updateOnlineCounts(): void {
+    const time = performance.now() / 1000;
+    for (const cf of this.campfires) {
+      const awarenessStates = this.config.awareness.get(cf.teamId) || [];
+      const onlineCount = awarenessStates.filter(
+        (a) => a.status === 'active' || a.status === 'idle',
+      ).length;
+      const prevCount = this.onlineMemberCounts.get(cf.teamId) || 0;
+      this.onlineMemberCounts.set(cf.teamId, onlineCount);
+
+      // Detect cold → online transition for kindle animation
+      if (prevCount === 0 && onlineCount > 0) {
+        const cfIndex = this.campfires.indexOf(cf);
+        const fireState = this.fireStates[cfIndex];
+        if (fireState && fireState.level === 'cold') {
+          this.pendingKindles.push({ teamId: cf.teamId, requestedAt: time });
+        }
+      }
+    }
   }
 
   private buildDOM(): void {
@@ -901,7 +942,8 @@ export class MapView {
     for (let i = 0; i < this.campfires.length; i++) {
       const teamId = this.campfires[i].teamId;
       const count = this.recentEvents.filter((e) => e.teamId === teamId).length;
-      const newLevel = computeFireLevel(count);
+      const onlineCount = this.onlineMemberCounts.get(teamId) || 0;
+      const newLevel = computeFireLevel(count, onlineCount);
       setFireLevel(this.fireStates[i], newLevel);
     }
   }
@@ -1052,6 +1094,116 @@ export class MapView {
     this.milestones.push(createMilestoneCelebration(cf.x, cf.y, cf.fireSize, cf.color, time));
   }
 
+  /** Add a new team to the map (called from SSE team_registered event) */
+  addTeam(team: Team): void {
+    const time = performance.now() / 1000;
+
+    // Add to config
+    this.config.teams.push(team);
+    this.config.members.set(team.teamId, []);
+    this.config.awareness.set(team.teamId, []);
+
+    // Recompute layout
+    this.computeLayout();
+    this.environment = generateEnvironment(this.mapWidth, this.mapHeight, this.campfires);
+
+    // Add fire state for the new campfire
+    const newIndex = this.campfires.length - 1;
+    while (this.fireStates.length <= newIndex) {
+      this.fireStates.push(createFireState('cold'));
+      this.fireFlares.push(createFireFlare());
+      this.pulseStates.push(createPulseState());
+    }
+
+    // Trigger founder ceremony
+    const cf = this.campfires[newIndex];
+    if (cf && team.mapX != null && team.mapY != null) {
+      const edge = this.getMapEdgePoint(cf.x, cf.y);
+      this.founderCeremonies.set(team.teamId, {
+        startTime: time,
+        edgeX: edge.x,
+        edgeY: edge.y,
+        targetX: cf.x,
+        targetY: cf.y,
+      });
+    }
+
+    // Reconcile sprites
+    this.animatedSprites = reconcileSprites(this.animatedSprites, this.allSprites, this.campfires);
+    this.renderSummaryBar();
+  }
+
+  private drawFounderCeremony(
+    ctx: CanvasRenderingContext2D,
+    ceremony: { startTime: number; edgeX: number; edgeY: number; targetX: number; targetY: number },
+    cf: CampfirePosition,
+    time: number,
+  ): void {
+    const elapsed = time - ceremony.startTime;
+
+    if (elapsed < 1.0) {
+      // Phase 1: Entrance — pig walks from edge to campfire position
+      const p = elapsed / 1.0;
+      const pigX = ceremony.edgeX + (ceremony.targetX - ceremony.edgeX) * p;
+      const pigY = ceremony.edgeY + (ceremony.targetY - ceremony.edgeY) * p;
+      drawFounderPig(ctx, pigX, pigY + 8, time, 'walking');
+    } else if (elapsed < 2.5) {
+      // Phase 2: Building — stones pop in, logs placed
+      const p = (elapsed - 1.0) / 1.5;
+      const pigX = ceremony.targetX + 10;
+      const pigY = ceremony.targetY + 8;
+      drawFounderPig(ctx, pigX, pigY, time, 'building');
+
+      // Stones appearing one at a time
+      const stoneCount = Math.min(7, Math.floor((p * 7) / 0.6));
+      const stoneColors = ['#555', '#666', '#777', '#5a5a5a', '#606060', '#6a6a6a', '#585858'];
+      for (let i = 0; i < stoneCount; i++) {
+        const angle = (i / 7) * Math.PI * 2;
+        const r = 9;
+        const sx = cf.x + Math.cos(angle) * r;
+        const sy = cf.y + Math.sin(angle) * r * 0.5;
+        px(ctx, sx - 1, sy - 1, 3, 2, stoneColors[i % stoneColors.length]);
+      }
+
+      // Logs sliding in
+      if (p > 0.6) {
+        const logP = (p - 0.6) / 0.4;
+        const logStartX = pigX;
+        const logEndX = cf.x - 3;
+        const logX = logStartX + (logEndX - logStartX) * Math.min(1, logP * 2);
+        px(ctx, logX, cf.y + 1, 5, 1, '#4a3020');
+        if (logP > 0.5) {
+          const log2X = logStartX + (logEndX + 1 - logStartX) * Math.min(1, (logP - 0.5) * 2);
+          px(ctx, log2X, cf.y - 1, 4, 1, '#3a2818');
+        }
+      }
+    } else if (elapsed < 3.5) {
+      // Phase 3: Lighting — kindle animation triggered by pig
+      const p = (elapsed - 2.5) / 1.0;
+      const pigX = ceremony.targetX + 8;
+      const pigY = ceremony.targetY + 8;
+      drawFounderPig(ctx, pigX, pigY, time, 'lighting');
+
+      // Small fire growing at the campfire center
+      drawKindleAnimation(ctx, cf.x, cf.y, p, time);
+    } else {
+      // Phase 4: Exit — pig walks away
+      const p = (elapsed - 3.5) / 0.5;
+      const exitX = ceremony.targetX + 10 + p * 30;
+      const exitY = ceremony.targetY + 8 + p * 10;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - p);
+      drawFounderPig(ctx, exitX, exitY, time, 'walking');
+      ctx.restore();
+
+      // Fire is now kindled
+      const cfIndex = this.campfires.findIndex((c) => c.teamId === cf.teamId);
+      if (cfIndex >= 0 && this.fireStates[cfIndex]?.level === 'cold') {
+        setFireLevel(this.fireStates[cfIndex], 'kindled');
+      }
+    }
+  }
+
   triggerSparkArc(spark: Spark): void {
     if (spark.teamConnections.length < 2) return;
 
@@ -1099,6 +1251,32 @@ export class MapView {
     // Tick animation systems
     tickFireState(this.fireStates, this.fireFlares, dt, time);
     tickPulses(this.pulseStates, this.fireStates, this.campfires, time);
+
+    // Process kindle queue (stagger kindles by KINDLE_STAGGER_DELAY)
+    if (this.pendingKindles.length > 0 && time - this.lastKindleStart >= KINDLE_STAGGER_DELAY) {
+      const next = this.pendingKindles.shift();
+      if (next) {
+        this.kindleAnimations.set(next.teamId, { startTime: time });
+        this.lastKindleStart = time;
+        // Transition fire state to kindled
+        const cfIndex = this.campfires.findIndex((c) => c.teamId === next.teamId);
+        if (cfIndex >= 0) setFireLevel(this.fireStates[cfIndex], 'kindled');
+      }
+    }
+
+    // Cleanup expired kindle animations
+    for (const [teamId, kindle] of this.kindleAnimations) {
+      if (time - kindle.startTime >= KINDLE_DURATION) {
+        this.kindleAnimations.delete(teamId);
+      }
+    }
+
+    // Cleanup expired founder ceremonies
+    for (const [teamId, ceremony] of this.founderCeremonies) {
+      if (time - ceremony.startTime >= FOUNDER_CEREMONY_DURATION) {
+        this.founderCeremonies.delete(teamId);
+      }
+    }
     for (const sprite of this.animatedSprites.values()) {
       tickSprite(sprite, dt);
 
@@ -1300,11 +1478,41 @@ export class MapView {
       if (item.type === 'fire') {
         const cfIdx = item.data as number;
         const cf = this.campfires[cfIdx];
-        const fm = this.fireStates[cfIdx]
-          ? getFireMultipliers(this.fireStates[cfIdx], this.fireFlares[cfIdx], time)
-          : undefined;
-        drawCampfire(ctx, cf.x, cf.y, cf.fireSize, cf.color, time, dayNight.glowMultiplier, fm);
-        drawTeamLabel(ctx, cf.x, cf.y, cf.name, cf.fireSize);
+        const fireState = this.fireStates[cfIdx];
+        const fireLevel = fireState?.level || 'steady';
+
+        // Check for active kindle animation
+        const kindle = this.kindleAnimations.get(cf.teamId);
+        if (kindle) {
+          const kindleProgress = (time - kindle.startTime) / KINDLE_DURATION;
+          drawKindleAnimation(ctx, cf.x, cf.y, Math.min(1, kindleProgress), time);
+        } else if (fireLevel === 'cold') {
+          // Cold firepit rendering
+          const tools = this.leftoverTools.get(cf.teamId) || [];
+          drawColdFirepit(ctx, cf.x, cf.y, cf.color, time, dayNight, tools);
+        } else {
+          // Normal fire rendering
+          const fm = fireState
+            ? getFireMultipliers(fireState, this.fireFlares[cfIdx], time)
+            : undefined;
+          drawCampfire(ctx, cf.x, cf.y, cf.fireSize, cf.color, time, dayNight.glowMultiplier, fm);
+        }
+
+        // Team label (dimmed for cold firepits)
+        if (fireLevel === 'cold' && !kindle) {
+          ctx.save();
+          ctx.globalAlpha = 0.5;
+          drawTeamLabel(ctx, cf.x, cf.y, cf.name, cf.fireSize);
+          ctx.restore();
+        } else {
+          drawTeamLabel(ctx, cf.x, cf.y, cf.name, cf.fireSize);
+        }
+
+        // Founder ceremony pig
+        const ceremony = this.founderCeremonies.get(cf.teamId);
+        if (ceremony) {
+          this.drawFounderCeremony(ctx, ceremony, cf, time);
+        }
 
         // Spark badge
         const badgeStart = this.sparkBadges.get(cf.teamId);

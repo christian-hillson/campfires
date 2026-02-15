@@ -70,13 +70,52 @@ export function layoutCampfires(
   const radiusX = mapWidth * 0.3;
   const radiusY = mapHeight * 0.25;
 
+  // Count teams that need auto-layout (no persisted position)
+  const teamsNeedingLayout = teams.filter((t) => t.mapX == null || t.mapY == null);
+  const teamsWithPositions = teams.filter((t) => t.mapX != null && t.mapY != null);
+
   for (let i = 0; i < teams.length; i++) {
     const team = teams[i];
-    const angle = (i / teams.length) * Math.PI * 2 - Math.PI / 2;
 
-    // For single team, center it
-    const x = teams.length === 1 ? centerX : centerX + Math.cos(angle) * radiusX;
-    const y = teams.length === 1 ? centerY : centerY + Math.sin(angle) * radiusY;
+    let x: number;
+    let y: number;
+
+    if (team.mapX != null && team.mapY != null) {
+      // Use persisted position
+      x = team.mapX;
+      y = team.mapY;
+    } else if (teamsWithPositions.length > 0) {
+      // Find a gap position that doesn't overlap existing teams
+      const pos = findGapPosition(
+        positions.concat(
+          teamsWithPositions
+            .filter((t) => !positions.find((p) => p.teamId === t.teamId))
+            .map((t) => ({
+              teamId: t.teamId,
+              name: t.name,
+              color: TEAM_COLORS[teams.indexOf(t) % TEAM_COLORS.length],
+              x: t.mapX ?? 0,
+              y: t.mapY ?? 0,
+              fireSize: 1,
+            })),
+        ),
+        centerX,
+        centerY,
+        radiusX,
+        radiusY,
+        mapWidth,
+        mapHeight,
+      );
+      x = pos.x;
+      y = pos.y;
+    } else {
+      // All teams need layout — use elliptical arrangement
+      const layoutIndex = teamsNeedingLayout.indexOf(team);
+      const total = teamsNeedingLayout.length;
+      const angle = (layoutIndex / total) * Math.PI * 2 - Math.PI / 2;
+      x = total === 1 ? centerX : centerX + Math.cos(angle) * radiusX;
+      y = total === 1 ? centerY : centerY + Math.sin(angle) * radiusY;
+    }
 
     // Fire size based on event count from latest summary
     const teamSummaries = summaries.filter((s) => s.teamId === team.teamId);
@@ -99,6 +138,70 @@ export function layoutCampfires(
   }
 
   return positions;
+}
+
+/** Find a gap position for a new team that doesn't overlap existing campfires */
+export function findGapPosition(
+  existing: CampfirePosition[],
+  centerX: number,
+  centerY: number,
+  radiusX: number,
+  radiusY: number,
+  mapWidth: number,
+  mapHeight: number,
+): { x: number; y: number } {
+  const minDistance = 60; // minimum pixel-art units between campfires
+
+  // Try angles around the ellipse, find one with maximum distance from existing
+  let bestX = centerX;
+  let bestY = centerY;
+  let bestMinDist = 0;
+
+  for (let attempt = 0; attempt < 36; attempt++) {
+    const angle = (attempt / 36) * Math.PI * 2 - Math.PI / 2;
+    const x = centerX + Math.cos(angle) * radiusX;
+    const y = centerY + Math.sin(angle) * radiusY;
+
+    // Clamp to map bounds
+    const cx = Math.max(40, Math.min(mapWidth - 40, x));
+    const cy = Math.max(40, Math.min(mapHeight - 40, y));
+
+    let closestDist = Infinity;
+    for (const pos of existing) {
+      const dist = Math.hypot(cx - pos.x, cy - pos.y);
+      closestDist = Math.min(closestDist, dist);
+    }
+
+    if (closestDist > bestMinDist) {
+      bestMinDist = closestDist;
+      bestX = cx;
+      bestY = cy;
+    }
+  }
+
+  // If best distance is too small, try pushing outward
+  if (bestMinDist < minDistance && existing.length > 0) {
+    const expandedRX = radiusX * 1.3;
+    const expandedRY = radiusY * 1.3;
+    for (let attempt = 0; attempt < 36; attempt++) {
+      const angle = (attempt / 36) * Math.PI * 2 - Math.PI / 2;
+      const x = Math.max(40, Math.min(mapWidth - 40, centerX + Math.cos(angle) * expandedRX));
+      const y = Math.max(40, Math.min(mapHeight - 40, centerY + Math.sin(angle) * expandedRY));
+
+      let closestDist = Infinity;
+      for (const pos of existing) {
+        closestDist = Math.min(closestDist, Math.hypot(x - pos.x, y - pos.y));
+      }
+
+      if (closestDist > bestMinDist) {
+        bestMinDist = closestDist;
+        bestX = x;
+        bestY = y;
+      }
+    }
+  }
+
+  return { x: bestX, y: bestY };
 }
 
 export function layoutSprites(

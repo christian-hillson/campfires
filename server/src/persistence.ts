@@ -185,6 +185,22 @@ export class Persistence {
     } catch {
       // Column already exists
     }
+    // Migration for campfire lifecycle fields on teams
+    try {
+      this.db.exec(`ALTER TABLE teams ADD COLUMN mapX REAL`);
+    } catch {
+      // Column already exists
+    }
+    try {
+      this.db.exec(`ALTER TABLE teams ADD COLUMN mapY REAL`);
+    } catch {
+      // Column already exists
+    }
+    try {
+      this.db.exec(`ALTER TABLE teams ADD COLUMN firstSeenAt TEXT`);
+    } catch {
+      // Column already exists
+    }
   }
 
   // ============================================
@@ -251,24 +267,35 @@ export class Persistence {
     const teamId = uuidv4();
     const inviteCode = this.generateInviteCode();
     const createdAt = new Date().toISOString();
+    const firstSeenAt = createdAt;
 
     this.db
       .prepare(
         `
-      INSERT INTO teams (teamId, orgId, name, description, inviteCode, createdAt)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO teams (teamId, orgId, name, description, inviteCode, createdAt, firstSeenAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `,
       )
-      .run(teamId, orgId, name, description, inviteCode, createdAt);
+      .run(teamId, orgId, name, description, inviteCode, createdAt, firstSeenAt);
 
-    return { teamId, orgId, name, description, inviteCode, createdAt };
+    return {
+      teamId,
+      orgId,
+      name,
+      description,
+      inviteCode,
+      createdAt,
+      mapX: null,
+      mapY: null,
+      firstSeenAt,
+    };
   }
 
   getTeam(teamId: string): Team | null {
     const row = this.db
       .prepare(
         `
-      SELECT teamId, orgId, name, description, inviteCode, createdAt
+      SELECT teamId, orgId, name, description, inviteCode, createdAt, mapX, mapY, firstSeenAt
       FROM teams WHERE teamId = ?
     `,
       )
@@ -281,7 +308,7 @@ export class Persistence {
     const row = this.db
       .prepare(
         `
-      SELECT teamId, orgId, name, description, inviteCode, createdAt
+      SELECT teamId, orgId, name, description, inviteCode, createdAt, mapX, mapY, firstSeenAt
       FROM teams WHERE inviteCode = ?
     `,
       )
@@ -294,7 +321,7 @@ export class Persistence {
     return this.db
       .prepare(
         `
-      SELECT teamId, orgId, name, description, inviteCode, createdAt
+      SELECT teamId, orgId, name, description, inviteCode, createdAt, mapX, mapY, firstSeenAt
       FROM teams WHERE orgId = ?
     `,
       )
@@ -305,11 +332,22 @@ export class Persistence {
     return this.db
       .prepare(
         `
-      SELECT teamId, orgId, name, description, inviteCode, createdAt
+      SELECT teamId, orgId, name, description, inviteCode, createdAt, mapX, mapY, firstSeenAt
       FROM teams
     `,
       )
       .all() as Team[];
+  }
+
+  updateTeamPosition(teamId: string, mapX: number, mapY: number): void {
+    this.db.prepare(`UPDATE teams SET mapX = ?, mapY = ? WHERE teamId = ?`).run(mapX, mapY, teamId);
+  }
+
+  setTeamFirstSeen(teamId: string): void {
+    const now = new Date().toISOString();
+    this.db
+      .prepare(`UPDATE teams SET firstSeenAt = ? WHERE teamId = ? AND firstSeenAt IS NULL`)
+      .run(now, teamId);
   }
 
   getTeamWithMembers(teamId: string): TeamWithMembers | null {

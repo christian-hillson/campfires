@@ -59,6 +59,9 @@ export interface Team {
   description: string;
   inviteCode: string;
   createdAt: string; // ISO timestamp
+  mapX?: number | null;
+  mapY?: number | null;
+  firstSeenAt?: string | null;
 }
 
 /**
@@ -269,6 +272,9 @@ export interface JwtPayload {
   type: UserType;
 }
 
+// Fire tier for campfire lifecycle
+export type FireTier = 0 | 1 | 2 | 3;
+
 // ============================================
 // Config Constants
 // ============================================
@@ -315,4 +321,8 @@ export const CONFIG = {
   SPARK_MIN_CONFIDENCE: 0.7,
   SPARK_EXPIRY_HOURS: 72,
   SPARK_FADE_DURATION: 15_000, // 15s momentary entry in stories panel
+
+  // Campfire lifecycle
+  GRACE_PERIOD_MS: 5 * 60 * 1000, // 5 minutes before fire decay
+  DECAY_DURATION_MS: 60 * 1000, // 60s visual decay to cold
 } as const;

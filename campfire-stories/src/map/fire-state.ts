@@ -37,8 +37,8 @@ export interface PulseState {
 
 // ── Initialization ──
 
-export function createFireState(): CampfireFireState {
-  return { level: 'steady', prevLevel: 'steady', transitionProgress: 1 };
+export function createFireState(initialLevel: FireLevel = 'steady'): CampfireFireState {
+  return { level: initialLevel, prevLevel: initialLevel, transitionProgress: 1 };
 }
 
 export function createFireFlare(): FireFlare {
@@ -132,6 +132,9 @@ export function tickPulses(
 
     const interval = PULSE_INTERVALS[fs.level];
 
+    // No pulses for cold fires
+    if (interval <= 0) continue;
+
     // Emit new pulse if interval elapsed
     if (time - ps.lastPulseTime >= interval) {
       ps.rings.push({ startTime: time, x: cf.x, y: cf.y });
@@ -158,10 +161,15 @@ export function triggerFireFlare(
   }
 }
 
-export function computeFireLevel(recentEventCount: number): FireLevel {
-  if (recentEventCount >= FIRE_LEVEL_HIGH_THRESHOLD) return 'high';
+export function computeFireLevel(
+  recentEventCount: number,
+  onlineMemberCount: number = 1,
+): FireLevel {
+  if (onlineMemberCount === 0) return 'cold';
+  if (recentEventCount === 0) return 'kindled';
+  if (recentEventCount >= FIRE_LEVEL_HIGH_THRESHOLD) return 'roaring';
   if (recentEventCount >= FIRE_LEVEL_STEADY_THRESHOLD) return 'steady';
-  return 'low';
+  return 'kindled';
 }
 
 export function setFireLevel(state: CampfireFireState, newLevel: FireLevel): void {

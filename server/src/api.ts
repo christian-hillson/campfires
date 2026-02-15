@@ -128,6 +128,22 @@ const ActivitySchema = z.object({
   session_id: z.string().max(200).optional(),
 });
 
+// SSE clients for org-level events (team_registered, etc.)
+const sseClients = new Map<string, Set<Response>>(); // orgId → Set<Response>
+
+function broadcastOrgEvent(orgId: string, event: Record<string, unknown>): void {
+  const clients = sseClients.get(orgId);
+  if (!clients) return;
+  const data = JSON.stringify(event);
+  for (const res of clients) {
+    try {
+      res.write(`data: ${data}\n\n`);
+    } catch {
+      clients.delete(res);
+    }
+  }
+}
+
 export function createRouter(): Router {
   const router = Router();
 
@@ -333,6 +349,40 @@ export function createRouter(): Router {
     }
 
     const teams = db.getTeamsByOrg(id);
+
+    // Auto-layout migration: persist positions for teams that lack them
+    const teamsWithoutPositions = teams.filter((t) => t.mapX == null || t.mapY == null);
+    if (teamsWithoutPositions.length > 0) {
+      // Simple elliptical auto-layout (matches client-side logic)
+      const mapWidth = 500;
+      const mapHeight = 280;
+      const centerX = mapWidth / 2;
+      const centerY = mapHeight / 2;
+      const radiusX = mapWidth * 0.3;
+      const radiusY = mapHeight * 0.25;
+
+      for (let i = 0; i < teams.length; i++) {
+        const team = teams[i];
+        if (team.mapX != null && team.mapY != null) continue;
+
+        const angle = (i / teams.length) * Math.PI * 2 - Math.PI / 2;
+        const x = teams.length === 1 ? centerX : centerX + Math.cos(angle) * radiusX;
+        const y = teams.length === 1 ? centerY : centerY + Math.sin(angle) * radiusY;
+
+        db.updateTeamPosition(team.teamId, x, y);
+        team.mapX = x;
+        team.mapY = y;
+      }
+    }
+
+    // Set firstSeenAt for teams that lack it
+    for (const team of teams) {
+      if (!team.firstSeenAt) {
+        db.setTeamFirstSeen(team.teamId);
+        team.firstSeenAt = new Date().toISOString();
+      }
+    }
+
     res.json(teams);
   });
 
@@ -366,9 +416,54 @@ export function createRouter(): Router {
 
     const team = db.createTeam(orgId, name, description || '');
 
+    // Calculate and persist map position for the new team
+    const existingTeams = db.getTeamsByOrg(orgId);
+    const mapWidth = 500;
+    const mapHeight = 280;
+    const centerX = mapWidth / 2;
+    const centerY = mapHeight / 2;
+    const radiusX = mapWidth * 0.3;
+    const radiusY = mapHeight * 0.25;
+
+    // Find gap position away from existing teams
+    let bestX = centerX;
+    let bestY = centerY;
+    let bestMinDist = 0;
+    const positioned = existingTeams.filter(
+      (t) => t.mapX != null && t.mapY != null && t.teamId !== team.teamId,
+    );
+
+    if (positioned.length === 0) {
+      bestX = centerX;
+      bestY = centerY;
+    } else {
+      for (let attempt = 0; attempt < 36; attempt++) {
+        const angle = (attempt / 36) * Math.PI * 2 - Math.PI / 2;
+        const x = Math.max(40, Math.min(mapWidth - 40, centerX + Math.cos(angle) * radiusX));
+        const y = Math.max(40, Math.min(mapHeight - 40, centerY + Math.sin(angle) * radiusY));
+
+        let closestDist = Infinity;
+        for (const pos of positioned) {
+          closestDist = Math.min(closestDist, Math.hypot(x - (pos.mapX ?? 0), y - (pos.mapY ?? 0)));
+        }
+        if (closestDist > bestMinDist) {
+          bestMinDist = closestDist;
+          bestX = x;
+          bestY = y;
+        }
+      }
+    }
+
+    db.updateTeamPosition(team.teamId, bestX, bestY);
+    team.mapX = bestX;
+    team.mapY = bestY;
+
     // Auto-join the creating user to the team
     const userId = getUser(req).userId;
     db.updateUserTeam(userId, team.teamId, orgId);
+
+    // Emit SSE event for founder ceremony
+    broadcastOrgEvent(orgId, { type: 'team_registered', team });
 
     res.status(201).json(team);
   });
@@ -507,10 +602,16 @@ export function createRouter(): Router {
         res.write(': ping\n\n');
       }, CONFIG.SSE_PING_INTERVAL);
 
+      // Register this client for org-level broadcasts
+      if (!sseClients.has(id)) sseClients.set(id, new Set());
+      const clients = sseClients.get(id);
+      if (clients) clients.add(res);
+
       // Clean up on close
       req.on('close', () => {
         clearInterval(interval);
         clearInterval(pingInterval);
+        sseClients.get(id)?.delete(res);
       });
     },
   );

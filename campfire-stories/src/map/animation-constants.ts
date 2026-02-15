@@ -16,7 +16,7 @@ export const FIRE_LEVEL_HIGH_THRESHOLD = 10;
 export const FIRE_LEVEL_STEADY_THRESHOLD = 3;
 export const FIRE_LEVEL_WINDOW = 5 * 60 * 1000; // 5 minutes in ms
 
-export type FireLevel = 'high' | 'steady' | 'low';
+export type FireLevel = 'cold' | 'kindled' | 'steady' | 'roaring';
 
 export interface FireLevelMultipliers {
   height: number;
@@ -28,24 +28,34 @@ export interface FireLevelMultipliers {
 }
 
 export const FIRE_LEVELS: Record<FireLevel, FireLevelMultipliers> = {
-  high: { height: 1.5, sparks: 2.0, flicker: 1.5, glow: 1.3, embers: 1.5, flames: 1.0 },
+  cold: { height: 0, sparks: 0, flicker: 0, glow: 0, embers: 0, flames: 0 },
+  kindled: { height: 0.3, sparks: 0.15, flicker: 0.4, glow: 0.5, embers: 0.3, flames: 0.3 },
   steady: { height: 1.0, sparks: 1.0, flicker: 1.0, glow: 1.0, embers: 1.0, flames: 1.0 },
-  low: { height: 0.5, sparks: 0.3, flicker: 0.6, glow: 0.7, embers: 0.5, flames: 0.5 },
+  roaring: { height: 1.5, sparks: 2.0, flicker: 1.5, glow: 1.3, embers: 1.5, flames: 1.0 },
 };
 
 // Pulse ring intervals per fire level (seconds between pulses)
 export const PULSE_INTERVALS: Record<FireLevel, number> = {
-  high: 2,
+  cold: 0, // no pulses when cold
+  kindled: 12,
   steady: 5,
-  low: 10,
+  roaring: 2,
 };
 
 // Pulse ring max radius multiplier (relative to fire size)
 export const PULSE_RADIUS_MULT: Record<FireLevel, number> = {
-  high: 3,
+  cold: 0,
+  kindled: 1,
   steady: 2,
-  low: 1.5,
+  roaring: 3,
 };
+
+// Kindle animation
+export const KINDLE_DURATION = 1.5;
+export const KINDLE_STAGGER_DELAY = 0.25;
+
+// Founder pig ceremony
+export const FOUNDER_CEREMONY_DURATION = 4.0;
 
 // Fire flare multiplier on commit
 export const COMMIT_FLARE_MULT = 1.2;

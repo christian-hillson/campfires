@@ -146,6 +146,200 @@ export function drawCampfire(
   ctx.restore();
 }
 
+export function drawColdFirepit(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  teamColor: string,
+  time: number,
+  dayNightState: DayNightState,
+  leftoverTools: string[],
+): void {
+  const baseR = 9; // stone ring radius
+
+  // Stone ring (6-8 gray stones)
+  const stoneColors = ['#555', '#666', '#777', '#5a5a5a', '#606060', '#6a6a6a', '#585858'];
+  for (let i = 0; i < 7; i++) {
+    const angle = (i / 7) * Math.PI * 2;
+    const r = baseR + Math.sin(angle * 3) * 1;
+    const sx = cx + Math.cos(angle) * r;
+    const sy = cy + Math.sin(angle) * r * 0.5;
+    const stoneSize = 3 + (i % 2);
+    px(ctx, sx - stoneSize / 2, sy - 1, stoneSize, 2, stoneColors[i % stoneColors.length]);
+  }
+
+  // Charred logs (2-3 dark shapes)
+  px(ctx, cx - 3, cy + 1, 5, 1, '#2a1a10');
+  px(ctx, cx - 2, cy - 1, 4, 1, '#1a1008');
+  px(ctx, cx + 1, cy, 3, 1, '#251510');
+
+  // Smoke wisp (single ascending particle, sinusoidal drift)
+  const smokeY = cy - 3 - ((time * 4) % 12);
+  const smokeDrift = Math.sin(time * 0.5) * 2;
+  const smokeAlpha = 0.3 * Math.max(0, 1 - ((time * 4) % 12) / 12);
+  if (smokeAlpha > 0.02) {
+    ctx.save();
+    ctx.globalAlpha = smokeAlpha;
+    px(ctx, cx + smokeDrift, smokeY, 1, 1, '#888');
+    ctx.restore();
+  }
+
+  // Night embers (flickering glow at dusk/night)
+  if (dayNightState.phase === 'night' || dayNightState.phase === 'dusk') {
+    const emberColors = ['#8B2500', '#4A1400', '#6B1800'];
+    for (let i = 0; i < 3; i++) {
+      const ex = cx - 1 + (i % 3) * 1.5;
+      const ey = cy + Math.sin(time * 3 + i * 2) * 0.5;
+      const flicker = Math.sin(time * 5 + i * 4) > 0;
+      if (flicker) {
+        ctx.save();
+        ctx.globalAlpha = 0.4;
+        px(ctx, ex, ey, 1, 1, emberColors[i % emberColors.length]);
+        ctx.restore();
+      }
+    }
+
+    // Subtle glow on ground at night
+    ctx.save();
+    const gradient = ctx.createRadialGradient(
+      cx * PIXEL_SCALE,
+      cy * PIXEL_SCALE,
+      0,
+      cx * PIXEL_SCALE,
+      cy * PIXEL_SCALE,
+      baseR * PIXEL_SCALE,
+    );
+    gradient.addColorStop(0, 'rgba(139,37,0,0.08)');
+    gradient.addColorStop(1, 'transparent');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(
+      (cx - baseR) * PIXEL_SCALE,
+      (cy - baseR) * PIXEL_SCALE,
+      baseR * 2 * PIXEL_SCALE,
+      baseR * 2 * PIXEL_SCALE,
+    );
+    ctx.restore();
+  }
+
+  // Leftover tools at small offsets from center
+  for (let i = 0; i < Math.min(leftoverTools.length, 2); i++) {
+    const toolOffsetX = (i === 0 ? -8 : 7) + Math.sin(i * 3) * 2;
+    const toolOffsetY = 4 + i * 2;
+    ctx.save();
+    ctx.globalAlpha = 0.6;
+    // Draw a simplified barrel/crate shape
+    if (leftoverTools[i] === 'barrel') {
+      px(ctx, cx + toolOffsetX, cy + toolOffsetY, 3, 3, '#5a4030');
+      px(ctx, cx + toolOffsetX, cy + toolOffsetY + 1, 3, 1, '#4a3020');
+    } else if (leftoverTools[i] === 'crates') {
+      px(ctx, cx + toolOffsetX, cy + toolOffsetY, 3, 2, '#6a5838');
+      px(ctx, cx + toolOffsetX + 1, cy + toolOffsetY - 1, 2, 1, '#7a6848');
+    } else {
+      // woodpile
+      px(ctx, cx + toolOffsetX, cy + toolOffsetY, 4, 2, '#4a3020');
+      px(ctx, cx + toolOffsetX + 1, cy + toolOffsetY - 1, 2, 1, '#5a4030');
+    }
+    ctx.restore();
+  }
+}
+
+export function drawKindleAnimation(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  progress: number,
+  time: number,
+): void {
+  if (progress < 0.2) {
+    // Phase 1: Spark — tiny bright point appears in the ashes
+    const sparkAlpha = progress / 0.2;
+    const sparkSize = 1 + sparkAlpha;
+    ctx.save();
+    ctx.globalAlpha = sparkAlpha;
+    px(ctx, cx - 0.5, cy - sparkSize, Math.ceil(sparkSize), Math.ceil(sparkSize), '#f0e8a0');
+    // Glow
+    const grad = ctx.createRadialGradient(
+      cx * PIXEL_SCALE,
+      (cy - 1) * PIXEL_SCALE,
+      0,
+      cx * PIXEL_SCALE,
+      (cy - 1) * PIXEL_SCALE,
+      4 * PIXEL_SCALE,
+    );
+    grad.addColorStop(0, `rgba(240,200,80,${sparkAlpha * 0.3})`);
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect((cx - 4) * PIXEL_SCALE, (cy - 5) * PIXEL_SCALE, 8 * PIXEL_SCALE, 8 * PIXEL_SCALE);
+    ctx.restore();
+  } else if (progress < 0.47) {
+    // Phase 2: Catch — spark catches on logs, small flames appear
+    const catchP = (progress - 0.2) / 0.27;
+    const flameCount = Math.ceil(catchP * 3);
+    for (let i = 0; i < flameCount; i++) {
+      const fx = cx - 1 + i * 1.2;
+      const flameH = 1 + catchP * 3;
+      for (let fy = 0; fy < flameH; fy++) {
+        const t = fy / flameH;
+        const flicker = Math.sin(time * 10 + i * 3 + fy) * 0.5;
+        let color: string;
+        if (t < 0.3) color = '#f0e8a0';
+        else if (t < 0.6) color = '#f0c040';
+        else color = '#f08020';
+        ctx.save();
+        ctx.globalAlpha = 0.5 + catchP * 0.5;
+        px(ctx, fx + flicker * 0.3, cy - fy - 1, 1, 1, color);
+        ctx.restore();
+      }
+    }
+    // Embers starting to glow
+    px(ctx, cx - 1, cy, 2, 1, '#f06020');
+  } else {
+    // Phase 3: Grow — fire grows from tiny to kindled size
+    const growP = (progress - 0.47) / 0.53;
+    const fireHeight = Math.round(1 + growP * 4);
+    const flameCount = 2 + Math.round(growP * 2);
+    for (let f = 0; f < flameCount; f++) {
+      const fx = cx - 1 + f * (2 / flameCount);
+      for (let fy = 0; fy < fireHeight; fy++) {
+        const t = fy / fireHeight;
+        const flicker = Math.sin(time * 8 + f * 2 + fy * 0.5) * (1 + t);
+        const width = (1 - t) * (1 + growP) + flicker * 0.2;
+        if (width > 0.3) {
+          let color: string;
+          if (t < 0.3) color = '#f0e8a0';
+          else if (t < 0.5) color = '#f0c040';
+          else if (t < 0.7) color = '#f08020';
+          else color = '#f06020';
+          px(ctx, fx + flicker * 0.3, cy - fy - 1, Math.max(1, width), 1, color);
+        }
+      }
+    }
+    // Ember base
+    const emberCount = Math.round(2 + growP * 3);
+    for (let i = 0; i < emberCount; i++) {
+      const angle = (i / emberCount) * Math.PI * 2 + time * 0.5;
+      const r = 1.5 + Math.sin(time * 3 + i) * 0.5;
+      px(ctx, cx + Math.cos(angle) * r, cy + Math.sin(angle) * r * 0.3, 1, 1, '#f06020');
+    }
+    // Growing glow
+    ctx.save();
+    const glowR = (4 + growP * 6) * PIXEL_SCALE;
+    const grad = ctx.createRadialGradient(
+      cx * PIXEL_SCALE,
+      cy * PIXEL_SCALE,
+      0,
+      cx * PIXEL_SCALE,
+      cy * PIXEL_SCALE,
+      glowR,
+    );
+    grad.addColorStop(0, `rgba(240,128,32,${0.05 + growP * 0.1})`);
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(cx * PIXEL_SCALE - glowR, cy * PIXEL_SCALE - glowR, glowR * 2, glowR * 2);
+    ctx.restore();
+  }
+}
+
 export function drawTeamLabel(
   ctx: CanvasRenderingContext2D,
   cx: number,

@@ -680,3 +680,60 @@ export function drawMilestoneCelebration(
 export function isMilestoneExpired(celebration: MilestoneCelebration, time: number): boolean {
   return time - celebration.startTime >= MILESTONE_PARTICLE_DURATION + 1.0;
 }
+
+// ── Sprint 13: Founder Pig ──
+
+export type FounderPigPhase = 'walking' | 'building' | 'lighting';
+
+/** Draw the founder pig sprite with hard hat */
+export function drawFounderPig(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  time: number,
+  phase: FounderPigPhase,
+): void {
+  const bobY = phase === 'walking' ? Math.sin(time * 8) * 0.5 : 0;
+  const bY = y + bobY;
+
+  // Body: 4x3 pink rectangle
+  px(ctx, x - 2, bY, 4, 3, '#FFB6C1');
+  // Head: 3x2 on top, slightly forward
+  px(ctx, x - 1, bY - 2, 3, 2, '#FFB6C1');
+  // Snout: 2x1 darker pink
+  px(ctx, x - 0.5, bY - 1, 2, 1, '#E8929E');
+  // Eyes: 2 single pixels
+  px(ctx, x - 1, bY - 2, 1, 1, '#1a1a1a');
+  px(ctx, x + 1, bY - 2, 1, 1, '#1a1a1a');
+  // Ears: 2 single pixels on top of head
+  px(ctx, x - 1, bY - 3, 1, 1, '#FFB6C1');
+  px(ctx, x + 1, bY - 3, 1, 1, '#FFB6C1');
+  // Curly tail: 2px at back
+  px(ctx, x + 2, bY + 1, 1, 1, '#FFB6C1');
+  px(ctx, x + 3, bY, 1, 1, '#FFB6C1');
+  // Legs
+  px(ctx, x - 1, bY + 3, 1, 1, '#E8929E');
+  px(ctx, x + 1, bY + 3, 1, 1, '#E8929E');
+  // Hard hat: 3x1 yellow on top, 1px brim
+  px(ctx, x - 1, bY - 4, 3, 1, '#FFD700');
+  px(ctx, x - 2, bY - 3, 1, 1, '#FFD700'); // brim
+
+  // Phase-specific animation
+  if (phase === 'building') {
+    // Hammer in hand
+    const hammerUp = Math.sin(time * 6) > 0;
+    px(ctx, x - 3, bY + (hammerUp ? -1 : 1), 1, 1, '#888');
+    px(ctx, x - 3, bY, 1, 1, '#5a4030');
+    if (!hammerUp) {
+      // Sparks
+      px(ctx, x - 3 + Math.random() * 2, bY - 1 - Math.random(), 1, 1, '#f0c040');
+    }
+  } else if (phase === 'lighting') {
+    // Holding torch
+    px(ctx, x - 3, bY - 1, 1, 2, '#5a4030');
+    // Torch flame
+    const flicker = Math.sin(time * 10) * 0.5;
+    px(ctx, x - 3 + flicker, bY - 2, 1, 1, '#f0c040');
+    px(ctx, x - 3 + flicker, bY - 3, 1, 1, '#f08020');
+  }
+}

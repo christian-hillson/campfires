@@ -157,6 +157,17 @@ function connectSSE(orgId: string): EventSource {
         }
       }
 
+      if (data.type === 'team_registered' && data.team && state) {
+        // Add new team and trigger founder ceremony on map
+        state.teams.push(data.team);
+        state.members.set(data.team.teamId, []);
+        state.awareness.set(data.team.teamId, []);
+
+        if (mapView) {
+          mapView.addTeam(data.team);
+        }
+      }
+
       if (data.type === 'spark' && data.spark && state) {
         state.sparks = [data.spark, ...state.sparks];
 
