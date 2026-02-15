@@ -247,7 +247,7 @@
       </div>
       <div class="header-right">
         <div class="stat"><span class="dot"></span> 14 online</div>
-        <div class="stat">4 campfires</div>
+        <div class="stat" id="campfire-count">4 campfires</div>
       </div>
     </div>
 
@@ -1099,6 +1099,9 @@
         // Remove hackathon summary DOM element if present
         const hackSummaryEl = document.getElementById('summary-text-hackathon');
         if (hackSummaryEl) hackSummaryEl.parentElement.remove();
+        // Reset header count
+        const countEl = document.getElementById('campfire-count');
+        if (countEl) countEl.textContent = '4 campfires';
 
         // Clear logs panel entries
         storyStartTime = null;
@@ -2949,6 +2952,10 @@
         newCampfireState.fireAlpha = 1;
         newCampfireState.startTime = lastRenderTime;
 
+        // Update header count
+        const countEl = document.getElementById('campfire-count');
+        if (countEl) countEl.textContent = '5 campfires';
+
         // Add the hackathon team to the teams array
         const newTeam = {
           id: 'hackathon',
@@ -3607,18 +3614,8 @@
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.restore();
 
-        // Stars (drawn after vignette, before sky overlay)
-        const skyState = getSkyOverlay(streamTime);
-        drawStars(time, skyState.starAlpha);
-
-        // Sky overlay (very last — tints everything)
-        if (skyState.alpha > 0) {
-          ctx.save();
-          ctx.globalAlpha = skyState.alpha;
-          ctx.fillStyle = skyState.color;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.restore();
-        }
+        // Day/night sky and stars disabled — always daytime
+        // Fires still dim/brighten based on arrivals and departures
 
         requestAnimationFrame(render);
       }
