@@ -790,6 +790,40 @@ export class Persistence {
     }));
   }
 
+  getTranscriptsByTeam(teamId: string, since: string): SessionTranscript[] {
+    const rows = this.db
+      .prepare(
+        `
+      SELECT session_id, user_id, team_id, content, is_complete, repo, branch, created_at, updated_at
+      FROM session_transcripts WHERE team_id = ? AND updated_at > ?
+      ORDER BY created_at ASC
+    `,
+      )
+      .all(teamId, since) as Array<{
+      session_id: string;
+      user_id: string;
+      team_id: string;
+      content: string;
+      is_complete: number;
+      repo: string | null;
+      branch: string | null;
+      created_at: string;
+      updated_at: string;
+    }>;
+
+    return rows.map((row) => ({
+      sessionId: row.session_id,
+      userId: row.user_id,
+      teamId: row.team_id,
+      content: row.content,
+      isComplete: row.is_complete === 1,
+      repo: row.repo,
+      branch: row.branch,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  }
+
   close(): void {
     this.db.close();
   }
