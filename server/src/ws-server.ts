@@ -4,7 +4,7 @@ import { setupWSConnection, docs } from 'y-websocket/bin/utils';
 import * as Y from 'yjs';
 import type { ActivityEvent, AwarenessState } from '@campfires/shared';
 import { getPersistence } from './persistence.js';
-import { verifyToken } from './auth.js';
+import { consumeWsToken } from './auth.js';
 
 interface AuthenticatedWebSocket extends WebSocket {
   userId?: string;
@@ -68,15 +68,16 @@ export function createWebSocketServer(server: http.Server): WebSocketServer {
       return;
     }
 
-    // Extract token from query string
-    const token = url.searchParams.get('token');
-    if (!token) {
+    // Extract single-use upgrade token from query string
+    const wsToken = url.searchParams.get('token');
+    if (!wsToken) {
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
       socket.destroy();
       return;
     }
 
-    const payload = verifyToken(token);
+    // Consume the token (single-use, 30s TTL)
+    const payload = consumeWsToken(wsToken);
     if (!payload) {
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
       socket.destroy();

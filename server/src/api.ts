@@ -12,6 +12,7 @@ import {
   optionalAuthMiddleware,
   generateToken,
   verifyToken,
+  createWsToken,
 } from './auth.js';
 
 // ============================================
@@ -224,6 +225,11 @@ export function createRouter(): Router {
     }
 
     res.json(result);
+  });
+
+  router.post('/auth/ws-token', authMiddleware, (req: Request, res: Response) => {
+    const wsToken = createWsToken(req.user!);
+    res.json({ token: wsToken, expiresIn: 30 });
   });
 
   // ============================================

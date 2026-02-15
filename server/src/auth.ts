@@ -1,9 +1,49 @@
 import jwt from 'jsonwebtoken';
-import { createHash } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import bcrypt from 'bcryptjs';
 import type { Request, Response, NextFunction } from 'express';
 import type { JwtPayload, User } from '@campfires/shared';
 import { getPersistence } from './persistence.js';
+
+// ============================================
+// WebSocket Upgrade Tokens (single-use, 30s TTL)
+// ============================================
+
+const WS_TOKEN_TTL_MS = 30_000;
+
+interface WsTokenEntry {
+  payload: JwtPayload;
+  expiresAt: number;
+}
+
+const wsTokenStore: Map<string, WsTokenEntry> = new Map();
+
+// Cleanup expired tokens every 10 seconds
+setInterval(() => {
+  const now = Date.now();
+  for (const [token, entry] of wsTokenStore) {
+    if (entry.expiresAt <= now) {
+      wsTokenStore.delete(token);
+    }
+  }
+}, 10_000);
+
+export function createWsToken(payload: JwtPayload): string {
+  const token = randomBytes(32).toString('hex');
+  wsTokenStore.set(token, {
+    payload,
+    expiresAt: Date.now() + WS_TOKEN_TTL_MS,
+  });
+  return token;
+}
+
+export function consumeWsToken(token: string): JwtPayload | null {
+  const entry = wsTokenStore.get(token);
+  if (!entry) return null;
+  wsTokenStore.delete(token); // single-use: delete immediately
+  if (entry.expiresAt <= Date.now()) return null;
+  return entry.payload;
+}
 
 if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required in production');
