@@ -1,4 +1,5 @@
-import type { Summary, Org, Team } from '@campfires/shared';
+import type { Summary, Org, Team, Spark } from '@campfires/shared';
+import { CONFIG } from '@campfires/shared';
 import { TEAM_COLORS } from '../map/layout.js';
 
 export interface FeedContext {
@@ -132,6 +133,151 @@ export function renderSummaryFeed(container: HTMLElement, ctx: FeedContext): voi
   }
 
   container.appendChild(list);
+
+  // Spark history link
+  const sparkLogLink = document.createElement('div');
+  sparkLogLink.className = 'spark-log-link';
+  sparkLogLink.innerHTML = '<button class="spark-log-btn">\u26A1 Spark History</button>';
+  sparkLogLink.querySelector('button')!.addEventListener('click', () => {
+    renderSparkLog(container, ctx);
+  });
+  container.appendChild(sparkLogLink);
+}
+
+function renderSparkLog(container: HTMLElement, ctx: FeedContext): void {
+  container.innerHTML = '';
+
+  const header = document.createElement('div');
+  header.className = 'spark-log-header';
+
+  const backBtn = document.createElement('button');
+  backBtn.className = 'back-button';
+  backBtn.textContent = '\u2190 Back to feed';
+  backBtn.addEventListener('click', () => renderSummaryFeed(container, ctx));
+  header.appendChild(backBtn);
+
+  const title = document.createElement('h1');
+  title.className = 'spark-log-title';
+  title.textContent = '\u26A1 SPARK HISTORY';
+  header.appendChild(title);
+
+  container.appendChild(header);
+
+  const logContainer = document.createElement('div');
+  logContainer.className = 'spark-log';
+  logContainer.innerHTML = '<div class="loading">Loading...</div>';
+  container.appendChild(logContainer);
+
+  const teamMap = new Map(ctx.teams.map((t, i) => [t.teamId, { name: t.name, index: i }]));
+
+  fetch(`/api/orgs/${ctx.org.orgId}/sparks/log?limit=50`)
+    .then((r) => (r.ok ? r.json() : { sparks: [], hasMore: false }))
+    .then(({ sparks, hasMore }: { sparks: Spark[]; hasMore: boolean }) => {
+      logContainer.innerHTML = '';
+
+      if (sparks.length === 0) {
+        logContainer.innerHTML = '<div class="empty-state">No sparks detected yet.</div>';
+        return;
+      }
+
+      for (const spark of sparks) {
+        const entry = document.createElement('div');
+        entry.className = 'spark-log-entry';
+        entry.dataset.status = spark.status;
+
+        const teamNames = spark.teamConnections
+          .map((tc) => {
+            const info = teamMap.get(tc.teamId);
+            const color = info ? getTeamColor(info.index) : '#fbbf24';
+            return `<span class="team-dot" style="background:${esc(color)}"></span>${esc(info?.name || tc.teamName)}`;
+          })
+          .join(' \u2194 ');
+
+        const statusBadge =
+          spark.status === 'active'
+            ? '<span class="spark-badge active">active</span>'
+            : spark.status === 'dismissed'
+              ? '<span class="spark-badge dismissed">dismissed</span>'
+              : '<span class="spark-badge expired">expired</span>';
+
+        entry.innerHTML = `
+          <div class="spark-log-header-row">
+            <span class="spark-log-time">${esc(timeAgo(spark.createdAt))}</span>
+            <span class="spark-log-teams">${teamNames}</span>
+            ${statusBadge}
+          </div>
+          <div class="spark-log-summary">${esc(spark.summary)}</div>
+        `;
+
+        // Expand/collapse details on click
+        entry.addEventListener('click', () => {
+          const existing = entry.querySelector('.spark-log-details');
+          if (existing) {
+            existing.remove();
+            return;
+          }
+          const details = document.createElement('div');
+          details.className = 'spark-log-details';
+          details.innerHTML = `
+            <div class="spark-log-detail-text">${esc(spark.details)}</div>
+            ${spark.suggestedAction ? `<div class="spark-log-action">\u2192 ${esc(spark.suggestedAction)}</div>` : ''}
+          `;
+          entry.appendChild(details);
+        });
+
+        logContainer.appendChild(entry);
+      }
+
+      if (hasMore) {
+        const more = document.createElement('div');
+        more.className = 'spark-log-more';
+        more.textContent = 'More sparks available...';
+        logContainer.appendChild(more);
+      }
+    })
+    .catch(() => {
+      logContainer.innerHTML = '<div class="error">Failed to load spark history</div>';
+    });
+}
+
+export function addSparkToFeed(
+  container: HTMLElement,
+  spark: Spark,
+  teams: Team[],
+): void {
+  const list = container.querySelector('.team-entries');
+  if (!list) return;
+
+  const teamMap = new Map(teams.map((t, i) => [t.teamId, { name: t.name, index: i }]));
+  const teamNames = spark.teamConnections
+    .map((tc) => {
+      const info = teamMap.get(tc.teamId);
+      const color = info ? getTeamColor(info.index) : '#fbbf24';
+      return `<span class="team-dot" style="background:${esc(color)}"></span>${esc(info?.name || tc.teamName)}`;
+    })
+    .join(' \u2194 ');
+
+  const entry = document.createElement('div');
+  entry.className = 'spark-entry spark-entry-new';
+  entry.innerHTML = `
+    <div class="spark-entry-icon">\u26A1</div>
+    <div class="spark-entry-body">
+      <div class="spark-entry-teams">${teamNames}</div>
+      <div class="spark-entry-summary">${esc(spark.summary)}</div>
+    </div>
+  `;
+
+  list.insertBefore(entry, list.firstChild);
+
+  // After SPARK_FADE_DURATION, remove the "new" glow
+  setTimeout(() => {
+    entry.classList.remove('spark-entry-new');
+  }, CONFIG.SPARK_FADE_DURATION);
+
+  // After 60s, remove entirely
+  setTimeout(() => {
+    entry.remove();
+  }, 60_000);
 }
 
 export function updateSummaryFeed(container: HTMLElement, newSummaries: Summary[]): void {

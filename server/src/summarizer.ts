@@ -1,7 +1,8 @@
+import { createHash } from 'crypto';
 import Anthropic from '@anthropic-ai/sdk';
-import type { ActivityEvent, SessionTranscript, Team, User } from '@campfires/shared';
+import type { ActivityEvent, SessionTranscript, Team, User, Summary, Spark } from '@campfires/shared';
 import { CONFIG } from '@campfires/shared';
-import { getPersistence } from './persistence.js';
+import { getPersistence, type Persistence } from './persistence.js';
 
 interface SummaryResult {
   content: string;
@@ -515,6 +516,12 @@ export class Summarizer {
     console.log('[Summarizer] Running summarization...');
     const db = getPersistence();
 
+    // Expire old sparks at the start of each cycle
+    const expired = db.expireOldSparks();
+    if (expired > 0) {
+      console.log(`[Summarizer] Expired ${expired} old sparks`);
+    }
+
     const teams = db.getAllTeams();
     if (teams.length === 0) {
       console.log('[Summarizer] No teams found, skipping');
@@ -522,19 +529,36 @@ export class Summarizer {
     }
 
     let summariesCreated = 0;
+    const newSummaries: Summary[] = [];
 
     for (const team of teams) {
       try {
-        summariesCreated += await this.summarizeTeam(team, db);
+        const result = await this.summarizeTeam(team, db);
+        summariesCreated += result.count;
+        if (result.summary) {
+          newSummaries.push(result.summary);
+        }
       } catch (err) {
         console.error(`[Summarizer] Error summarizing team ${team.name}:`, err);
       }
     }
 
     console.log(`[Summarizer] Done — created ${summariesCreated} summaries`);
+
+    // Detect sparks if 2+ teams produced summaries this cycle
+    if (newSummaries.length >= 2) {
+      try {
+        await this.detectSparks(newSummaries, teams, db);
+      } catch (err) {
+        console.error('[Summarizer] Error detecting sparks:', err);
+      }
+    }
   }
 
-  private async summarizeTeam(team: Team, db: ReturnType<typeof getPersistence>): Promise<number> {
+  private async summarizeTeam(
+    team: Team,
+    db: Persistence,
+  ): Promise<{ count: number; summary: Summary | null }> {
     const lastSummaryTime = db.getLatestSummaryTime(team.teamId);
     const since = lastSummaryTime || new Date(0).toISOString();
 
@@ -545,7 +569,7 @@ export class Summarizer {
     const transcripts = db.getTranscriptsByTeam(team.teamId, since);
 
     if (events.length === 0 && transcripts.length === 0) {
-      return 0;
+      return { count: 0, summary: null };
     }
 
     const org = db.getOrg(team.orgId);
@@ -570,7 +594,7 @@ export class Summarizer {
     const periodStart = since;
     const periodEnd = new Date().toISOString();
 
-    db.createSummary(
+    const summary = db.createSummary(
       team.orgId,
       team.teamId,
       periodStart,
@@ -583,6 +607,253 @@ export class Summarizer {
     console.log(
       `[Summarizer] Created summary for team "${team.name}" (${events.length} events, ${transcripts.length} transcripts)`,
     );
-    return 1;
+    return { count: 1, summary };
+  }
+
+  private async detectSparks(
+    newSummaries: Summary[],
+    teams: Team[],
+    db: Persistence,
+  ): Promise<void> {
+    const client = getAnthropicClient();
+    if (!client) return;
+
+    const orgId = newSummaries[0].orgId;
+    const org = db.getOrg(orgId);
+    const orgContext = {
+      mission: org?.mission || '',
+      roadmap: org?.roadmap || '',
+    };
+
+    // Get existing active and recently dismissed sparks for dedup/avoidance
+    const activeSparks = db.getSparks(orgId, { status: 'active', limit: 50 });
+    const dismissedSparks = db.getSparks(orgId, { status: 'dismissed', limit: 20 });
+
+    // Rate limit check: for each team in new summaries, check daily spark count
+    const dayMs = 24 * 60 * 60 * 1000;
+    const rateLimitedTeamIds = new Set<string>();
+    const summaryTeamIds = new Set(newSummaries.map((s) => s.teamId));
+
+    for (const teamId of summaryTeamIds) {
+      const count = db.countRecentSparksForTeam(teamId, dayMs);
+      if (count >= CONFIG.SPARK_MAX_PER_CAMPFIRE_PER_DAY) {
+        rateLimitedTeamIds.add(teamId);
+      }
+    }
+
+    // If all teams are rate-limited, skip
+    if ([...summaryTeamIds].every((id) => rateLimitedTeamIds.has(id))) {
+      console.log('[Sparks] All involved teams are rate-limited, skipping detection');
+      return;
+    }
+
+    // Build team name map
+    const teamMap = new Map(teams.map((t) => [t.teamId, t]));
+
+    try {
+      const candidates = await callSparkDetection(
+        newSummaries,
+        teamMap,
+        orgContext,
+        activeSparks,
+        dismissedSparks,
+      );
+
+      let created = 0;
+      let refreshed = 0;
+
+      for (const candidate of candidates) {
+        if (candidate.confidence < CONFIG.SPARK_MIN_CONFIDENCE) continue;
+
+        // Skip if any involved team is rate-limited
+        const candidateTeamIds = candidate.teamConnections.map(
+          (tc: { teamId: string }) => tc.teamId,
+        );
+        if (candidateTeamIds.some((id: string) => rateLimitedTeamIds.has(id))) continue;
+
+        // Content hash for dedup
+        const sortedTeamIds = [...candidateTeamIds].sort();
+        const normalizedSummary = candidate.summary.toLowerCase().replace(/\s+/g, ' ').trim();
+        const contentHash = createHash('sha256')
+          .update(sortedTeamIds.join(':') + ':' + normalizedSummary)
+          .digest('hex')
+          .slice(0, 16);
+
+        // Check for existing spark with same hash
+        const existingByHash = db.getSparkByContentHash(contentHash);
+        if (existingByHash) {
+          db.refreshSpark(existingByHash.id);
+          refreshed++;
+          continue;
+        }
+
+        // Check for continuation of existing spark between same team pair
+        if (candidate.isContinuationOf) {
+          const existingSpark = activeSparks.find(
+            (s) => s.id === candidate.isContinuationOf,
+          );
+          if (existingSpark) {
+            db.refreshSpark(existingSpark.id);
+            refreshed++;
+            continue;
+          }
+        }
+
+        // Check for active sparks between the same team pair
+        if (candidateTeamIds.length === 2) {
+          const pairSparks = db.getActiveSparksByTeamPair(
+            candidateTeamIds[0],
+            candidateTeamIds[1],
+            orgId,
+          );
+          if (pairSparks.length > 0) {
+            db.refreshSpark(pairSparks[0].id);
+            refreshed++;
+            continue;
+          }
+        }
+
+        // Create new spark
+        const expiresAt = new Date(
+          Date.now() + CONFIG.SPARK_EXPIRY_HOURS * 60 * 60 * 1000,
+        ).toISOString();
+
+        db.createSpark({
+          orgId,
+          teamConnections: candidate.teamConnections,
+          summary: candidate.summary,
+          details: candidate.details,
+          suggestedAction: candidate.suggestedAction,
+          confidence: candidate.confidence,
+          status: 'active',
+          contentHash,
+          relatedSummaryIds: newSummaries.map((s) => s.id),
+          expiresAt,
+        });
+        created++;
+      }
+
+      console.log(
+        `[Sparks] Detection complete — ${created} created, ${refreshed} refreshed`,
+      );
+    } catch (err) {
+      console.error('[Sparks] Detection API call failed:', err);
+    }
+  }
+}
+
+// --- Spark detection Claude API call ---
+
+interface SparkCandidate {
+  teamConnections: Array<{
+    teamId: string;
+    teamName: string;
+    perspective: string;
+    actionRequired: boolean;
+    viewedBy: string[];
+  }>;
+  summary: string;
+  details: string;
+  suggestedAction?: string;
+  confidence: number;
+  isContinuationOf: string | null;
+}
+
+async function callSparkDetection(
+  summaries: Summary[],
+  teamMap: Map<string, Team>,
+  orgContext: { mission: string; roadmap: string },
+  activeSparks: Spark[],
+  dismissedSparks: Spark[],
+): Promise<SparkCandidate[]> {
+  const client = getAnthropicClient();
+  if (!client) return [];
+
+  const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20250514';
+
+  const systemPrompt = `You are the Campfires cross-team intelligence detector. You analyze team summaries to find meaningful connections between teams.
+
+IMPORTANT GUIDELINES:
+- Return an empty JSON array [] when no strong connections exist. Most of the time, teams are working independently and that's fine.
+- Only surface connections that would genuinely benefit from cross-team awareness or coordination.
+- Do NOT flag superficial overlap (e.g., "both teams use TypeScript" or "both teams are working on features").
+- DO flag: shared dependencies, conflicting approaches, duplicated effort, blocking issues, complementary work that could be integrated.
+
+CONFIDENCE CALIBRATION:
+- 0.9+ = Teams MUST talk — blocking issue, conflicting changes, or major opportunity
+- 0.7-0.89 = Worth noting — useful awareness, potential for coordination
+- Below 0.7 = Do not return
+
+ASYMMETRIC PERSPECTIVES:
+Each team connection should have a unique "perspective" — what this connection means FROM that team's point of view. Different teams care about different aspects.
+
+If a detected connection is essentially a continuation of an existing active spark, set isContinuationOf to that spark's ID.
+
+Respond ONLY with a valid JSON array. Each element:
+{
+  "teamConnections": [
+    { "teamId": "...", "teamName": "...", "perspective": "...", "actionRequired": true/false }
+  ],
+  "summary": "One-line description of the connection",
+  "details": "2-3 sentences explaining why this matters",
+  "suggestedAction": "Optional concrete next step",
+  "confidence": 0.7-1.0,
+  "isContinuationOf": null or "sparkId"
+}`;
+
+  let userMessage = '';
+  if (orgContext.mission) userMessage += `Org mission: ${orgContext.mission}\n`;
+  if (orgContext.roadmap) userMessage += `Org roadmap: ${orgContext.roadmap}\n`;
+  userMessage += '\n--- Team Summaries This Cycle ---\n';
+
+  for (const s of summaries) {
+    const team = teamMap.get(s.teamId);
+    userMessage += `\nTeam: ${team?.name || 'Unknown'} (ID: ${s.teamId})\n`;
+    userMessage += `One-liner: ${s.oneLiner}\n`;
+    userMessage += `Content: ${s.content}\n`;
+  }
+
+  if (activeSparks.length > 0) {
+    userMessage += '\n--- Active Sparks (for continuation detection) ---\n';
+    for (const spark of activeSparks) {
+      const teamNames = spark.teamConnections.map((tc) => tc.teamName).join(' + ');
+      userMessage += `Spark ${spark.id}: ${teamNames} — ${spark.summary}\n`;
+    }
+  }
+
+  if (dismissedSparks.length > 0) {
+    userMessage += '\n--- Recently Dismissed Sparks (avoid re-surfacing) ---\n';
+    for (const spark of dismissedSparks) {
+      const teamNames = spark.teamConnections.map((tc) => tc.teamName).join(' + ');
+      userMessage += `Dismissed: ${teamNames} — ${spark.summary}\n`;
+    }
+  }
+
+  const response = await client.messages.create({
+    model,
+    max_tokens: 1024,
+    temperature: 0.3,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userMessage }],
+  });
+
+  const textBlock = response.content.find((block) => block.type === 'text');
+  if (!textBlock || textBlock.type !== 'text') return [];
+
+  try {
+    const parsed = JSON.parse(textBlock.text);
+    if (!Array.isArray(parsed)) return [];
+
+    // Add viewedBy arrays to team connections
+    return parsed.map((c: SparkCandidate) => ({
+      ...c,
+      teamConnections: c.teamConnections.map((tc) => ({
+        ...tc,
+        viewedBy: [],
+      })),
+    }));
+  } catch {
+    console.error('[Sparks] Failed to parse detection response');
+    return [];
   }
 }

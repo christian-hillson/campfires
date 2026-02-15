@@ -467,17 +467,27 @@ export function createRouter(): Router {
       res.setHeader('Connection', 'keep-alive');
       res.flushHeaders();
 
-      // Send initial summaries
+      // Send initial summaries and active sparks
       const summaries = db.getSummaries(id, { limit: 10 });
-      res.write(`data: ${JSON.stringify({ type: 'initial', summaries })}\n\n`);
+      const sparks = db.getSparks(id, { status: 'active', limit: 10 });
+      res.write(`data: ${JSON.stringify({ type: 'initial', summaries, sparks })}\n\n`);
 
-      // Poll for new summaries
+      // Poll for new summaries and sparks
       let lastCheck = new Date().toISOString();
+      let lastSparkCheck = new Date().toISOString();
       const interval = setInterval(() => {
         const newSummaries = db.getSummaries(id, { since: lastCheck });
         if (newSummaries.length > 0) {
           res.write(`data: ${JSON.stringify({ type: 'update', summaries: newSummaries })}\n\n`);
           lastCheck = new Date().toISOString();
+        }
+
+        const newSparks = db.getSparks(id, { since: lastSparkCheck });
+        if (newSparks.length > 0) {
+          for (const spark of newSparks) {
+            res.write(`data: ${JSON.stringify({ type: 'spark', spark, isNew: true })}\n\n`);
+          }
+          lastSparkCheck = new Date().toISOString();
         }
       }, CONFIG.SSE_POLL_INTERVAL);
 
@@ -493,6 +503,71 @@ export function createRouter(): Router {
       });
     },
   );
+
+  // ============================================
+  // Spark Endpoints
+  // ============================================
+
+  router.get('/orgs/:orgId/sparks', optionalAuthMiddleware, (req: Request, res: Response) => {
+    const { orgId } = req.params;
+    const status = (req.query.status as string) || 'active';
+    const teamId = req.query.teamId as string | undefined;
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+
+    const db = getPersistence();
+    const org = db.getOrg(orgId);
+    if (!org) {
+      res.status(404).json({ error: 'Org not found' });
+      return;
+    }
+
+    const sparks = db.getSparks(orgId, {
+      status: status as 'active' | 'dismissed' | 'expired',
+      teamId,
+      limit,
+    });
+    res.json({ sparks });
+  });
+
+  router.get('/orgs/:orgId/sparks/log', optionalAuthMiddleware, (req: Request, res: Response) => {
+    const { orgId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+    const before = req.query.before as string | undefined;
+
+    const db = getPersistence();
+    const org = db.getOrg(orgId);
+    if (!org) {
+      res.status(404).json({ error: 'Org not found' });
+      return;
+    }
+
+    const result = db.getSparkLog(orgId, { limit, before });
+    res.json(result);
+  });
+
+  router.post('/sparks/:sparkId/dismiss', authMiddleware, (req: Request, res: Response) => {
+    const { sparkId } = req.params;
+    const caller = req.user!;
+
+    const db = getPersistence();
+    db.dismissSpark(sparkId, caller.userId);
+    res.json({ status: 'ok' });
+  });
+
+  router.post('/sparks/:sparkId/view', authMiddleware, (req: Request, res: Response) => {
+    const { sparkId } = req.params;
+    const teamId = req.body?.teamId;
+    const caller = req.user!;
+
+    if (!teamId) {
+      res.status(400).json({ error: 'teamId required' });
+      return;
+    }
+
+    const db = getPersistence();
+    db.markViewedSpark(sparkId, teamId, caller.userId);
+    res.json({ status: 'ok' });
+  });
 
   // ============================================
   // Agent Endpoints

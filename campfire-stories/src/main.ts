@@ -1,5 +1,5 @@
-import type { Org, Team, Summary, AwarenessState, User } from '@campfires/shared';
-import { renderSummaryFeed, updateSummaryFeed } from './components/summary-feed.js';
+import type { Org, Team, Summary, AwarenessState, User, Spark } from '@campfires/shared';
+import { renderSummaryFeed, updateSummaryFeed, addSparkToFeed } from './components/summary-feed.js';
 import { renderDetailView } from './components/detail-view.js';
 import { renderHeader, type ViewMode } from './components/header.js';
 import { MapView } from './map/index.js';
@@ -24,6 +24,7 @@ export interface AppState {
   org: Org;
   teams: Team[];
   summaries: Summary[];
+  sparks: Spark[];
   members: Map<string, User[]>;
   awareness: Map<string, AwarenessState[]>;
   eventSource: EventSource | null;
@@ -119,6 +120,7 @@ function showMap(content: HTMLElement): void {
     org: state.org,
     teams: state.teams,
     summaries: state.summaries,
+    sparks: state.sparks,
     members: state.members,
     awareness: state.awareness,
     serverUrl: SERVER_URL,
@@ -134,6 +136,13 @@ function connectSSE(orgId: string): EventSource {
   es.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
+
+      if (data.type === 'initial' && state) {
+        if (data.sparks) {
+          state.sparks = data.sparks;
+        }
+      }
+
       if (data.type === 'update' && data.summaries && state) {
         state.summaries = [...data.summaries, ...state.summaries];
 
@@ -144,6 +153,23 @@ function connectSSE(orgId: string): EventSource {
 
         if (mapView) {
           mapView.updateSummaries(data.summaries);
+        }
+      }
+
+      if (data.type === 'spark' && data.spark && state) {
+        state.sparks = [data.spark, ...state.sparks];
+
+        if (data.isNew) {
+          // Trigger arc animation on map
+          if (mapView) {
+            mapView.triggerSparkArc(data.spark);
+          }
+
+          // Add momentary entry to fireside feed
+          const content = app.querySelector('.stories-content');
+          if (content && state.currentView === 'feed') {
+            addSparkToFeed(content as HTMLElement, data.spark, state.teams);
+          }
         }
       }
     } catch {
@@ -245,6 +271,7 @@ async function init(): Promise<void> {
       org,
       teams,
       summaries,
+      sparks: [],
       members,
       awareness,
       eventSource: connectSSE(orgId),

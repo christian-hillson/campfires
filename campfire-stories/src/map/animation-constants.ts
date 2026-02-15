@@ -80,3 +80,8 @@ export const ORB_DEPOSIT_DURATION = 0.3;
 export const MILESTONE_JUMP_DURATION = 0.4;
 export const MILESTONE_PARTICLE_DURATION = 1.0;
 export const MILESTONE_GOLD_DURATION = 0.5;
+
+// Sprint 12: Spark arcs
+export const SPARK_ARC_DURATION = 3.0; // total animation time (seconds)
+export const SPARK_ARC_HEIGHT = 40; // pixels above midpoint
+export const SPARK_BADGE_PERSIST = 300; // seconds (5 min) badge visible after arc

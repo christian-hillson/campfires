@@ -119,6 +119,45 @@ export interface SessionTranscript {
   updatedAt: string;
 }
 
+/**
+ * Spark Status
+ */
+export type SparkStatus = 'active' | 'dismissed' | 'expired';
+
+/**
+ * Spark Team Connection
+ * Per-team perspective on a cross-team spark
+ */
+export interface SparkTeamConnection {
+  teamId: string;
+  teamName: string;
+  perspective: string;
+  actionRequired: boolean;
+  viewedBy: string[];
+}
+
+/**
+ * Spark (Persisted)
+ * Cross-team intelligence detected by AI
+ */
+export interface Spark {
+  id: string;
+  orgId: string;
+  teamConnections: SparkTeamConnection[];
+  summary: string;
+  details: string;
+  suggestedAction?: string;
+  confidence: number;
+  status: SparkStatus;
+  contentHash: string;
+  relatedSummaryIds: string[];
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string;
+  dismissedAt?: string;
+  dismissedBy?: string;
+}
+
 // ============================================
 // Real-Time Models (In-Memory via Yjs)
 // ============================================
@@ -270,4 +309,10 @@ export const CONFIG = {
   // Session tracking
   SESSION_STALE_TIMEOUT: 10 * 60 * 1000, // 10 min without heartbeat = stale
   TRANSCRIPT_DELTA_MAX_SIZE: 500_000, // 500KB per delta
+
+  // Spark detection
+  SPARK_MAX_PER_CAMPFIRE_PER_DAY: 1,
+  SPARK_MIN_CONFIDENCE: 0.7,
+  SPARK_EXPIRY_HOURS: 72,
+  SPARK_FADE_DURATION: 15_000, // 15s momentary entry in fireside
 } as const;

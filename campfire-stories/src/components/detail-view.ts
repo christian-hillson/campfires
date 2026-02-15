@@ -1,4 +1,4 @@
-import type { User, ActivityEvent, Summary, Team, AwarenessState } from '@campfires/shared';
+import type { User, ActivityEvent, Summary, Team, AwarenessState, Spark } from '@campfires/shared';
 
 export interface DetailContext {
   team: Team;
@@ -236,6 +236,83 @@ function renderStories(events: ActivityEvent[], members: User[]): HTMLElement {
   return section;
 }
 
+function esc2(str: string): string {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function renderSparks(
+  sparks: Spark[],
+  teamId: string,
+  teams: Team[],
+  serverUrl: string,
+): HTMLElement {
+  const section = document.createElement('div');
+  section.className = 'detail-section panel-sparks';
+
+  if (sparks.length === 0) return section;
+
+  const heading = document.createElement('h3');
+  heading.textContent = '\u26A1 Connections';
+  section.appendChild(heading);
+
+  const teamMap = new Map(teams.map((t) => [t.teamId, t.name]));
+
+  for (const spark of sparks) {
+    const entry = document.createElement('div');
+    entry.className = 'panel-spark-entry';
+
+    const myConnection = spark.teamConnections.find((tc) => tc.teamId === teamId);
+    const otherConnections = spark.teamConnections.filter((tc) => tc.teamId !== teamId);
+    const otherNames = otherConnections
+      .map((tc) => teamMap.get(tc.teamId) || tc.teamName)
+      .join(', ');
+
+    const header = document.createElement('div');
+    header.className = 'spark-entry-header';
+    header.innerHTML = `<span class="spark-icon">\u26A1</span> <strong>${esc2(otherNames)}</strong>`;
+    entry.appendChild(header);
+
+    const perspective = document.createElement('div');
+    perspective.className = 'spark-entry-perspective';
+    perspective.textContent = myConnection?.perspective || spark.summary;
+    entry.appendChild(perspective);
+
+    if (spark.suggestedAction && myConnection?.actionRequired) {
+      const action = document.createElement('div');
+      action.className = 'spark-entry-action';
+      action.textContent = `\u2192 ${spark.suggestedAction}`;
+      entry.appendChild(action);
+    }
+
+    const dismissBtn = document.createElement('button');
+    dismissBtn.className = 'spark-dismiss-btn';
+    dismissBtn.textContent = '\u2715';
+    dismissBtn.title = 'Dismiss';
+    dismissBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      fetch(`${serverUrl}/api/sparks/${spark.id}/dismiss`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId }),
+      }).then(() => entry.remove());
+    });
+    entry.appendChild(dismissBtn);
+
+    // Mark as viewed
+    fetch(`${serverUrl}/api/sparks/${spark.id}/view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ teamId }),
+    }).catch(() => {});
+
+    section.appendChild(entry);
+  }
+
+  return section;
+}
+
 export async function renderDetailView(container: HTMLElement, ctx: DetailContext): Promise<void> {
   container.innerHTML = '';
 
@@ -274,10 +351,11 @@ export async function renderDetailView(container: HTMLElement, ctx: DetailContex
   container.appendChild(view);
 
   try {
-    const [membersRes, activityRes, summariesRes] = await Promise.all([
+    const [membersRes, activityRes, summariesRes, sparksRes] = await Promise.all([
       fetch(`${ctx.serverUrl}/api/teams/${ctx.team.teamId}/members`),
       fetch(`${ctx.serverUrl}/api/teams/${ctx.team.teamId}/activity?limit=20`),
       fetch(`${ctx.serverUrl}/api/orgs/${ctx.orgId}/summaries`),
+      fetch(`${ctx.serverUrl}/api/orgs/${ctx.orgId}/sparks?teamId=${ctx.team.teamId}&status=active`),
     ]);
 
     const members: User[] = membersRes.ok ? await membersRes.json() : [];
@@ -285,7 +363,25 @@ export async function renderDetailView(container: HTMLElement, ctx: DetailContex
     const allSummaries: Summary[] = summariesRes.ok ? await summariesRes.json() : [];
     const teamSummaries = allSummaries.filter((s) => s.teamId === ctx.team.teamId);
 
+    let sparks: Spark[] = [];
+    if (sparksRes.ok) {
+      const sparksData = await sparksRes.json();
+      sparks = sparksData.sparks || [];
+    }
+
+    // Get all teams for context
+    let allTeams: Team[] = [];
+    try {
+      const teamsRes = await fetch(`${ctx.serverUrl}/api/orgs/${ctx.orgId}/teams`);
+      if (teamsRes.ok) allTeams = await teamsRes.json();
+    } catch { /* ignore */ }
+
     loading.remove();
+
+    // Sparks section (before other content)
+    if (sparks.length > 0) {
+      view.appendChild(renderSparks(sparks, ctx.team.teamId, allTeams, ctx.serverUrl));
+    }
 
     if (ctx.awareness && ctx.awareness.length > 0) {
       view.appendChild(renderPresence(ctx.awareness));

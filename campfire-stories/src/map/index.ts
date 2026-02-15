@@ -1,4 +1,4 @@
-import type { Org, Team, Summary, User, AwarenessState, ActivityEvent } from '@campfires/shared';
+import type { Org, Team, Summary, User, AwarenessState, ActivityEvent, Spark } from '@campfires/shared';
 import {
   PIXEL_SCALE,
   drawCampfire,
@@ -8,6 +8,8 @@ import {
   drawDayNightOverlay,
   drawStars,
   drawPulseRing,
+  drawSparkArc,
+  drawSparkBadge,
 } from './renderer.js';
 import {
   drawGround,
@@ -93,6 +95,8 @@ import {
   GOLEM_SPEED_MULT,
   AFTERIMAGE_DURATION,
   GOLEM_GLOW_WINDOW,
+  SPARK_ARC_DURATION,
+  SPARK_BADGE_PERSIST,
 } from './animation-constants.js';
 import { ActivityFeed } from './activity-feed.js';
 
@@ -106,11 +110,21 @@ export interface MapViewConfig {
   org: Org;
   teams: Team[];
   summaries: Summary[];
+  sparks: Spark[];
   members: Map<string, User[]>;
   awareness: Map<string, AwarenessState[]>;
   serverUrl: string;
   homeTeamId?: string;
   onTeamSelect?: (teamId: string) => void;
+}
+
+interface SparkArcState {
+  spark: Spark;
+  startTime: number;
+  fromX: number;
+  fromY: number;
+  toX: number;
+  toY: number;
 }
 
 export class MapView {
@@ -140,6 +154,8 @@ export class MapView {
   private recentEvents: { teamId: string; timestamp: number }[] = [];
   private milestones: MilestoneCelebration[] = [];
   private castingSprites = new Set<string>(); // userId of humans currently casting for golem spawn
+  private sparkArcs: SparkArcState[] = [];
+  private sparkBadges = new Map<string, number>(); // teamId → badge start time
 
   // Map dimensions in pixel-art units
   private mapWidth = 500;
@@ -176,6 +192,18 @@ export class MapView {
       this.config.serverUrl,
       (events) => this.handleActivityEvents(events),
     );
+
+    // Set initial spark badges from config (no arc animation)
+    const now = performance.now() / 1000;
+    for (const spark of this.config.sparks) {
+      if (spark.status !== 'active') continue;
+      for (const tc of spark.teamConnections) {
+        if (!this.sparkBadges.has(tc.teamId)) {
+          this.sparkBadges.set(tc.teamId, now);
+        }
+      }
+    }
+
     this.render(0);
 
     // Debug helper for manual event injection
@@ -595,15 +623,21 @@ export class MapView {
 
   private async fetchPanelData(teamId: string): Promise<void> {
     try {
-      const [membersRes, awarenessRes, summariesRes] = await Promise.all([
+      const [membersRes, awarenessRes, summariesRes, sparksRes] = await Promise.all([
         fetch(`${this.config.serverUrl}/api/teams/${teamId}/members`),
         fetch(`${this.config.serverUrl}/api/teams/${teamId}/awareness`),
         fetch(`${this.config.serverUrl}/api/orgs/${this.config.org.orgId}/summaries`),
+        fetch(`${this.config.serverUrl}/api/orgs/${this.config.org.orgId}/sparks?teamId=${teamId}&status=active`),
       ]);
 
       const members: User[] = membersRes.ok ? await membersRes.json() : [];
       const awareness: AwarenessState[] = awarenessRes.ok ? await awarenessRes.json() : [];
       const allSummaries: Summary[] = summariesRes.ok ? await summariesRes.json() : [];
+      let teamSparks: Spark[] = [];
+      if (sparksRes.ok) {
+        const sparksData = await sparksRes.json();
+        teamSparks = sparksData.sparks || [];
+      }
       const teamSummaries = allSummaries
         .filter((s) => s.teamId === teamId)
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -652,7 +686,24 @@ export class MapView {
         .map((a) => `<div class="panel-member">${statusDot('visitor')}<span class="panel-member-dot" style="background:${esc(a.color)}"></span>${esc(a.displayName)}</div>`)
         .join('');
 
+      // Sparks section
+      const sparksHtml = teamSparks.length > 0
+        ? `<div class="panel-sparks">${teamSparks.map((spark) => {
+            const otherTeams = spark.teamConnections
+              .filter((tc: { teamId: string }) => tc.teamId !== teamId)
+              .map((tc: { teamName: string }) => esc(tc.teamName))
+              .join(', ');
+            const myPerspective = spark.teamConnections.find((tc: { teamId: string }) => tc.teamId === teamId);
+            return `<div class="panel-spark-entry">
+              <span class="spark-icon">\u26A1</span> <strong>${otherTeams}</strong>
+              <div class="spark-perspective">${esc(myPerspective?.perspective || spark.summary)}</div>
+              ${spark.suggestedAction && myPerspective?.actionRequired ? `<div class="spark-action">\u2192 ${esc(spark.suggestedAction)}</div>` : ''}
+            </div>`;
+          }).join('')}</div>`
+        : '';
+
       body.innerHTML = `
+        ${sparksHtml}
         ${summaryHtml}
         <div class="panel-stats">${members.length} member${members.length !== 1 ? 's' : ''} \u00b7 ${onlineCount} online</div>
         <div class="panel-members">${membersHtml}${visitorsHtml}</div>
@@ -984,6 +1035,45 @@ export class MapView {
     this.milestones.push(createMilestoneCelebration(cf.x, cf.y, cf.fireSize, cf.color, time));
   }
 
+  triggerSparkArc(spark: Spark): void {
+    if (spark.teamConnections.length < 2) return;
+
+    const time = performance.now() / 1000;
+    const tc0 = spark.teamConnections[0];
+    const tc1 = spark.teamConnections[1];
+
+    const cf0 = this.campfires.find((c) => c.teamId === tc0.teamId);
+    const cf1 = this.campfires.find((c) => c.teamId === tc1.teamId);
+    if (!cf0 || !cf1) return;
+
+    this.sparkArcs.push({
+      spark,
+      startTime: time,
+      fromX: cf0.x,
+      fromY: cf0.y,
+      toX: cf1.x,
+      toY: cf1.y,
+    });
+
+    // Set spark badges on both campfires
+    this.sparkBadges.set(tc0.teamId, time);
+    this.sparkBadges.set(tc1.teamId, time);
+
+    // Floating text at arc midpoint
+    const midX = (cf0.x + cf1.x) / 2;
+    const midY = (cf0.y + cf1.y) / 2 - 20;
+    const shortSummary = spark.summary.length > 40
+      ? spark.summary.slice(0, 37) + '...'
+      : spark.summary;
+    this.floatingTexts.push({
+      text: `\u26A1 ${shortSummary}`,
+      x: midX,
+      y: midY,
+      startTime: time,
+      color: '#fbbf24',
+    });
+  }
+
   private render = (timestamp: number): void => {
     const time = timestamp / 1000;
     const dt = this.lastRenderTime > 0 ? time - this.lastRenderTime : 0.016;
@@ -1145,6 +1235,13 @@ export class MapView {
       }
     }
 
+    // Draw spark arcs (filter expired)
+    this.sparkArcs = this.sparkArcs.filter((a) => time - a.startTime < SPARK_ARC_DURATION);
+    for (const arc of this.sparkArcs) {
+      const progress = (time - arc.startTime) / SPARK_ARC_DURATION;
+      drawSparkArc(ctx, arc.fromX, arc.fromY, arc.toX, arc.toY, progress, time);
+    }
+
     // Build animated sprite render states
     const spriteRenders: { sprite: AnimatedSprite; state: SpriteRenderState }[] = [];
     for (const sprite of this.animatedSprites.values()) {
@@ -1185,6 +1282,17 @@ export class MapView {
           : undefined;
         drawCampfire(ctx, cf.x, cf.y, cf.fireSize, cf.color, time, dayNight.glowMultiplier, fm);
         drawTeamLabel(ctx, cf.x, cf.y, cf.name, cf.fireSize);
+
+        // Spark badge
+        const badgeStart = this.sparkBadges.get(cf.teamId);
+        if (badgeStart !== undefined) {
+          const badgeElapsed = time - badgeStart;
+          if (badgeElapsed < SPARK_BADGE_PERSIST) {
+            drawSparkBadge(ctx, cf.x, cf.y, cf.fireSize, badgeElapsed);
+          } else {
+            this.sparkBadges.delete(cf.teamId);
+          }
+        }
       } else if (item.type === 'decoration') {
         const dec = item.data as { x: number; y: number; type: string };
         drawWorkstation(ctx, dec.x, dec.y, dec.type, time);

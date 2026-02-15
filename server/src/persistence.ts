@@ -8,9 +8,13 @@ import type {
   ActivityEvent,
   Summary,
   SessionTranscript,
+  Spark,
+  SparkTeamConnection,
+  SparkStatus,
   UserType,
   ActivityEventType,
 } from '@campfires/shared';
+import { CONFIG } from '@campfires/shared';
 
 const AVATAR_COLORS = [
   '#FF6B6B',
@@ -131,6 +135,31 @@ export class Persistence {
         ON session_transcripts(user_id, created_at);
       CREATE INDEX IF NOT EXISTS idx_session_transcripts_incomplete
         ON session_transcripts(is_complete, updated_at);
+    `);
+
+    // Sparks table
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS sparks (
+        id TEXT PRIMARY KEY,
+        orgId TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        details TEXT NOT NULL,
+        suggestedAction TEXT,
+        confidence REAL NOT NULL,
+        status TEXT NOT NULL DEFAULT 'active',
+        contentHash TEXT NOT NULL,
+        relatedSummaryIds TEXT NOT NULL DEFAULT '[]',
+        teamConnections TEXT NOT NULL DEFAULT '[]',
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL,
+        expiresAt TEXT NOT NULL,
+        dismissedAt TEXT,
+        dismissedBy TEXT,
+        FOREIGN KEY (orgId) REFERENCES orgs(orgId)
+      );
+      CREATE INDEX IF NOT EXISTS idx_sparks_org_status ON sparks(orgId, status);
+      CREATE INDEX IF NOT EXISTS idx_sparks_content_hash ON sparks(contentHash);
+      CREATE INDEX IF NOT EXISTS idx_sparks_expires ON sparks(expiresAt);
     `);
 
     // Migrations for parentUserId (idempotent)
@@ -834,6 +863,206 @@ export class Persistence {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     }));
+  }
+
+  // ============================================
+  // Spark Operations
+  // ============================================
+
+  createSpark(spark: Omit<Spark, 'id' | 'createdAt' | 'updatedAt'>): Spark {
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    this.db
+      .prepare(
+        `INSERT INTO sparks (id, orgId, summary, details, suggestedAction, confidence, status, contentHash, relatedSummaryIds, teamConnections, createdAt, updatedAt, expiresAt, dismissedAt, dismissedBy)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        spark.orgId,
+        spark.summary,
+        spark.details,
+        spark.suggestedAction || null,
+        spark.confidence,
+        spark.status,
+        spark.contentHash,
+        JSON.stringify(spark.relatedSummaryIds),
+        JSON.stringify(spark.teamConnections),
+        now,
+        now,
+        spark.expiresAt,
+        spark.dismissedAt || null,
+        spark.dismissedBy || null,
+      );
+
+    return {
+      ...spark,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
+
+  getSparks(
+    orgId: string,
+    options: { status?: SparkStatus; teamId?: string; limit?: number; since?: string } = {},
+  ): Spark[] {
+    const { status = 'active', teamId, limit = 20, since } = options;
+
+    let query = `SELECT * FROM sparks WHERE orgId = ?`;
+    const params: (string | number)[] = [orgId];
+
+    if (status) {
+      query += ` AND status = ?`;
+      params.push(status);
+    }
+
+    if (since) {
+      query += ` AND createdAt > ?`;
+      params.push(since);
+    }
+
+    query += ` ORDER BY createdAt DESC LIMIT ?`;
+    params.push(limit);
+
+    const rows = this.db.prepare(query).all(...params) as Array<Record<string, unknown>>;
+    const sparks = rows.map((r) => this.rowToSpark(r));
+
+    if (teamId) {
+      return sparks.filter((s) =>
+        s.teamConnections.some((tc) => tc.teamId === teamId),
+      );
+    }
+
+    return sparks;
+  }
+
+  getSparkLog(
+    orgId: string,
+    options: { limit?: number; before?: string } = {},
+  ): { sparks: Spark[]; hasMore: boolean } {
+    const { limit = 50, before } = options;
+
+    let query = `SELECT * FROM sparks WHERE orgId = ?`;
+    const params: (string | number)[] = [orgId];
+
+    if (before) {
+      query += ` AND createdAt < ?`;
+      params.push(before);
+    }
+
+    query += ` ORDER BY createdAt DESC LIMIT ?`;
+    params.push(limit + 1);
+
+    const rows = this.db.prepare(query).all(...params) as Array<Record<string, unknown>>;
+    const hasMore = rows.length > limit;
+    const sparks = rows.slice(0, limit).map((r) => this.rowToSpark(r));
+
+    return { sparks, hasMore };
+  }
+
+  getSparkByContentHash(contentHash: string): Spark | null {
+    const row = this.db
+      .prepare(`SELECT * FROM sparks WHERE contentHash = ? AND status = 'active'`)
+      .get(contentHash) as Record<string, unknown> | undefined;
+
+    return row ? this.rowToSpark(row) : null;
+  }
+
+  getActiveSparksByTeamPair(teamAId: string, teamBId: string, orgId: string): Spark[] {
+    const rows = this.db
+      .prepare(`SELECT * FROM sparks WHERE orgId = ? AND status = 'active'`)
+      .all(orgId) as Array<Record<string, unknown>>;
+
+    return rows
+      .map((r) => this.rowToSpark(r))
+      .filter((s) => {
+        const teamIds = s.teamConnections.map((tc) => tc.teamId);
+        return teamIds.includes(teamAId) && teamIds.includes(teamBId);
+      });
+  }
+
+  refreshSpark(sparkId: string): void {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + CONFIG.SPARK_EXPIRY_HOURS * 60 * 60 * 1000);
+
+    this.db
+      .prepare(`UPDATE sparks SET updatedAt = ?, expiresAt = ? WHERE id = ?`)
+      .run(now.toISOString(), expiresAt.toISOString(), sparkId);
+  }
+
+  dismissSpark(sparkId: string, userId: string): void {
+    const now = new Date().toISOString();
+    this.db
+      .prepare(
+        `UPDATE sparks SET status = 'dismissed', dismissedAt = ?, dismissedBy = ?, updatedAt = ? WHERE id = ?`,
+      )
+      .run(now, userId, now, sparkId);
+  }
+
+  markViewedSpark(sparkId: string, teamId: string, userId: string): void {
+    const row = this.db
+      .prepare(`SELECT teamConnections FROM sparks WHERE id = ?`)
+      .get(sparkId) as { teamConnections: string } | undefined;
+
+    if (!row) return;
+
+    const connections: SparkTeamConnection[] = JSON.parse(row.teamConnections);
+    for (const tc of connections) {
+      if (tc.teamId === teamId && !tc.viewedBy.includes(userId)) {
+        tc.viewedBy.push(userId);
+      }
+    }
+
+    this.db
+      .prepare(`UPDATE sparks SET teamConnections = ?, updatedAt = ? WHERE id = ?`)
+      .run(JSON.stringify(connections), new Date().toISOString(), sparkId);
+  }
+
+  expireOldSparks(): number {
+    const now = new Date().toISOString();
+    const result = this.db
+      .prepare(
+        `UPDATE sparks SET status = 'expired', updatedAt = ? WHERE expiresAt < ? AND status = 'active'`,
+      )
+      .run(now, now);
+
+    return result.changes;
+  }
+
+  countRecentSparksForTeam(teamId: string, windowMs: number): number {
+    const since = new Date(Date.now() - windowMs).toISOString();
+    const rows = this.db
+      .prepare(
+        `SELECT teamConnections FROM sparks WHERE status = 'active' AND createdAt > ?`,
+      )
+      .all(since) as Array<{ teamConnections: string }>;
+
+    return rows.filter((r) => {
+      const connections: SparkTeamConnection[] = JSON.parse(r.teamConnections);
+      return connections.some((tc) => tc.teamId === teamId);
+    }).length;
+  }
+
+  private rowToSpark(row: Record<string, unknown>): Spark {
+    return {
+      id: row.id as string,
+      orgId: row.orgId as string,
+      summary: row.summary as string,
+      details: row.details as string,
+      suggestedAction: (row.suggestedAction as string) || undefined,
+      confidence: row.confidence as number,
+      status: row.status as SparkStatus,
+      contentHash: row.contentHash as string,
+      relatedSummaryIds: JSON.parse((row.relatedSummaryIds as string) || '[]'),
+      teamConnections: JSON.parse((row.teamConnections as string) || '[]'),
+      createdAt: row.createdAt as string,
+      updatedAt: row.updatedAt as string,
+      expiresAt: row.expiresAt as string,
+      dismissedAt: (row.dismissedAt as string) || undefined,
+      dismissedBy: (row.dismissedBy as string) || undefined,
+    };
   }
 
   close(): void {

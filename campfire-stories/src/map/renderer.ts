@@ -1,5 +1,5 @@
 import type { FireLevelMultipliers, FireLevel } from './animation-constants.js';
-import { PULSE_DURATION, PULSE_RADIUS_MULT } from './animation-constants.js';
+import { PULSE_DURATION, PULSE_RADIUS_MULT, SPARK_ARC_DURATION, SPARK_ARC_HEIGHT } from './animation-constants.js';
 import type { PulseRing } from './fire-state.js';
 
 // Low-level pixel art drawing helpers
@@ -329,5 +329,122 @@ export function drawPulseRing(
   ctx.strokeStyle = hexToRgba(teamColor, alpha);
   ctx.lineWidth = 2;
   ctx.stroke();
+  ctx.restore();
+}
+
+// ============================================
+// Spark Arc Drawing
+// ============================================
+
+const SPARK_COLOR = '#fbbf24'; // amber
+
+/** Quadratic bezier point at parameter t */
+function bezierPoint(
+  t: number,
+  x0: number, y0: number,
+  cx: number, cy: number,
+  x1: number, y1: number,
+): { x: number; y: number } {
+  const mt = 1 - t;
+  return {
+    x: mt * mt * x0 + 2 * mt * t * cx + t * t * x1,
+    y: mt * mt * y0 + 2 * mt * t * cy + t * t * y1,
+  };
+}
+
+export function drawSparkArc(
+  ctx: CanvasRenderingContext2D,
+  fromX: number,
+  fromY: number,
+  toX: number,
+  toY: number,
+  progress: number,
+  time: number,
+): void {
+  // Bezier control point at elevated midpoint
+  const midX = (fromX + toX) / 2;
+  const midY = (fromY + toY) / 2 - SPARK_ARC_HEIGHT;
+
+  // Opacity: fade in 0-0.2, hold 0.2-0.7, fade out 0.7-1.0
+  let opacity: number;
+  if (progress < 0.2) opacity = progress / 0.2;
+  else if (progress < 0.7) opacity = 1.0;
+  else opacity = 1.0 - (progress - 0.7) / 0.3;
+
+  ctx.save();
+  ctx.globalAlpha = opacity * 0.7;
+
+  // Draw dashed arc line
+  ctx.beginPath();
+  ctx.setLineDash([6, 4]);
+  ctx.moveTo(fromX * PIXEL_SCALE, fromY * PIXEL_SCALE);
+  ctx.quadraticCurveTo(
+    midX * PIXEL_SCALE,
+    midY * PIXEL_SCALE,
+    toX * PIXEL_SCALE,
+    toY * PIXEL_SCALE,
+  );
+  ctx.strokeStyle = SPARK_COLOR;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Draw ember particles traveling along the bezier
+  const particleCount = 4;
+  for (let i = 0; i < particleCount; i++) {
+    const t = ((progress * 2 + i / particleCount) % 1);
+    if (t > progress * 1.5) continue; // particles appear progressively
+    const pt = bezierPoint(t, fromX, fromY, midX, midY, toX, toY);
+    const size = 1 + Math.sin(time * 5 + i * 2) * 0.5;
+    const pAlpha = opacity * (0.6 + 0.4 * Math.sin(time * 8 + i * 3));
+    ctx.globalAlpha = pAlpha;
+    px(ctx, pt.x - size / 2, pt.y - size / 2, Math.ceil(size), Math.ceil(size), SPARK_COLOR);
+  }
+
+  // Flash at destination when progress > 0.8
+  if (progress > 0.8) {
+    const flashAlpha = (1 - (progress - 0.8) / 0.2) * 0.5;
+    ctx.globalAlpha = flashAlpha;
+    const flashR = 4 * PIXEL_SCALE;
+    const gradient = ctx.createRadialGradient(
+      toX * PIXEL_SCALE, toY * PIXEL_SCALE, 0,
+      toX * PIXEL_SCALE, toY * PIXEL_SCALE, flashR,
+    );
+    gradient.addColorStop(0, SPARK_COLOR);
+    gradient.addColorStop(1, 'transparent');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(
+      (toX - 4) * PIXEL_SCALE, (toY - 4) * PIXEL_SCALE,
+      8 * PIXEL_SCALE, 8 * PIXEL_SCALE,
+    );
+  }
+
+  ctx.restore();
+}
+
+export function drawSparkBadge(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  fireSize: number,
+  elapsed: number,
+): void {
+  // Pulse opacity between 0.6 and 1.0
+  const pulseAlpha = 0.6 + 0.4 * Math.abs(Math.sin(elapsed * 2));
+
+  ctx.save();
+  ctx.globalAlpha = pulseAlpha;
+
+  // Lightning bolt glyph above team label
+  const bx = cx + fireSize * 3 + 6;
+  const by = cy + fireSize * 6 + 8;
+
+  // Pixel-art lightning bolt (3x5 px)
+  px(ctx, bx + 1, by, 2, 1, SPARK_COLOR);
+  px(ctx, bx, by + 1, 2, 1, SPARK_COLOR);
+  px(ctx, bx - 1, by + 2, 3, 1, SPARK_COLOR);
+  px(ctx, bx, by + 3, 2, 1, SPARK_COLOR);
+  px(ctx, bx - 1, by + 4, 2, 1, SPARK_COLOR);
+
   ctx.restore();
 }

@@ -758,3 +758,322 @@ body {
   text-align: center;
   padding: 8px 0;
 }
+
+/* ============================================ */
+/* Spark Entries (Fireside Feed)                */
+/* ============================================ */
+
+.spark-entry {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  font-family: 'Silkscreen', monospace;
+  border-radius: 4px;
+  border-left: 3px solid #fbbf24;
+  background: #1a1a10;
+  margin-bottom: 2px;
+  transition: opacity 0.5s, border-color 0.5s, background 0.5s;
+}
+
+.spark-entry-new {
+  background: #1f1a0a;
+  border-color: #fbbf24;
+  box-shadow: 0 0 8px #fbbf2433, inset 0 0 12px #fbbf2411;
+  animation: sparkGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes sparkGlow {
+  from { box-shadow: 0 0 6px #fbbf2422, inset 0 0 8px #fbbf2411; }
+  to { box-shadow: 0 0 12px #fbbf2444, inset 0 0 16px #fbbf2422; }
+}
+
+.spark-entry-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.spark-entry-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.spark-entry-teams {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #d0c0a0;
+  margin-bottom: 2px;
+}
+
+.spark-entry-teams .team-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.spark-entry-summary {
+  font-size: 10px;
+  color: var(--map-text-muted);
+  line-height: 1.5;
+}
+
+/* ============================================ */
+/* Panel Sparks (Stories Panel + Detail Panel)  */
+/* ============================================ */
+
+.panel-sparks {
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--map-border);
+  padding-bottom: 8px;
+}
+
+.panel-sparks h3 {
+  color: #fbbf24;
+}
+
+.panel-spark-entry {
+  padding: 6px 0;
+  font-family: 'Silkscreen', monospace;
+  font-size: 9px;
+  color: var(--map-text-muted);
+  line-height: 1.6;
+  position: relative;
+  border-bottom: 1px solid #1a1a10;
+}
+
+.panel-spark-entry:last-child {
+  border-bottom: none;
+}
+
+.panel-spark-entry .spark-icon {
+  color: #fbbf24;
+  margin-right: 4px;
+}
+
+.panel-spark-entry strong {
+  color: #d0c0a0;
+}
+
+.spark-perspective {
+  color: var(--map-text-muted);
+  font-size: 9px;
+  margin-top: 2px;
+}
+
+.spark-action {
+  color: #fbbf24;
+  font-size: 9px;
+  margin-top: 2px;
+}
+
+.spark-entry-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--map-text);
+}
+
+.spark-entry-header .spark-icon {
+  color: #fbbf24;
+}
+
+.spark-entry-perspective {
+  font-size: 10px;
+  color: var(--map-text-muted);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.spark-entry-action {
+  font-size: 10px;
+  color: #fbbf24;
+  margin-top: 4px;
+}
+
+.spark-dismiss-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: none;
+  border: none;
+  color: var(--map-text-dim);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.panel-spark-entry:hover .spark-dismiss-btn,
+.detail-section:hover .spark-dismiss-btn {
+  opacity: 1;
+}
+
+.spark-dismiss-btn:hover {
+  color: #f85149;
+}
+
+/* ============================================ */
+/* Spark Log                                    */
+/* ============================================ */
+
+.spark-log-link {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.spark-log-btn {
+  background: none;
+  border: 1px solid var(--map-border);
+  color: #fbbf24;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Silkscreen', monospace;
+  font-size: 10px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.spark-log-btn:hover {
+  border-color: #fbbf24;
+  background: #1f1a0a;
+}
+
+.spark-log-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--map-border);
+}
+
+.spark-log-header .back-button {
+  margin-bottom: 12px;
+}
+
+.spark-log-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: #fbbf24;
+  letter-spacing: 1px;
+}
+
+.spark-log {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.spark-log-entry {
+  padding: 10px 12px;
+  font-family: 'Silkscreen', monospace;
+  border-radius: 4px;
+  border-left: 3px solid #fbbf2466;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.spark-log-entry:hover {
+  background: #1a1a10;
+}
+
+.spark-log-entry[data-status="dismissed"] {
+  opacity: 0.5;
+  border-left-color: #6e7681;
+}
+
+.spark-log-entry[data-status="expired"] {
+  opacity: 0.4;
+  border-left-color: #484f58;
+}
+
+.spark-log-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+
+.spark-log-time {
+  color: var(--map-text-dim);
+  font-size: 9px;
+  flex-shrink: 0;
+}
+
+.spark-log-teams {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #d0c0a0;
+  flex: 1;
+}
+
+.spark-log-teams .team-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.spark-badge {
+  font-size: 8px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: 'Silkscreen', monospace;
+  flex-shrink: 0;
+}
+
+.spark-badge.active {
+  background: #fbbf2422;
+  color: #fbbf24;
+}
+
+.spark-badge.dismissed {
+  background: #6e768122;
+  color: #6e7681;
+}
+
+.spark-badge.expired {
+  background: #484f5822;
+  color: #484f58;
+}
+
+.spark-log-summary {
+  font-size: 10px;
+  color: var(--map-text-muted);
+  line-height: 1.5;
+}
+
+.spark-log-details {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--map-border);
+  animation: fadeIn 0.15s ease;
+}
+
+.spark-log-detail-text {
+  font-size: 10px;
+  color: var(--map-text);
+  line-height: 1.6;
+}
+
+.spark-log-action {
+  font-size: 10px;
+  color: #fbbf24;
+  margin-top: 4px;
+}
+
+.spark-log-more {
+  text-align: center;
+  color: var(--map-text-dim);
+  font-size: 9px;
+  padding: 12px 0;
+  font-style: italic;
+}
