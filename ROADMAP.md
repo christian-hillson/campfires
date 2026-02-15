@@ -205,6 +205,8 @@ Interactive camera controls, ambient day/night lighting, and removal of the Feed
 | Map: twinkling stars at night                 | Done   | —     | 60 deterministic stars in upper 40%, visible during night/dusk phases                     |
 | Map: world-space ground rendering             | Done   | —     | `drawGround` uses world dimensions for correct rendering under camera transform           |
 | Map: hit-testing works at all zoom/pan levels | Done   | —     | `screenToWorld()` conversion for tooltips and campfire clicks                             |
+| Map: keyboard controls                        | Done   | —     | Arrow keys pan, +/- zoom, Home resets view                                                |
+| Map: smooth zoom with easing                  | Done   | —     | Target-based zoom with per-frame lerp, anchor point preserved under cursor                |
 | Remove Feed view, map-only experience         | Done   | —     | Feed/Map toggle removed from header, app defaults to map view                             |
 
 ## Not Yet Planned
@@ -217,8 +219,11 @@ These are explicitly deferred. Don't build them yet.
 - Campfire Stories notifications / follow
 - Daily digest emails
 - Agent identity config (naming, colors)
+- Map View: touch support (pinch-to-zoom, touch-drag) — low priority
 - Map View: ambient display mode (TV in the office)
 - Map View: sprite customization
+- Map View: ambient sound (campfire crackling, proximity-based)
+- Map View: campfire detail side panel redesign (replace overlay with map-native panel)
 
 ## How to Use This Doc
 

@@ -33,6 +33,8 @@ import {
   MIN_ZOOM,
   MAX_ZOOM,
   ZOOM_SPEED,
+  ZOOM_LERP,
+  PAN_SPEED,
 } from './camera.js';
 
 function esc(str: string): string {
@@ -79,6 +81,9 @@ export class MapView {
   private dragCameraStartY = 0;
   private dragDistance = 0;
   private resetTarget: { x: number; y: number; zoom: number } | null = null;
+  private zoomTarget = 1.0;
+  private zoomAnchorScreen: { x: number; y: number } | null = null;
+  private keysDown = new Set<string>();
 
   constructor(container: HTMLElement, config: MapViewConfig) {
     this.container = container;
@@ -90,6 +95,7 @@ export class MapView {
     this.computeLayout();
     this.environment = generateEnvironment(this.mapWidth, this.mapHeight, this.campfires);
     this.camera = createCamera(this.mapWidth, this.mapHeight);
+    this.zoomTarget = this.camera.zoom;
     this.attachEvents();
     this.render(0);
   }
@@ -161,6 +167,7 @@ export class MapView {
         y: this.mapHeight / 2,
         zoom: 1.0,
       };
+      this.zoomTarget = 1.0;
     });
     wrapper.appendChild(resetBtn);
 
@@ -232,60 +239,45 @@ export class MapView {
       this.computeLayout();
       this.environment = generateEnvironment(this.mapWidth, this.mapHeight, this.campfires);
       this.camera = createCamera(this.mapWidth, this.mapHeight);
+      this.zoomTarget = this.camera.zoom;
     });
     resizeObserver.observe(this.canvas.parentElement!);
 
-    // Wheel: zoom toward cursor
+    // Wheel: smooth zoom toward cursor
     this.canvas.addEventListener(
       'wheel',
       (e) => {
         e.preventDefault();
-
         const rect = this.canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-
-        // World point under cursor before zoom
-        const before = screenToWorld(
-          mx,
-          my,
-          this.camera,
-          this.canvas.width,
-          this.canvas.height,
-          PIXEL_SCALE,
-        );
-
-        // Apply zoom
+        this.zoomAnchorScreen = { x: e.clientX - rect.left, y: e.clientY - rect.top };
         const delta = e.deltaY > 0 ? -ZOOM_SPEED : ZOOM_SPEED;
-        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, this.camera.zoom + delta));
-        this.camera.zoom = newZoom;
-
-        // World point under cursor after zoom
-        const after = screenToWorld(
-          mx,
-          my,
-          this.camera,
-          this.canvas.width,
-          this.canvas.height,
-          PIXEL_SCALE,
-        );
-
-        // Adjust camera so the world point stays under cursor
-        this.camera.x += before.wx - after.wx;
-        this.camera.y += before.wy - after.wy;
-
-        this.camera = clampCamera(
-          this.camera,
-          this.mapWidth,
-          this.mapHeight,
-          this.canvas.width,
-          this.canvas.height,
-          PIXEL_SCALE,
-        );
+        this.zoomTarget = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, this.zoomTarget + delta));
         this.resetTarget = null;
       },
       { passive: false },
     );
+
+    // Keyboard: arrow keys pan, +/- zoom, Home resets
+    window.addEventListener('keydown', (e) => {
+      const key = e.key;
+      if (
+        ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '+', '=', '-', 'Home'].includes(key)
+      ) {
+        e.preventDefault();
+        this.keysDown.add(key);
+        if (key === 'Home') {
+          this.resetTarget = {
+            x: this.mapWidth / 2,
+            y: this.mapHeight / 2,
+            zoom: 1.0,
+          };
+          this.zoomTarget = 1.0;
+        }
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      this.keysDown.delete(e.key);
+    });
 
     // Mousedown: start drag
     this.canvas.addEventListener('mousedown', (e) => {
@@ -530,6 +522,7 @@ export class MapView {
         this.resetTarget.zoom,
         0.08,
       );
+      this.zoomTarget = this.resetTarget.zoom;
       const dx = Math.abs(this.camera.x - this.resetTarget.x);
       const dy = Math.abs(this.camera.y - this.resetTarget.y);
       const dz = Math.abs(this.camera.zoom - this.resetTarget.zoom);
@@ -539,6 +532,69 @@ export class MapView {
         this.camera.zoom = this.resetTarget.zoom;
         this.resetTarget = null;
       }
+    }
+
+    // Smooth zoom toward target
+    if (Math.abs(this.camera.zoom - this.zoomTarget) > 0.002) {
+      const anchor = this.zoomAnchorScreen || {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+      };
+      // World point under anchor before zoom
+      const before = screenToWorld(
+        anchor.x,
+        anchor.y,
+        this.camera,
+        canvas.width,
+        canvas.height,
+        PIXEL_SCALE,
+      );
+      this.camera.zoom += (this.zoomTarget - this.camera.zoom) * ZOOM_LERP;
+      // World point under anchor after zoom
+      const after = screenToWorld(
+        anchor.x,
+        anchor.y,
+        this.camera,
+        canvas.width,
+        canvas.height,
+        PIXEL_SCALE,
+      );
+      this.camera.x += before.wx - after.wx;
+      this.camera.y += before.wy - after.wy;
+      this.camera = clampCamera(
+        this.camera,
+        this.mapWidth,
+        this.mapHeight,
+        canvas.width,
+        canvas.height,
+        PIXEL_SCALE,
+      );
+    } else {
+      this.camera.zoom = this.zoomTarget;
+      this.zoomAnchorScreen = null;
+    }
+
+    // Keyboard panning
+    if (this.keysDown.size > 0 && !this.resetTarget) {
+      const panAmount = PAN_SPEED / this.camera.zoom;
+      if (this.keysDown.has('ArrowLeft')) this.camera.x -= panAmount;
+      if (this.keysDown.has('ArrowRight')) this.camera.x += panAmount;
+      if (this.keysDown.has('ArrowUp')) this.camera.y -= panAmount;
+      if (this.keysDown.has('ArrowDown')) this.camera.y += panAmount;
+      if (this.keysDown.has('+') || this.keysDown.has('=')) {
+        this.zoomTarget = Math.min(MAX_ZOOM, this.zoomTarget + 0.02);
+      }
+      if (this.keysDown.has('-')) {
+        this.zoomTarget = Math.max(MIN_ZOOM, this.zoomTarget - 0.02);
+      }
+      this.camera = clampCamera(
+        this.camera,
+        this.mapWidth,
+        this.mapHeight,
+        canvas.width,
+        canvas.height,
+        PIXEL_SCALE,
+      );
     }
 
     // Day/night state

@@ -2,7 +2,9 @@
 
 export const MIN_ZOOM = 0.8;
 export const MAX_ZOOM = 4.0;
-export const ZOOM_SPEED = 0.1;
+export const ZOOM_SPEED = 0.15;
+export const ZOOM_LERP = 0.12;
+export const PAN_SPEED = 8;
 
 export interface Camera {
   x: number; // world-space center X
