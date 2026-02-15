@@ -224,6 +224,29 @@ Holistic security review and hardening pass across server, plugin, and client. N
 | Server: structured audit logging                     | Done   | —     | `server/src/audit-log.ts` — JSON to stdout for auth failures, authorization denials, rate limit hits. Wired into auth middleware and all 403 responses |
 | Server: prompt injection defenses                    | Done   | —     | Control character stripping + 2000 char cap on org mission, roadmap, and team description via Zod transform. These fields flow into Claude API prompts |
 
+## Sprint 12: Sparks — Cross-Team Intelligence Layer
+
+AI-powered cross-team connection detection. After each batch summarization cycle, a second Claude API call analyzes all team summaries together and surfaces "Sparks" — brief, high-signal connections between campfires. Full spec in `context/sprint-12-sparks.md`.
+
+**Core concept:** Sparks are precious, not noisy. Max 1 per campfire per 24h. They appear as an animated arc on the map, a momentary fireside entry, and persistent badges on connected campfires. Dismissed sparks are preserved in a searchable log.
+
+| Feature                                                   | Status      | Owner | Notes                                                                                             |
+| --------------------------------------------------------- | ----------- | ----- | ------------------------------------------------------------------------------------------------- |
+| Shared: Spark + SparkTeamConnection types                 | Done        | —     | `shared/src/types.ts` — Spark, SparkTeamConnection                                               |
+| Server: sparks table + persistence methods                | Not started | —     | `server/src/persistence.ts` — CRUD, dedup queries, expiration                                     |
+| Server: spark detection prompt                            | Not started | —     | `server/src/summarizer.ts` — second Claude API call after team summaries                          |
+| Server: spark rate limiter                                | Not started | —     | 1 spark/campfire/24h, select highest confidence when over limit                                   |
+| Server: spark deduplication                               | Not started | —     | Content hash + active spark check before creation                                                 |
+| Server: spark expiration                                  | Not started | —     | 72h TTL, check-on-read or background cleanup                                                     |
+| Server: spark API endpoints                               | Not started | —     | GET sparks, GET log, POST dismiss, POST view                                                      |
+| Server: SSE spark events                                  | Not started | —     | Extend existing summary stream with spark event type                                              |
+| Campfire Stories: map arc animation                       | Not started | —     | Bezier particle arc between campfires, plays once on new spark                                    |
+| Campfire Stories: persistent spark badge on campfires     | Not started | —     | Amber lightning badge on campfires with active sparks                                             |
+| Campfire Stories: Fireside Updates momentary entry        | Not started | —     | 15s fade-out spark notification in Fireside Updates                                               |
+| Campfire Stories: campfire detail spark section           | Not started | —     | Persistent spark display with dismiss, view tracking, visit prompt                                |
+| Campfire Stories: spark log                               | Not started | —     | Historical log in Fireside Updates, all statuses, scrollable                                      |
+| Mockup: spark arc + badge + fireside entry in simulation  | Done        | —     | 2 spark events in 90s loop (Payments↔Platform t=35, Growth↔Infra t=65), amber #fbbf24 throughout |
+
 ## Not Yet Planned
 
 These are explicitly deferred. Don't build them yet.

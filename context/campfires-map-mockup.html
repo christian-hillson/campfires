@@ -77,30 +77,6 @@
         box-shadow: 0 0 4px #4ade8088;
       }
 
-      .view-toggle {
-        display: flex;
-        gap: 2px;
-        background: #1a2a1a;
-        border-radius: 4px;
-        padding: 2px;
-      }
-
-      .view-toggle button {
-        font-family: 'Silkscreen', monospace;
-        font-size: 9px;
-        padding: 4px 10px;
-        border: none;
-        border-radius: 3px;
-        cursor: pointer;
-        background: transparent;
-        color: #5a6a4a;
-        transition: all 0.2s;
-      }
-
-      .view-toggle button.active {
-        background: #2a4a2a;
-        color: #a0d890;
-      }
 
       .canvas-container {
         flex: 1;
@@ -239,6 +215,29 @@
         font-size: 8px;
         margin-right: 4px;
       }
+
+      /* Spark fireside entry */
+      .spark-summary-line {
+        font-size: 9px;
+        color: #fbbf24;
+        line-height: 1.5;
+        display: flex;
+        gap: 6px;
+        opacity: 0;
+        transition: opacity 0.6s ease-in;
+        border-left: 2px solid #fbbf2466;
+        padding-left: 6px;
+        margin-left: -2px;
+      }
+
+      .spark-summary-line.visible {
+        opacity: 1;
+      }
+
+      .spark-summary-line.fading {
+        opacity: 0;
+        transition: opacity 1.5s ease-out;
+      }
     </style>
   </head>
   <body>
@@ -248,10 +247,6 @@
         <span class="org-name">Gusto Engineering</span>
       </div>
       <div class="header-right">
-        <div class="view-toggle">
-          <button>Feed</button>
-          <button class="active">Map</button>
-        </div>
         <div class="stat"><span class="dot"></span> 14 online</div>
         <div class="stat">4 campfires</div>
       </div>
@@ -590,6 +585,14 @@
           message: 'wire up batch summarizer',
           userType: 'agent',
         },
+        // --- Cross-team spark: Payments ↔ Platform ---
+        {
+          time: 35,
+          type: 'spark',
+          fromTeam: 'payments',
+          toTeam: 'platform',
+          summary: 'Payments \u2194 Platform \u2014 webhook auth changes may conflict with OAuth migration',
+        },
         // Draft mode
         { time: 36, type: 'draft_mode_on', userId: 'jc' },
         // --- Multiple rapid agent spawns (staggered pop-pop-pop) ---
@@ -675,6 +678,14 @@
           milestone: false,
           mood: 'building',
           oneLiner: 'Connection pool tuning under load test',
+        },
+        // --- Cross-team spark: Growth ↔ Infra ---
+        {
+          time: 65,
+          type: 'spark',
+          fromTeam: 'growth',
+          toTeam: 'infra',
+          summary: 'Growth \u2194 Infra \u2014 new SMB onboarding load will hit the connection pool changes',
         },
         {
           time: 70,
@@ -784,6 +795,15 @@
         goldUntil: 0,
       }));
       const pulseState = teams.map(() => ({ lastPulse: 0, rings: [] }));
+
+      // ─── SPARK STATE ───
+      const SPARK_ARC_DURATION = 3.0;
+      const SPARK_ARC_HEIGHT = 40;
+      const SPARK_BADGE_PERSIST = 300; // seconds
+      const SPARK_FADE_DURATION = 15; // seconds before fireside entry fades
+      let sparkArcs = []; // { fromX, fromY, toX, toY, startTime }
+      let sparkBadges = new Map(); // teamId → startTime
+      let sparkFiresideEntries = []; // DOM elements to clean on reset
 
       // ─── GOLEM STATE ───
       let pendingSpawns = []; // active spawn animations
@@ -955,6 +975,14 @@
           pulseState[i].lastPulse = 0;
           pulseState[i].rings.length = 0;
         }
+        // Clear spark state
+        sparkArcs = [];
+        sparkBadges.clear();
+        for (const el of sparkFiresideEntries) {
+          el.remove();
+        }
+        sparkFiresideEntries = [];
+
         // Clear Campfire Stories entries
         storyStartTime = null;
         const storiesList = document.getElementById('stories-list');
@@ -2124,6 +2152,9 @@
           case 'story_update':
             handleStoryUpdate(event);
             break;
+          case 'spark':
+            handleSpark(event);
+            break;
         }
       }
 
@@ -2474,6 +2505,49 @@
 
       function handleAgentDespawn(event) {
         despawnGolem(event.agentId);
+      }
+
+      function handleSpark(event) {
+        const fromIdx = teamIndexById[event.fromTeam];
+        const toIdx = teamIndexById[event.toTeam];
+        if (fromIdx === undefined || toIdx === undefined) return;
+        const fromTeam = teams[fromIdx];
+        const toTeam = teams[toIdx];
+
+        // Arc animation
+        sparkArcs.push({
+          fromX: fromTeam.x,
+          fromY: fromTeam.y,
+          toX: toTeam.x,
+          toY: toTeam.y,
+          startTime: lastRenderTime,
+        });
+
+        // Badges on both campfires
+        sparkBadges.set(event.fromTeam, lastRenderTime);
+        sparkBadges.set(event.toTeam, lastRenderTime);
+
+        // Fireside entry in #map-summary-bar (the ai-summary-bar panel)
+        const summaryBar = document.querySelector('.ai-summary-bar');
+        if (summaryBar) {
+          const entry = document.createElement('div');
+          entry.className = 'spark-summary-line';
+          entry.innerHTML = `<span>⚡</span><span>${event.summary}</span>`;
+          summaryBar.appendChild(entry);
+          sparkFiresideEntries.push(entry);
+
+          // Fade in
+          requestAnimationFrame(() => {
+            entry.classList.add('visible');
+          });
+
+          // Fade out after 15 seconds
+          setTimeout(() => {
+            entry.classList.remove('visible');
+            entry.classList.add('fading');
+            setTimeout(() => entry.remove(), 1500);
+          }, SPARK_FADE_DURATION * 1000);
+        }
       }
 
       // ─── FIRE FLARE ───
@@ -2868,6 +2942,128 @@
         for (const ft of floatingTexts) {
           drawFloatingText(ft, time);
         }
+
+        // ─── SPARK ARCS ───
+        for (let i = sparkArcs.length - 1; i >= 0; i--) {
+          const arc = sparkArcs[i];
+          const elapsed = time - arc.startTime;
+          if (elapsed > SPARK_ARC_DURATION) {
+            sparkArcs.splice(i, 1);
+            continue;
+          }
+          const progress = elapsed / SPARK_ARC_DURATION;
+
+          // Fade envelope: in 0-20%, hold 20-70%, out 70-100%
+          let arcAlpha;
+          if (progress < 0.2) arcAlpha = progress / 0.2;
+          else if (progress < 0.7) arcAlpha = 1.0;
+          else arcAlpha = 1.0 - (progress - 0.7) / 0.3;
+
+          // Quadratic bezier control point (arc upward)
+          const midX = (arc.fromX + arc.toX) / 2;
+          const midY = Math.min(arc.fromY, arc.toY) - SPARK_ARC_HEIGHT;
+
+          // Draw dashed amber bezier line
+          ctx.save();
+          ctx.globalAlpha = arcAlpha * 0.6;
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = PIXEL_SCALE;
+          ctx.setLineDash([4 * PIXEL_SCALE, 4 * PIXEL_SCALE]);
+          ctx.lineDashOffset = -time * 40; // animate dash movement
+          ctx.beginPath();
+          ctx.moveTo(arc.fromX * PIXEL_SCALE, arc.fromY * PIXEL_SCALE);
+          ctx.quadraticCurveTo(
+            midX * PIXEL_SCALE,
+            midY * PIXEL_SCALE,
+            arc.toX * PIXEL_SCALE,
+            arc.toY * PIXEL_SCALE,
+          );
+          ctx.stroke();
+          ctx.restore();
+
+          // Draw 3-4 ember particles traveling along the curve
+          const particleCount = 4;
+          for (let p = 0; p < particleCount; p++) {
+            const particleT = ((progress * 2 + p / particleCount) % 1.0);
+            // Only show particles that have "launched"
+            if (particleT > progress * 1.5) continue;
+            const t = Math.min(1, particleT);
+            // Quadratic bezier position
+            const bx =
+              (1 - t) * (1 - t) * arc.fromX +
+              2 * (1 - t) * t * midX +
+              t * t * arc.toX;
+            const by =
+              (1 - t) * (1 - t) * arc.fromY +
+              2 * (1 - t) * t * midY +
+              t * t * arc.toY;
+
+            ctx.save();
+            ctx.globalAlpha = arcAlpha * (0.7 + Math.sin(time * 8 + p) * 0.3);
+            // Particle glow
+            const glowR = 3;
+            const pGrad = ctx.createRadialGradient(
+              bx * PIXEL_SCALE, by * PIXEL_SCALE, 0,
+              bx * PIXEL_SCALE, by * PIXEL_SCALE, glowR * PIXEL_SCALE,
+            );
+            pGrad.addColorStop(0, 'rgba(251,191,36,0.6)');
+            pGrad.addColorStop(0.5, 'rgba(251,191,36,0.2)');
+            pGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = pGrad;
+            ctx.fillRect(
+              (bx - glowR) * PIXEL_SCALE,
+              (by - glowR) * PIXEL_SCALE,
+              glowR * 2 * PIXEL_SCALE,
+              glowR * 2 * PIXEL_SCALE,
+            );
+            // Bright core
+            px(bx, by, 1, 1, '#fbbf24');
+            ctx.restore();
+          }
+
+          // Radial flash at destination when arc is 60-80% through
+          if (progress > 0.6 && progress < 0.8) {
+            const flashP = (progress - 0.6) / 0.2;
+            const flashAlpha = Math.sin(flashP * Math.PI) * arcAlpha;
+            const flashR = 6 + flashP * 4;
+            ctx.save();
+            ctx.globalAlpha = flashAlpha * 0.5;
+            const flashGrad = ctx.createRadialGradient(
+              arc.toX * PIXEL_SCALE, arc.toY * PIXEL_SCALE, 0,
+              arc.toX * PIXEL_SCALE, arc.toY * PIXEL_SCALE, flashR * PIXEL_SCALE,
+            );
+            flashGrad.addColorStop(0, 'rgba(251,191,36,0.8)');
+            flashGrad.addColorStop(0.4, 'rgba(251,191,36,0.3)');
+            flashGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = flashGrad;
+            ctx.fillRect(
+              (arc.toX - flashR) * PIXEL_SCALE,
+              (arc.toY - flashR) * PIXEL_SCALE,
+              flashR * 2 * PIXEL_SCALE,
+              flashR * 2 * PIXEL_SCALE,
+            );
+            ctx.restore();
+          }
+        }
+
+        // ─── SPARK BADGES (pulsing amber lightning bolt near campfire labels) ───
+        sparkBadges.forEach((startTime, teamId) => {
+          const teamIndex = teamIndexById[teamId];
+          if (teamIndex === undefined) return;
+          const team = teams[teamIndex];
+          // Pulsing opacity 0.6-1.0
+          const pulseAlpha = 0.6 + 0.4 * Math.sin(time * 4);
+          // Position just right of the team label
+          const labelY = team.y + team.fireSize * 6 + 14;
+          const badgeOffsetX = team.name.length * 3 + 4; // approximate half-width of label
+
+          ctx.save();
+          ctx.globalAlpha = pulseAlpha;
+          ctx.font = '8px "Silkscreen", monospace';
+          ctx.fillStyle = '#fbbf24';
+          ctx.fillText('⚡', (team.x + badgeOffsetX) * PIXEL_SCALE, labelY * PIXEL_SCALE);
+          ctx.restore();
+        });
 
         // Vignette
         ctx.save();
