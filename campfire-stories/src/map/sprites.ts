@@ -7,6 +7,10 @@ import {
   SPAWN_DESCENT,
   SPAWN_FORMATION,
   SPAWN_TOTAL,
+  AFTERIMAGE_DURATION,
+  GOLEM_GLOW_WINDOW,
+  MILESTONE_PARTICLE_DURATION,
+  MILESTONE_JUMP_DURATION,
 } from './animation-constants.js';
 
 export interface FloatingText {
@@ -459,3 +463,196 @@ export function drawCastingSprite(
   ctx.restore();
 }
 
+// ── PR3: Golem Behaviors ──
+
+/** Draw activity glow aura around a golem */
+export function drawActivityGlow(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  recentEventTimes: number[],
+  time: number,
+): void {
+  // Prune events outside window
+  const cutoff = time - GOLEM_GLOW_WINDOW;
+  const recentCount = recentEventTimes.filter((t) => t >= cutoff).length;
+  const glowIntensity = Math.min(1, recentCount / 8);
+
+  if (glowIntensity <= 0.05) return;
+
+  const glowRadius = 8 + glowIntensity * 6;
+  const centerAlpha = 0.08 + glowIntensity * 0.12;
+
+  ctx.save();
+  const grad = ctx.createRadialGradient(
+    x * PIXEL_SCALE, y * PIXEL_SCALE, 0,
+    x * PIXEL_SCALE, y * PIXEL_SCALE, glowRadius * PIXEL_SCALE,
+  );
+  grad.addColorStop(0, `rgba(255,180,60,${centerAlpha})`);
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.fillRect(
+    (x - glowRadius) * PIXEL_SCALE,
+    (y - glowRadius) * PIXEL_SCALE,
+    glowRadius * 2 * PIXEL_SCALE,
+    glowRadius * 2 * PIXEL_SCALE,
+  );
+  ctx.restore();
+}
+
+/** Draw afterimage trail for walking sprites */
+export function drawAfterimages(
+  ctx: CanvasRenderingContext2D,
+  afterimages: { x: number; y: number; time: number }[],
+  color: string,
+  time: number,
+): void {
+  for (const ai of afterimages) {
+    const age = time - ai.time;
+    if (age >= AFTERIMAGE_DURATION) continue;
+    const alpha = 0.25 * (1 - age / AFTERIMAGE_DURATION);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    // Simplified ghost body
+    px(ctx, ai.x, ai.y, 2, 2, color);
+    px(ctx, ai.x, ai.y - 1, 2, 1, '#6a6a70');
+    ctx.restore();
+  }
+}
+
+/** Draw carrying orb above golem head */
+export function drawCarryingOrb(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  orbBrightness: number,
+  orbSaveCount: number,
+): void {
+  if (orbSaveCount <= 0) return;
+
+  const orbSize = 1 + Math.min(1, orbSaveCount / 6);
+  const orbAlpha = 0.3 + orbBrightness * 0.7;
+  const r = 255;
+  const g = Math.round(200 + orbBrightness * 55);
+  const b = Math.round(100 + orbBrightness * 80);
+
+  ctx.save();
+  ctx.globalAlpha = orbAlpha;
+  px(ctx, x + 0.5, y - 3, Math.ceil(orbSize), Math.ceil(orbSize), `rgb(${r},${g},${b})`);
+
+  // Glow
+  if (orbBrightness > 0.3) {
+    const glowR = 2 + orbBrightness * 2;
+    const grad = ctx.createRadialGradient(
+      (x + 0.5) * PIXEL_SCALE, (y - 3) * PIXEL_SCALE, 0,
+      (x + 0.5) * PIXEL_SCALE, (y - 3) * PIXEL_SCALE, glowR * PIXEL_SCALE,
+    );
+    grad.addColorStop(0, `rgba(255,200,100,${0.15 * orbBrightness})`);
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(
+      (x + 0.5 - glowR) * PIXEL_SCALE,
+      (y - 3 - glowR) * PIXEL_SCALE,
+      glowR * 2 * PIXEL_SCALE,
+      glowR * 2 * PIXEL_SCALE,
+    );
+  }
+  ctx.restore();
+}
+
+/** Draw idle standby golem (dimmed) */
+export function drawGolemIdle(
+  ctx: CanvasRenderingContext2D,
+  sprite: SpriteData,
+  time: number,
+): void {
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  drawGolemSprite(ctx, sprite, time);
+  ctx.restore();
+}
+
+// ── PR3: Milestone Celebrations ──
+
+export interface MilestoneParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  startTime: number;
+  color: string;
+}
+
+export interface MilestoneCelebration {
+  teamX: number;
+  teamY: number;
+  fireSize: number;
+  teamColor: string;
+  startTime: number;
+  particles: MilestoneParticle[];
+}
+
+/** Create a milestone celebration with particle burst */
+export function createMilestoneCelebration(
+  teamX: number,
+  teamY: number,
+  fireSize: number,
+  teamColor: string,
+  time: number,
+): MilestoneCelebration {
+  const particles: MilestoneParticle[] = [];
+  const count = 8 + Math.floor(Math.random() * 5);
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+    particles.push({
+      x: teamX,
+      y: teamY - 10,
+      vx: Math.cos(angle) * (15 + Math.random() * 10),
+      vy: -20 - Math.random() * 15,
+      startTime: time,
+      color: Math.random() > 0.5 ? '#f0e8a0' : '#ffffff',
+    });
+  }
+  return { teamX, teamY, fireSize, teamColor, startTime: time, particles };
+}
+
+/** Draw milestone celebration (jumping sprites handled separately) */
+export function drawMilestoneCelebration(
+  ctx: CanvasRenderingContext2D,
+  celebration: MilestoneCelebration,
+  time: number,
+): void {
+  const elapsed = time - celebration.startTime;
+
+  // Flag
+  if (elapsed < MILESTONE_JUMP_DURATION + 2.0) {
+    const flagX = celebration.teamX + celebration.fireSize * 5 + 8;
+    const flagY = celebration.teamY - 2;
+    // Pole
+    px(ctx, flagX, flagY - 6, 1, 6, '#5a4a3a');
+    // Flag
+    px(ctx, flagX + 1, flagY - 6, 4, 2, celebration.teamColor);
+    px(ctx, flagX + 1, flagY - 5, 3, 1, darken(celebration.teamColor, 0.7));
+  }
+
+  // Particles with gravity
+  for (const p of celebration.particles) {
+    const pe = time - p.startTime;
+    if (pe >= MILESTONE_PARTICLE_DURATION) continue;
+    const progress = pe / MILESTONE_PARTICLE_DURATION;
+    const alpha = 1 - progress;
+    const gravity = 20 * pe * pe;
+    const pxPos = p.x + p.vx * pe;
+    const pyPos = p.y + p.vy * pe + gravity;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    px(ctx, pxPos, pyPos, 1, 1, p.color);
+    ctx.restore();
+  }
+}
+
+/** Check if milestone celebration is expired */
+export function isMilestoneExpired(celebration: MilestoneCelebration, time: number): boolean {
+  return time - celebration.startTime >= MILESTONE_PARTICLE_DURATION + 1.0;
+}

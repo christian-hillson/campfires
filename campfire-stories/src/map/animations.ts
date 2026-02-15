@@ -77,6 +77,12 @@ export interface AnimatedSprite {
   currentAnim: SpriteAnimation | null;
   // Campfire reference
   campfireIndex: number;
+  // Golem behavior state (PR3)
+  recentEventTimes: number[]; // timestamps for activity glow
+  orbBrightness: number; // 0..1 carrying orb brightness
+  orbSaveCount: number; // file saves since last commit
+  afterimages: { x: number; y: number; time: number }[];
+  isGolemIdle: boolean;
   // Spawn state (PR2)
   isSpawning: boolean;
 }
@@ -291,6 +297,11 @@ export function reconcileSprites(
         animQueue: [],
         currentAnim: null,
         campfireIndex: sd.campfireIndex,
+        recentEventTimes: [],
+        orbBrightness: 0.1,
+        orbSaveCount: 0,
+        afterimages: [],
+        isGolemIdle: false,
         isSpawning: false,
       });
     }

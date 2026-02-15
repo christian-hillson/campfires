@@ -33,7 +33,15 @@ import {
   drawGolemSpawn,
   drawDespawnParticles,
   drawCastingSprite,
+  drawActivityGlow,
+  drawAfterimages,
+  drawCarryingOrb,
+  drawGolemIdle,
+  drawMilestoneCelebration,
+  createMilestoneCelebration,
+  isMilestoneExpired,
   type FloatingText,
+  type MilestoneCelebration,
 } from './sprites.js';
 import {
   type Camera,
@@ -81,7 +89,10 @@ import {
   SPAWN_TOTAL,
   DESPAWN_WALK_DURATION,
   DESPAWN_DISSOLVE_DURATION,
+  DESPAWN_FLARE_DURATION,
   GOLEM_SPEED_MULT,
+  AFTERIMAGE_DURATION,
+  GOLEM_GLOW_WINDOW,
 } from './animation-constants.js';
 import { ActivityFeed } from './activity-feed.js';
 
@@ -125,6 +136,7 @@ export class MapView {
   private activityFeed = new ActivityFeed();
   private lastRenderTime = 0;
   private recentEvents: { teamId: string; timestamp: number }[] = [];
+  private milestones: MilestoneCelebration[] = [];
   private castingSprites = new Set<string>(); // userId of humans currently casting for golem spawn
 
   // Map dimensions in pixel-art units
@@ -191,6 +203,12 @@ export class MapView {
         sessionId: null,
       };
       this.handleActivityEvents([event]);
+    };
+
+    // Debug helper for milestone celebrations
+    (window as unknown as Record<string, unknown>).__simulateMilestone = (teamIndex?: number) => {
+      const cf = this.campfires[teamIndex ?? 0];
+      if (cf) this.triggerMilestone(cf.teamId);
     };
   }
 
@@ -663,16 +681,23 @@ export class MapView {
     this.updateFireLevels();
   }
 
-  private handleFileSave(sprite: AnimatedSprite | undefined, _time: number): void {
+  private handleFileSave(sprite: AnimatedSprite | undefined, time: number): void {
     if (!sprite) return;
 
-    // Golem-specific: faster strike
+    // Golem-specific: faster strike, track orb brightness
     const speedMult = sprite.type === 'agent' ? GOLEM_SPEED_MULT : 1;
     sprite.animQueue.push({
       type: 'file_save_strike',
       duration: FILE_SAVE_DURATION / speedMult,
       elapsed: 0,
     });
+
+    // Track for activity glow (PR3)
+    sprite.recentEventTimes.push(time);
+    if (sprite.type === 'agent') {
+      sprite.orbSaveCount++;
+      sprite.orbBrightness = Math.min(1, 0.1 + sprite.orbSaveCount * 0.2);
+    }
   }
 
   private handleCommit(
@@ -730,8 +755,18 @@ export class MapView {
       color: '#f0e8c0',
     });
 
-    // Fire flare
-    triggerFireFlare(this.fireFlares, campfireIndex, COMMIT_FLARE_MULT, time);
+    // Fire flare — golems with bright orbs get stronger flares
+    const flareMult = sprite.type === 'agent'
+      ? COMMIT_FLARE_MULT + sprite.orbBrightness * 0.3
+      : COMMIT_FLARE_MULT;
+    triggerFireFlare(this.fireFlares, campfireIndex, flareMult, time);
+
+    // Track activity and reset orb (PR3)
+    sprite.recentEventTimes.push(time);
+    if (sprite.type === 'agent') {
+      sprite.orbBrightness = 0.1;
+      sprite.orbSaveCount = 0;
+    }
   }
 
   private handleBranchSwitch(
@@ -908,6 +943,16 @@ export class MapView {
     triggerFireFlare(this.fireFlares, campfireIndex, 1.0, time);
   }
 
+  // ── PR3: Milestone trigger ──
+
+  triggerMilestone(teamId: string): void {
+    const cfIndex = this.campfires.findIndex((cf) => cf.teamId === teamId);
+    if (cfIndex === -1) return;
+    const cf = this.campfires[cfIndex];
+    const time = performance.now() / 1000;
+    this.milestones.push(createMilestoneCelebration(cf.x, cf.y, cf.fireSize, cf.color, time));
+  }
+
   private hideOverlay(): void {
     if (this.overlayPollInterval) {
       clearInterval(this.overlayPollInterval);
@@ -930,12 +975,31 @@ export class MapView {
     tickPulses(this.pulseStates, this.fireStates, this.campfires, time);
     for (const sprite of this.animatedSprites.values()) {
       tickSprite(sprite, dt);
+
+      // Track afterimages for walking golems (PR3)
+      if (sprite.type === 'agent' && sprite.currentAnim?.type === 'walk') {
+        const rs = getSpriteRenderState(sprite);
+        sprite.afterimages.push({ x: rs.x, y: rs.y, time });
+      }
+      // Prune old afterimages
+      sprite.afterimages = sprite.afterimages.filter((a) => time - a.time < AFTERIMAGE_DURATION);
+      if (!sprite.currentAnim || sprite.currentAnim.type !== 'walk') {
+        sprite.afterimages.length = 0;
+      }
+      // Prune old activity events (PR3)
+      sprite.recentEventTimes = sprite.recentEventTimes.filter((t) => time - t < GOLEM_GLOW_WINDOW);
+      // Update golem idle state
+      if (sprite.type === 'agent') {
+        sprite.isGolemIdle = sprite.recentEventTimes.length === 0;
+      }
       // Clear spawning flag when spawn animation finishes
       if (sprite.isSpawning && !sprite.currentAnim && sprite.animQueue.length === 0) {
         sprite.isSpawning = false;
       }
     }
     cleanupFloatingTexts(this.floatingTexts, time);
+    // Cleanup expired milestones
+    this.milestones = this.milestones.filter((m) => !isMilestoneExpired(m, time));
 
     // Animate reset if active
     if (this.resetTarget) {
@@ -1152,16 +1216,34 @@ export class MapView {
           continue;
         }
 
+        // Activity glow aura for golems (PR3, drawn behind sprite)
+        if (sprite.type === 'agent' && !sprite.isSpawning) {
+          drawActivityGlow(ctx, state.x, state.y, sprite.recentEventTimes, time);
+        }
+
+        // Afterimage trail for walking golems (PR3)
+        if (sprite.type === 'agent' && sprite.afterimages.length > 0) {
+          drawAfterimages(ctx, sprite.afterimages, sprite.color, time);
+        }
+
+        // Determine which sprite draw function to use
         if (state.task === 'strike') {
           drawStrikeSprite(ctx, state.x, state.y, sprite.color, state.animProgress, time);
         } else if (state.task === 'toss') {
           drawTossSprite(ctx, state.x, state.y, sprite.color, state.animProgress, time);
         } else if (this.castingSprites.has(sprite.userId)) {
           drawCastingSprite(ctx, renderSprite, time);
+        } else if (sprite.type === 'agent' && sprite.isGolemIdle) {
+          drawGolemIdle(ctx, renderSprite, time);
         } else if (sprite.type === 'agent') {
           drawGolemSprite(ctx, renderSprite, time);
         } else {
           drawHumanSprite(ctx, renderSprite, time);
+        }
+
+        // Carrying orb for golems (PR3, drawn on top of sprite)
+        if (sprite.type === 'agent' && !sprite.isSpawning && sprite.orbSaveCount > 0) {
+          drawCarryingOrb(ctx, state.x, state.y, sprite.orbBrightness, sprite.orbSaveCount);
         }
 
         ctx.restore();
@@ -1171,6 +1253,11 @@ export class MapView {
     // Draw floating texts (on top of everything in world-space)
     for (const ft of this.floatingTexts) {
       drawFloatingText(ctx, ft, time);
+    }
+
+    // Draw milestone celebrations (PR3)
+    for (const m of this.milestones) {
+      drawMilestoneCelebration(ctx, m, time);
     }
 
     // Foreground trees

@@ -70,3 +70,13 @@ export const DESPAWN_FLARE_DURATION = 0.5;
 
 // PR2: Golem speed multiplier
 export const GOLEM_SPEED_MULT = 2;
+
+// PR3: Golem behaviors
+export const GOLEM_GLOW_WINDOW = 30; // seconds
+export const AFTERIMAGE_DURATION = 0.15; // seconds
+export const ORB_DEPOSIT_DURATION = 0.3;
+
+// PR3: Milestone celebrations
+export const MILESTONE_JUMP_DURATION = 0.4;
+export const MILESTONE_PARTICLE_DURATION = 1.0;
+export const MILESTONE_GOLD_DURATION = 0.5;
