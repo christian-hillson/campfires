@@ -261,12 +261,13 @@ body {
 
 .back-button {
   background: none;
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
+  border: 1px solid var(--map-border);
+  color: var(--map-text-muted);
   padding: 6px 14px;
-  border-radius: var(--radius);
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
+  font-family: 'Silkscreen', monospace;
+  font-size: 10px;
   margin-bottom: 24px;
   transition:
     border-color 0.15s,
@@ -274,8 +275,8 @@ body {
 }
 
 .back-button:hover {
-  border-color: var(--text-secondary);
-  color: var(--text-primary);
+  border-color: var(--map-text-muted);
+  color: var(--map-text);
 }
 
 .detail-header {
@@ -283,14 +284,16 @@ body {
 }
 
 .detail-header h1 {
-  font-size: 24px;
-  font-weight: 600;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+  color: var(--accent);
   margin-bottom: 4px;
 }
 
 .detail-header .description {
-  color: var(--text-secondary);
-  font-size: 14px;
+  font-family: 'Silkscreen', monospace;
+  color: var(--map-text-muted);
+  font-size: 10px;
 }
 
 .detail-section {
@@ -298,22 +301,24 @@ body {
 }
 
 .detail-section h3 {
-  font-size: 14px;
-  font-weight: 600;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
+  letter-spacing: 1px;
+  color: var(--map-text-dim);
   margin-bottom: 12px;
 }
 
 .summary-content {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: #111a11;
+  border: 1px solid var(--map-border);
+  border-radius: 4px;
   padding: 20px;
-  font-size: 14px;
+  font-family: 'Silkscreen', monospace;
+  font-size: 10px;
   line-height: 1.7;
   white-space: pre-wrap;
+  color: var(--map-text);
 }
 
 .member-list {
@@ -323,14 +328,16 @@ body {
 }
 
 .member-chip {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: #1a2a1a;
+  border: 1px solid var(--map-border);
   border-radius: 16px;
   padding: 4px 12px;
-  font-size: 13px;
+  font-family: 'Silkscreen', monospace;
+  font-size: 10px;
   display: flex;
   align-items: center;
   gap: 6px;
+  color: var(--map-text);
 }
 
 .member-dot {
@@ -341,40 +348,51 @@ body {
 }
 
 .member-type {
-  color: var(--text-muted);
-  font-size: 11px;
+  color: var(--map-text-dim);
+  font-size: 9px;
 }
 
-.activity-list {
-  list-style: none;
+/* Stories Panel */
+.stories-panel-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
 }
 
-.activity-item {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
+.story-entry {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--map-border);
+  font-family: 'Silkscreen', monospace;
+  font-size: 10px;
   display: flex;
-  gap: 12px;
+  align-items: baseline;
+  gap: 6px;
 }
 
-.activity-item:last-child {
+.story-entry:last-child {
   border-bottom: none;
 }
 
-.activity-type {
-  color: var(--accent);
-  font-weight: 500;
-  min-width: 100px;
-}
-
-.activity-message {
-  color: var(--text-primary);
-  flex: 1;
-}
-
-.activity-time {
-  color: var(--text-muted);
+.story-time {
+  color: var(--map-text-dim);
+  font-size: 9px;
   white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.story-text {
+  color: var(--map-text-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.story-text code {
+  color: var(--accent);
+  font-family: 'Silkscreen', monospace;
+  font-size: 10px;
 }
 
 /* Loading / Error States */

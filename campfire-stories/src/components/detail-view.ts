@@ -142,45 +142,80 @@ function renderPresence(awarenessStates: AwarenessState[]): HTMLElement {
   return section;
 }
 
-function renderActivityList(events: ActivityEvent[]): HTMLElement {
+function narratize(
+  event: ActivityEvent,
+  nameMap: Map<string, { displayName: string; type: string }>,
+): string {
+  const user = nameMap.get(event.userId);
+  const rawName = user?.displayName || 'Someone';
+  const name = event.userType === 'agent' ? `${rawName} (golem)` : rawName;
+
+  switch (event.type) {
+    case 'session_start': {
+      let text = `${name} started a new session`;
+      if (event.file) text += ` on <code>${event.file}</code>`;
+      if (event.branch) text += ` [${event.branch}]`;
+      return text;
+    }
+    case 'session_end':
+      return `${name}'s session ended`;
+    case 'commit': {
+      let text = `${name} committed`;
+      if (event.message) text += `: ${event.message}`;
+      if (event.branch) text += ` [${event.branch}]`;
+      return text;
+    }
+    case 'branch_switch':
+      return `${name} switched to <code>${event.branch || 'unknown'}</code>`;
+    case 'file_save':
+      return `${name} saved <code>${event.file || 'a file'}</code>`;
+    case 'file_open':
+      return `${name} opened <code>${event.file || 'a file'}</code>`;
+    default:
+      return `${name} did something`;
+  }
+}
+
+function renderStories(events: ActivityEvent[], members: User[]): HTMLElement {
   const section = document.createElement('div');
   section.className = 'detail-section';
 
   const heading = document.createElement('h3');
-  heading.textContent = 'Recent Activity';
+  heading.className = 'stories-panel-title';
+  heading.textContent = '\u2726 CAMPFIRE STORIES';
   section.appendChild(heading);
 
   if (events.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
-    empty.textContent = 'No recent activity.';
+    empty.textContent = 'No stories yet.';
     section.appendChild(empty);
     return section;
   }
 
-  const list = document.createElement('ul');
-  list.className = 'activity-list';
+  const nameMap = new Map<string, { displayName: string; type: string }>();
+  for (const m of members) {
+    nameMap.set(m.userId, { displayName: m.displayName, type: m.type });
+  }
+
+  const list = document.createElement('div');
+  list.className = 'stories-list';
 
   for (const event of events) {
-    const item = document.createElement('li');
-    item.className = 'activity-item';
-
-    const type = document.createElement('span');
-    type.className = 'activity-type';
-    type.textContent = event.type.replace('_', ' ');
-    item.appendChild(type);
-
-    const message = document.createElement('span');
-    message.className = 'activity-message';
-    message.textContent = event.message || event.file || event.branch || '';
-    item.appendChild(message);
+    const entry = document.createElement('div');
+    entry.className = 'story-entry';
 
     const time = document.createElement('span');
-    time.className = 'activity-time';
+    time.className = 'story-time';
     time.textContent = timeAgo(event.timestamp);
-    item.appendChild(time);
+    entry.appendChild(time);
 
-    list.appendChild(item);
+    const text = document.createElement('span');
+    text.className = 'story-text';
+    text.innerHTML = narratize(event, nameMap);
+    entry.appendChild(text);
+
+    list.appendChild(entry);
   }
 
   section.appendChild(list);
@@ -243,7 +278,7 @@ export async function renderDetailView(container: HTMLElement, ctx: DetailContex
     }
     view.appendChild(renderMembers(members));
     view.appendChild(renderSummaryContent(teamSummaries));
-    view.appendChild(renderActivityList(activity));
+    view.appendChild(renderStories(activity, members));
   } catch (err) {
     loading.remove();
     const error = document.createElement('div');
