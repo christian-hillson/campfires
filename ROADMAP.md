@@ -71,7 +71,7 @@ AI-summarized org-wide view for non-dev stakeholders.
 
 ## Sprint 4b: Map Enhancement — Event-Driven Animations & Golem Spawning
 
-Two-pass enhancement to the map mockup (`context/campfires-map-mockup.html`), making the map reactive to events and adding the signature spark-to-golem spawn animation. Specs in `context/map-enhancement-pass1.md` and `context/map-enhancement-pass2.md`.
+Two-pass enhancement to the map mockup (`active-product-development-context/campfires-map-mockup.html`), making the map reactive to events and adding the signature spark-to-golem spawn animation. Specs in `active-product-development-context/map-enhancement-pass1.md` and `active-product-development-context/map-enhancement-pass2.md`.
 
 **Pass 1 — Event System, Fire Reactivity, Sprite Animations:**
 
@@ -155,16 +155,16 @@ The plugin captures developer activity ambiently via Claude Code hooks and uploa
 | Server: session + transcript endpoints          | Done   | —     | `/api/sessions/start`, `/heartbeat`, `/end`, `/transcript-delta`, `/api/activity`     |
 | Shared: SessionTranscript type                  | Done   | —     | `shared/src/types.ts` — sessionId, content, isComplete, repo, branch                  |
 
-## Sprint 4c: Map Mockup — Campfire Stories Panel & UI Cleanup
+## Sprint 4c: Map Mockup — Logs Panel & UI Cleanup
 
-Iterative pass on the map mockup (`context/campfires-map-mockup.html`). Added the "Campfire Stories" detail panel concept and cleaned up unused UI elements.
+Iterative pass on the map mockup (`active-product-development-context/campfires-map-mockup.html`). Added the Logs panel (team detail) concept and cleaned up unused UI elements.
 
 | Feature                                                  | Status | Owner | Notes                                                                     |
 | -------------------------------------------------------- | ------ | ----- | ------------------------------------------------------------------------- |
 | Mockup: remove legend panel                              | Done   | —     | Legend was unnecessary clutter, removed HTML + CSS                        |
 | Mockup: remove orphaned minimap CSS                      | Done   | —     | CSS rules existed with no corresponding HTML element                      |
-| Mockup: rename FIRESIDE → FIRESIDE UPDATES               | Done   | —     | Org-wide summary panel in top-right                                       |
-| Mockup: add "Campfire Stories — Payments" panel          | Done   | —     | Bottom-right panel with detailed, multi-line team updates over 90s loop   |
+| Mockup: rename FIRESIDE → CAMPFIRE STORIES                | Done   | —     | Org-wide summary panel in top-right                                       |
+| Mockup: add "Logs — Payments" panel                      | Done   | —     | Bottom-right panel with detailed, multi-line team updates over 90s loop   |
 | Mockup: story_update events in simulation timeline       | Done   | —     | 6 narrative entries for Payments team spread across the cycle             |
 | Mockup: handleStoryUpdate() with fade-in + max 4 entries | Done   | —     | Prepend with relative timestamps, oldest fades out, clears on cycle reset |
 
@@ -177,8 +177,8 @@ Replace the stubbed summarizer with real Claude API integration. Transcripts pro
 | Server: Claude API integration replacing stub               | Done   | —     | `server/src/summarizer.ts`, Claude API wired up                                    |
 | Server: transcript → summary pipeline                       | Done   | —     | `preprocessTranscript()` strips noise, display names in headers                    |
 | Server: summary quality tuning                              | Done   | —     | Plain-text prompt, narrative voice, smart chunking for long sessions               |
-| Campfire Stories: Fireside Updates panel (org-wide)         | Done   | —     | Restyled summary feed to pixel-art aesthetic with FIRESIDE UPDATES branding        |
-| Campfire Stories: Campfire Stories panel (team detail)      | Done   | —     | Narrative story entries from activity events, pixel-art restyled detail view       |
+| Campfire Stories: Campfire Stories panel (org-wide summaries) | Done   | —     | Restyled summary feed to pixel-art aesthetic with CAMPFIRE STORIES branding        |
+| Campfire Stories: Logs panel (team detail)                    | Done   | —     | Narrative log entries from activity events, pixel-art restyled detail view         |
 | Campfire Stories: richer summary cards from transcript data | Done   | —     | Content preview on feed cards, one-liner headline in detail view, plain-text stubs |
 
 ## Sprint 9: Integration & Polish
@@ -193,7 +193,7 @@ End-to-end flow: Claude Code Plugin → Server → AI Summarizer → Campfire St
 
 ## Sprint 10: Map Enhancements — Camera Controls, Day/Night Cycle, Map-Only View
 
-Interactive camera controls, ambient day/night lighting, and removal of the Feed view in favor of a map-only experience. The Fireside Updates sidebar provides the text summaries previously shown in the Feed.
+Interactive camera controls, ambient day/night lighting, and removal of the Feed view in favor of a map-only experience. The Campfire Stories panel (org-wide summaries) provides the text summaries previously shown in the Feed.
 
 | Feature                                       | Status | Owner | Notes                                                                                     |
 | --------------------------------------------- | ------ | ----- | ----------------------------------------------------------------------------------------- |
@@ -226,9 +226,9 @@ Holistic security review and hardening pass across server, plugin, and client. N
 
 ## Sprint 12: Sparks — Cross-Team Intelligence Layer
 
-AI-powered cross-team connection detection. After each batch summarization cycle, a second Claude API call analyzes all team summaries together and surfaces "Sparks" — brief, high-signal connections between campfires. Full spec in `context/sprint-12-sparks.md`.
+AI-powered cross-team connection detection. After each batch summarization cycle, a second Claude API call analyzes all team summaries together and surfaces "Sparks" — brief, high-signal connections between campfires. Full spec in `active-product-development-context/sprint-12-sparks.md`.
 
-**Core concept:** Sparks are precious, not noisy. Max 1 per campfire per 24h. They appear as an animated arc on the map, a momentary fireside entry, and persistent badges on connected campfires. Dismissed sparks are preserved in a searchable log.
+**Core concept:** Sparks are precious, not noisy. Max 1 per campfire per 24h. They appear as an animated arc on the map, a momentary stories entry, and persistent badges on connected campfires. Dismissed sparks are preserved in a searchable log.
 
 | Feature                                                   | Status      | Owner | Notes                                                                                             |
 | --------------------------------------------------------- | ----------- | ----- | ------------------------------------------------------------------------------------------------- |
@@ -242,10 +242,10 @@ AI-powered cross-team connection detection. After each batch summarization cycle
 | Server: SSE spark events                                  | Not started | —     | Extend existing summary stream with spark event type                                              |
 | Campfire Stories: map arc animation                       | Not started | —     | Bezier particle arc between campfires, plays once on new spark                                    |
 | Campfire Stories: persistent spark badge on campfires     | Not started | —     | Amber lightning badge on campfires with active sparks                                             |
-| Campfire Stories: Fireside Updates momentary entry        | Not started | —     | 15s fade-out spark notification in Fireside Updates                                               |
-| Campfire Stories: campfire detail spark section           | Not started | —     | Persistent spark display with dismiss, view tracking, visit prompt                                |
-| Campfire Stories: spark log                               | Not started | —     | Historical log in Fireside Updates, all statuses, scrollable                                      |
-| Mockup: spark arc + badge + fireside entry in simulation  | Done        | —     | 2 spark events in 90s loop (Payments↔Platform t=35, Growth↔Infra t=65), amber #fbbf24 throughout |
+| Campfire Stories: momentary spark in stories panel         | Not started | —     | 15s fade-out spark notification in Campfire Stories panel (org-wide summaries)                     |
+| Campfire Stories: campfire detail spark section           | Not started | —     | Persistent spark display in Logs panel, with dismiss, view tracking, visit prompt                  |
+| Campfire Stories: spark log                               | Not started | —     | Historical log in Campfire Stories panel (org-wide summaries), all statuses, scrollable            |
+| Mockup: spark arc + badge + stories entry in simulation   | Done        | —     | 2 spark events in 90s loop (Payments↔Platform t=35, Growth↔Infra t=65), amber #fbbf24 throughout |
 
 ## Not Yet Planned
 

@@ -65,12 +65,12 @@ The key concepts of our platform include:
 
 ## Our Web App
 
-![Campfire Stories Map View](context/Live%20Campfires%20Screenshot%20Feb%2014%202026.png)
+![Campfire Stories Map View](active-product-development-context/Live%20Campfires%20Screenshot%20Feb%2014%202026.png)
 
 The Campfires web app ("Campfire Stories") is a full-screen pixel-art map view with two components:
 
 1. **Organization Map**: An RPG-style pixel-art canvas of your entire organization. Each campfire represents a team. Fire intensity reflects how active the team is. Developers appear as animated sprites; AI agents appear as golems linked to their human. Click any campfire to see who's gathered and what they're building. Supports mouse-wheel zoom, click-drag panning, and a day/night cycle with twinkling stars and dynamic campfire glow.
-2. **Fireside Updates**: An overlay panel showing AI-generated one-liner summaries for each team, updated in real time via SSE.
+2. **Campfire Stories panel (org-wide summaries)**: An overlay panel showing AI-generated one-liner summaries for each team, updated in real time via SSE. Clicking a campfire opens the **Logs panel** with team-level narrative detail.
 
 ### Naming Conventions
 
@@ -94,10 +94,10 @@ campfires/
 ├── server/            # Node.js + Express + SQLite
 ├── campfire-stories/  # Web app (Vite + vanilla TS)
 ├── campfires-plugin/  # Claude Code plugin (hooks, commands, skills)
-└── context/           # Specs and reference docs
+└── active-product-development-context/  # Specs and reference docs
 ```
 
-For the full technical specification — architecture, data model, API surface, and how the packages connect — see [`context/campfires-build-spec-v3.md`](context/campfires-build-spec-v3.md).
+For the full technical specification — architecture, data model, API surface, and how the packages connect — see [`active-product-development-context/campfires-build-spec-v3.md`](active-product-development-context/campfires-build-spec-v3.md).
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## Context
 
-This is Pass 2 of 2. Pass 1 (`context/map-enhancement-pass1.md`) established the mock event system, animation queue, fire reactivity, sprite micro-animations, milestone celebrations, and ambient pulses. This pass builds on that foundation to add golem (agent) visual enhancements and the spark-to-golem spawn/despawn animation — the showpiece of the map.
+This is Pass 2 of 2. Pass 1 (`active-product-development-context/map-enhancement-pass1.md`) established the mock event system, animation queue, fire reactivity, sprite micro-animations, milestone celebrations, and ambient pulses. This pass builds on that foundation to add golem (agent) visual enhancements and the spark-to-golem spawn/despawn animation — the showpiece of the map.
 
 The mockup file has already been updated by Pass 1. The animation queue, mutable sprite registry, and event stream infrastructure are in place. This pass extends them.
 

@@ -2,7 +2,7 @@
 
 Cross-team intelligence layer that detects meaningful connections between campfires and surfaces them as "Sparks." The AI summarizer already ingests activity from all teams — Sparks extend this with a cross-team analysis pass that identifies synergies, collisions, and dependencies between teams' current work.
 
-**Core concept:** After each batch summarization cycle, a second Claude API call analyzes all team summaries together and identifies cross-team connections. These are surfaced as Sparks — brief, high-signal notifications that appear on the map (animated arc between campfires), momentarily in Fireside Updates, and persistently in the campfire detail panel until dismissed. Dismissed sparks are preserved in a searchable log.
+**Core concept:** After each batch summarization cycle, a second Claude API call analyzes all team summaries together and identifies cross-team connections. These are surfaced as Sparks — brief, high-signal notifications that appear on the map (animated arc between campfires), momentarily in the Campfire Stories panel, and persistently in the campfire detail panel until dismissed. Dismissed sparks are preserved in a searchable log.
 
 **Design principles:**
 - Sparks are precious, not noisy. Max 1 spark per campfire per 24-hour window.
@@ -120,7 +120,7 @@ The prompt asks Claude to:
 
 ### `GET /api/orgs/:orgId/sparks`
 
-Returns active sparks for the org. Used by Campfire Stories to render sparks on the map and in Fireside Updates.
+Returns active sparks for the org. Used by the Campfire Stories web app to render sparks on the map and in the Campfire Stories panel (org-wide summaries).
 
 Query params:
 - `status` — filter by status (`active`, `dismissed`, `expired`, `all`). Default: `active`
@@ -157,7 +157,7 @@ Request body: `{ teamId: string, userId: string }`
 
 ---
 
-## Presentation: Campfire Stories
+## Presentation: Campfire Stories Web App
 
 ### Map: Spark arc animation
 
@@ -177,20 +177,20 @@ Implementation notes:
 - Use the existing ember/spark particle style from the campfire rendering
 - Spark icon is drawn as part of the campfire rendering pass, positioned just above/beside the team name label
 
-### Fireside Updates: Momentary spark entry
+### Campfire Stories panel (org-wide summaries): Momentary spark entry
 
 When a new spark is detected:
-1. A spark entry appears at the top of the Fireside Updates panel
+1. A spark entry appears at the top of the Campfire Stories panel (org-wide summaries, top-right)
 2. Styled distinctly from regular updates — spark/lightning icon, yellow accent text (`#fbbf24`), slightly different background
 3. Shows the one-line summary: "⚡ Spark: Payments ↔ Growth — converging on faster payment rollout for new SMBs"
-4. The entry fades out after 15 seconds or on the next Fireside Updates refresh cycle, whichever comes first
+4. The entry fades out after 15 seconds or on the next Campfire Stories panel refresh cycle, whichever comes first
 5. Not persistent — this is a flash of awareness, not a permanent entry
 
-### Campfire detail panel: Persistent spark section
+### Logs panel (team detail): Persistent spark section
 
 When a user clicks on a campfire that has active sparks:
 
-1. A "Sparks" section appears in the detail panel, above or below the member list
+1. A "Sparks" section appears in the Logs panel, above or below the member list
 2. Each spark shows:
    - Spark icon + yellow accent styling
    - The team-specific perspective text (asymmetric — what's relevant to *this* team)
@@ -202,7 +202,7 @@ When a user clicks on a campfire that has active sparks:
 
 ### Spark log
 
-A "Spark History" section accessible from the Fireside Updates panel (a toggle or small link at the bottom):
+A "Spark History" section accessible from the Campfire Stories panel (org-wide summaries, a toggle or small link at the bottom):
 
 1. Shows all sparks in reverse chronological order (active, dismissed, expired)
 2. Each entry shows: timestamp, connected teams, one-line summary, status badge (active/dismissed/expired)
@@ -223,7 +223,7 @@ event: spark
 data: { spark: Spark, isNew: boolean }
 ```
 
-- `isNew: true` — triggers the map arc animation and the momentary Fireside Updates entry
+- `isNew: true` — triggers the map arc animation and the momentary Campfire Stories panel (org-wide summaries) entry
 - `isNew: false` — sent on initial connection to hydrate existing active sparks (show persistent icons, no animation)
 
 ---
@@ -242,9 +242,9 @@ data: { spark: Spark, isNew: boolean }
 | Server: SSE spark events | Not started | — | Extend existing summary stream with spark event type |
 | Campfire Stories: map arc animation | Not started | — | Bezier particle arc between campfires, plays once on new spark |
 | Campfire Stories: persistent spark icon on campfires | Not started | — | Yellow lightning badge on campfires with active sparks |
-| Campfire Stories: Fireside Updates momentary entry | Not started | — | 15s fade-out spark notification in Fireside Updates panel |
-| Campfire Stories: campfire detail spark section | Not started | — | Persistent spark display with dismiss, view tracking, visit prompt |
-| Campfire Stories: spark log | Not started | — | Historical log in Fireside Updates, all statuses, scrollable |
+| Campfire Stories: momentary spark in stories panel | Not started | — | 15s fade-out spark notification in Campfire Stories panel (org-wide summaries) |
+| Campfire Stories: Logs panel spark section | Not started | — | Persistent spark display in Logs panel (team detail), with dismiss, view tracking, visit prompt |
+| Campfire Stories: spark log | Not started | — | Historical log in Campfire Stories panel (org-wide summaries), all statuses, scrollable |
 
 ---
 
@@ -257,9 +257,9 @@ Recommended sequence for Claude Code agents:
 3. **Detection pipeline** — Add cross-team analysis call to summarizer, implement rate limiter and dedup logic
 4. **API endpoints** — Wire up GET/POST routes, auth checks
 5. **SSE extension** — Add spark event type to existing stream
-6. **Campfire detail panel** — Persistent spark section with dismiss and view tracking (simplest UI, validates pipeline)
-7. **Spark log** — Historical log view in Fireside Updates
-8. **Fireside Updates momentary entry** — Timed fade-out notification
+6. **Logs panel spark section** — Persistent spark section in Logs panel (team detail) with dismiss and view tracking (simplest UI, validates pipeline)
+7. **Spark log** — Historical log view in Campfire Stories panel (org-wide summaries)
+8. **Campfire Stories panel momentary entry** — Timed fade-out notification in Campfire Stories panel (org-wide summaries)
 9. **Map arc animation** — The visual payoff, built last once everything else works
 
 Steps 1-5 are the pipeline. Steps 6-9 are the presentation. The pipeline should be validated (manually review generated sparks for quality) before investing in presentation work.

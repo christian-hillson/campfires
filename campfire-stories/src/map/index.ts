@@ -139,7 +139,7 @@ export class MapView {
   private allSprites: SpriteData[] = [];
   private environment!: EnvironmentData;
   private hoveredSprite: SpriteData | null = null;
-  private storiesPanel!: HTMLElement;
+  private logsPanel!: HTMLElement;
   private currentPanelTeamId: string | null = null;
   private panelPollInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -290,10 +290,10 @@ export class MapView {
     summaryBar.id = 'map-summary-bar';
     wrapper.appendChild(summaryBar);
 
-    // Stories panel (bottom-right)
-    this.storiesPanel = document.createElement('div');
-    this.storiesPanel.className = 'map-stories-panel';
-    wrapper.appendChild(this.storiesPanel);
+    // Logs panel (bottom-right, team detail)
+    this.logsPanel = document.createElement('div');
+    this.logsPanel.className = 'map-logs-panel';
+    wrapper.appendChild(this.logsPanel);
 
     // Legend
     const legend = document.createElement('div');
@@ -328,16 +328,16 @@ export class MapView {
     this.resize();
     this.renderSummaryBar();
 
-    // Show home team stories or placeholder
+    // Show home team logs or placeholder
     if (this.config.homeTeamId) {
-      this.renderStoriesPanel(this.config.homeTeamId);
+      this.renderLogsPanel(this.config.homeTeamId);
     } else {
-      this.storiesPanel.innerHTML = `
-        <div class="stories-panel-header">
-          <span class="stories-panel-title">\u2726 CAMPFIRE STORIES</span>
+      this.logsPanel.innerHTML = `
+        <div class="logs-panel-header">
+          <span class="logs-panel-title">\u2726 LOGS</span>
         </div>
-        <div class="stories-panel-body">
-          <div class="stories-panel-placeholder">Click a campfire to view its stories</div>
+        <div class="logs-panel-body">
+          <div class="logs-panel-placeholder">Click a campfire to view its logs</div>
         </div>
       `;
     }
@@ -378,7 +378,7 @@ export class MapView {
     const bar = this.container.querySelector('#map-summary-bar');
     if (!bar) return;
 
-    bar.innerHTML = '<div class="map-summary-title">\u2726 FIRESIDE UPDATES</div>';
+    bar.innerHTML = '<div class="map-summary-title">\u2726 CAMPFIRE STORIES</div>';
 
     // Show latest summary per team
     for (const cf of this.campfires) {
@@ -553,7 +553,7 @@ export class MapView {
       this.tooltip.style.display = 'none';
     });
 
-    // Click campfire to update stories panel (suppress if dragged)
+    // Click campfire to update logs panel (suppress if dragged)
     this.canvas.addEventListener('click', (e) => {
       if (this.dragDistance > 5) return;
 
@@ -572,14 +572,14 @@ export class MapView {
       for (const cf of this.campfires) {
         const hitRadius = cf.fireSize * 6 + 10;
         if (Math.hypot(wx - cf.x, wy - cf.y) < hitRadius) {
-          this.renderStoriesPanel(cf.teamId);
+          this.renderLogsPanel(cf.teamId);
           return;
         }
       }
     });
   }
 
-  private renderStoriesPanel(teamId: string): void {
+  private renderLogsPanel(teamId: string): void {
     if (teamId === this.currentPanelTeamId) return;
     this.currentPanelTeamId = teamId;
 
@@ -596,19 +596,19 @@ export class MapView {
 
     const showHomeBtn = this.config.homeTeamId && teamId !== this.config.homeTeamId;
 
-    this.storiesPanel.innerHTML = `
-      <div class="stories-panel-header">
-        ${showHomeBtn ? '<button class="stories-panel-home-btn">\u2302 HOME</button>' : ''}
-        <span class="stories-panel-title"><span class="team-dot" style="background:${esc(teamColor)}"></span> ${esc(teamName)}</span>
+    this.logsPanel.innerHTML = `
+      <div class="logs-panel-header">
+        ${showHomeBtn ? '<button class="logs-panel-home-btn">\u2302 HOME</button>' : ''}
+        <span class="logs-panel-title"><span class="team-dot" style="background:${esc(teamColor)}"></span> ${esc(teamName)}</span>
       </div>
-      <div class="stories-panel-body"><div class="stories-panel-loading">Loading...</div></div>
+      <div class="logs-panel-body"><div class="logs-panel-loading">Loading...</div></div>
     `;
 
     // Wire home button
     if (showHomeBtn) {
-      this.storiesPanel.querySelector('.stories-panel-home-btn')!.addEventListener('click', () => {
+      this.logsPanel.querySelector('.logs-panel-home-btn')!.addEventListener('click', () => {
         this.currentPanelTeamId = null; // force re-render
-        this.renderStoriesPanel(this.config.homeTeamId!);
+        this.renderLogsPanel(this.config.homeTeamId!);
       });
     }
 
@@ -661,7 +661,7 @@ export class MapView {
         return `<span class="panel-status-dot" style="background:${colors[status] || '#484f58'}"></span>`;
       };
 
-      const body = this.storiesPanel.querySelector('.stories-panel-body');
+      const body = this.logsPanel.querySelector('.logs-panel-body');
       if (!body) return;
 
       // Summary section
@@ -671,7 +671,7 @@ export class MapView {
             ${latest.content ? `<div class="panel-summary-content">${esc(latest.content.slice(0, 200))}${latest.content.length > 200 ? '...' : ''}</div>` : ''}
             <div class="panel-summary-meta">${new Date(latest.createdAt).toLocaleString()}</div>
           </div>`
-        : '<div class="panel-no-summary">No stories yet</div>';
+        : '<div class="panel-no-summary">No logs yet</div>';
 
       // Members section
       const membersHtml = members.map((m) => {
@@ -709,7 +709,7 @@ export class MapView {
         <div class="panel-members">${membersHtml}${visitorsHtml}</div>
       `;
     } catch {
-      const body = this.storiesPanel.querySelector('.stories-panel-body');
+      const body = this.logsPanel.querySelector('.logs-panel-body');
       if (body) body.innerHTML = '<div class="panel-error">Failed to load</div>';
     }
   }

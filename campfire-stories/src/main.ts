@@ -165,7 +165,7 @@ function connectSSE(orgId: string): EventSource {
             mapView.triggerSparkArc(data.spark);
           }
 
-          // Add momentary entry to fireside feed
+          // Add momentary entry to stories feed
           const content = app.querySelector('.stories-content');
           if (content && state.currentView === 'feed') {
             addSparkToFeed(content as HTMLElement, data.spark, state.teams);

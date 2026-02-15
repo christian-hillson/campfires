@@ -2,7 +2,7 @@
 
 Read CONTRIBUTING.md for repo conventions, branch prefixes, and development setup.
 Read ROADMAP.md for current sprint status, feature ownership, and what's in progress.
-Read campfires-build-spec-v3.md in the context folder for the original technical specification (v1 prototype).
+Read campfires-build-spec-v3.md in the active-product-development-context folder for the original technical specification (v1 prototype).
 
 ## Architecture
 
@@ -10,7 +10,7 @@ Campfires has three layers:
 
 1. **Source — Claude Code Plugin** captures developer activity (file edits, commands, sessions) and uploads session transcripts when Share is enabled.
 2. **System — Campfires Server** stores activity, manages teams/orgs, and runs AI summarization via Claude API.
-3. **Surface — Campfire Stories (Web App)** displays a pixel-art organization map (with zoom/pan and day/night cycle) and a Fireside Updates sidebar with AI-generated summaries.
+3. **Surface — Campfire Stories (Web App)** displays a pixel-art organization map (with zoom/pan and day/night cycle) and a Campfire Stories panel (org-wide summaries) with AI-generated summaries.
 
 ## Stack
 
@@ -24,7 +24,7 @@ Campfires has three layers:
 
 Core packages: shared/, server/, campfire-stories/
 Plugin: campfires-plugin/ (Claude Code hooks, commands, skills)
-Reference docs: context/
+Reference docs: active-product-development-context/
 Archived (v1 prototype, not built): extension/, cli/
 
 ## Naming

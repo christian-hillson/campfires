@@ -314,5 +314,5 @@ export const CONFIG = {
   SPARK_MAX_PER_CAMPFIRE_PER_DAY: 1,
   SPARK_MIN_CONFIDENCE: 0.7,
   SPARK_EXPIRY_HOURS: 72,
-  SPARK_FADE_DURATION: 15_000, // 15s momentary entry in fireside
+  SPARK_FADE_DURATION: 15_000, // 15s momentary entry in stories panel
 } as const;

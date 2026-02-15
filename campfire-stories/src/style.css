@@ -380,8 +380,8 @@ body {
   font-size: 9px;
 }
 
-/* Stories Panel */
-.stories-panel-title {
+/* Logs Panel Title (also used in detail-view) */
+.logs-panel-title {
   font-family: 'Press Start 2P', monospace;
   font-size: 8px;
   color: var(--accent);
@@ -390,7 +390,7 @@ body {
   margin-bottom: 12px;
 }
 
-.story-entry {
+.log-entry {
   padding: 8px 0;
   border-bottom: 1px solid var(--map-border);
   font-family: 'Silkscreen', monospace;
@@ -400,24 +400,24 @@ body {
   gap: 6px;
 }
 
-.story-entry:last-child {
+.log-entry:last-child {
   border-bottom: none;
 }
 
-.story-time {
+.log-time {
   color: var(--map-text-dim);
   font-size: 9px;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-.story-text {
+.log-text {
   color: var(--map-text-muted);
   font-size: 10px;
   line-height: 1.5;
 }
 
-.story-text code {
+.log-text code {
   color: var(--accent);
   font-family: 'Silkscreen', monospace;
   font-size: 10px;
@@ -605,10 +605,10 @@ body {
 }
 
 /* ============================================ */
-/* Map Stories Panel (bottom-right)             */
+/* Map Logs Panel (bottom-right)                */
 /* ============================================ */
 
-.map-stories-panel {
+.map-logs-panel {
   position: absolute;
   bottom: 16px;
   right: 16px;
@@ -625,14 +625,14 @@ body {
   box-shadow: 0 4px 16px #00000066;
 }
 
-.stories-panel-header {
+.logs-panel-header {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 10px;
 }
 
-.stories-panel-header .stories-panel-title {
+.logs-panel-header .logs-panel-title {
   font-family: 'Press Start 2P', monospace;
   font-size: 8px;
   color: var(--accent);
@@ -642,7 +642,7 @@ body {
   gap: 6px;
 }
 
-.stories-panel-header .team-dot {
+.logs-panel-header .team-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -650,7 +650,7 @@ body {
   display: inline-block;
 }
 
-.stories-panel-home-btn {
+.logs-panel-home-btn {
   background: none;
   border: 1px solid var(--map-border);
   color: var(--map-text-dim);
@@ -664,19 +664,19 @@ body {
   flex-shrink: 0;
 }
 
-.stories-panel-home-btn:hover {
+.logs-panel-home-btn:hover {
   color: var(--map-text);
   border-color: var(--map-text-muted);
 }
 
-.stories-panel-placeholder {
+.logs-panel-placeholder {
   font-size: 10px;
   color: var(--map-text-dim);
   text-align: center;
   padding: 12px 0;
 }
 
-.stories-panel-loading {
+.logs-panel-loading {
   font-size: 10px;
   color: var(--map-text-dim);
   text-align: center;
@@ -760,7 +760,7 @@ body {
 }
 
 /* ============================================ */
-/* Spark Entries (Fireside Feed)                */
+/* Spark Entries (Stories Feed)                  */
 /* ============================================ */
 
 .spark-entry {
@@ -822,7 +822,7 @@ body {
 }
 
 /* ============================================ */
-/* Panel Sparks (Stories Panel + Detail Panel)  */
+/* Panel Sparks (Logs Panel + Detail View)      */
 /* ============================================ */
 
 .panel-sparks {

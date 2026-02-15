@@ -86,7 +86,7 @@ export function renderSummaryFeed(container: HTMLElement, ctx: FeedContext): voi
   header.className = 'stories-header';
 
   const title = document.createElement('h1');
-  title.textContent = '\u2726 FIRESIDE UPDATES';
+  title.textContent = '\u2726 CAMPFIRE STORIES';
   header.appendChild(title);
 
   const subtitle = document.createElement('p');

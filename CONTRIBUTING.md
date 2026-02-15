@@ -20,9 +20,9 @@ npm run build        # build everything
 campfires/
   shared/            @campfires/shared            — types and protocol (build this first)
   server/            @campfires/server             — Node.js + Express + SQLite
-  campfire-stories/  @campfires/campfire-stories   — Vite web app (pixel-art map + Fireside Updates)
+  campfire-stories/  @campfires/campfire-stories   — Vite web app (pixel-art map + Campfire Stories panel + Logs panel)
   campfires-plugin/                                — Claude Code plugin (hooks, commands, skills)
-  context/                                         — specs, research, reference docs (read-only)
+  active-product-development-context/               — specs, research, reference docs (read-only)
   extension/         (archived, not built)          — VS Code extension prototype
   cli/               (archived, not built)          — campfire watch terminal client prototype
 ```
@@ -78,7 +78,7 @@ These are non-negotiable across all packages:
 
 ## Spec Reference
 
-The original v1 technical spec lives at `context/campfires-build-spec-v3.md`. It covers the prototype architecture (VS Code extension + CLI + web app). The README reflects the current vision: Claude Code Plugin as source, Campfires Server as system, Campfires Web App as surface.
+The original v1 technical spec lives at `active-product-development-context/campfires-build-spec-v3.md`. It covers the prototype architecture (VS Code extension + CLI + web app). The README reflects the current vision: Claude Code Plugin as source, Campfires Server as system, Campfires Web App as surface.
 
 `CLAUDE.md` contains the same rules in a format optimized for AI coding assistants (Claude Code, Copilot, etc.). Keep it in sync if you update conventions.
 

@@ -167,7 +167,7 @@
         margin-top: 4px;
       }
 
-      .campfire-stories {
+      .logs-panel {
         position: absolute;
         bottom: 16px;
         right: 16px;
@@ -184,7 +184,7 @@
         overflow: hidden;
       }
 
-      .stories-title {
+      .logs-title {
         font-family: 'Press Start 2P', monospace;
         font-size: 7px;
         color: #f97316;
@@ -216,7 +216,7 @@
         margin-right: 4px;
       }
 
-      /* Spark fireside entry */
+      /* Spark stories entry */
       .spark-summary-line {
         font-size: 9px;
         color: #fbbf24;
@@ -257,7 +257,7 @@
       <div class="tooltip" id="tooltip"></div>
 
       <div class="ai-summary-bar">
-        <div class="summary-title">✦ FIRESIDE UPDATES</div>
+        <div class="summary-title">✦ CAMPFIRE STORIES</div>
         <div class="ai-summary-line">
           <span class="team-dot" style="background: #f97316"></span>
           <span id="summary-text-payments"
@@ -288,8 +288,8 @@
         </div>
       </div>
 
-      <div class="campfire-stories">
-        <div class="stories-title">✦ CAMPFIRE STORIES — Payments</div>
+      <div class="logs-panel">
+        <div class="logs-title">✦ LOGS — Payments</div>
         <div id="stories-list"></div>
       </div>
     </div>
@@ -527,7 +527,7 @@
         },
       };
 
-      // Store original FIRESIDE panel text for reset
+      // Store original CAMPFIRE STORIES panel text for reset
       const originalSummaryHTML = {};
       ['payments', 'platform', 'growth', 'infra'].forEach((id) => {
         const span = document.getElementById(`summary-text-${id}`);
@@ -715,7 +715,7 @@
           mood: 'building',
           oneLiner: 'Auth service migration 80% complete',
         },
-        // Campfire Stories — Payments team detail updates
+        // Logs panel — Payments team detail updates
         {
           time: 5,
           type: 'story_update',
@@ -800,10 +800,10 @@
       const SPARK_ARC_DURATION = 3.0;
       const SPARK_ARC_HEIGHT = 40;
       const SPARK_BADGE_PERSIST = 300; // seconds
-      const SPARK_FADE_DURATION = 15; // seconds before fireside entry fades
+      const SPARK_FADE_DURATION = 15; // seconds before stories entry fades
       let sparkArcs = []; // { fromX, fromY, toX, toY, startTime }
       let sparkBadges = new Map(); // teamId → startTime
-      let sparkFiresideEntries = []; // DOM elements to clean on reset
+      let sparkStoriesEntries = []; // DOM elements to clean on reset
 
       // ─── GOLEM STATE ───
       let pendingSpawns = []; // active spawn animations
@@ -978,17 +978,17 @@
         // Clear spark state
         sparkArcs = [];
         sparkBadges.clear();
-        for (const el of sparkFiresideEntries) {
+        for (const el of sparkStoriesEntries) {
           el.remove();
         }
-        sparkFiresideEntries = [];
+        sparkStoriesEntries = [];
 
-        // Clear Campfire Stories entries
+        // Clear logs panel entries
         storyStartTime = null;
         const storiesList = document.getElementById('stories-list');
         if (storiesList) storiesList.innerHTML = '';
 
-        // Restore original FIRESIDE panel text
+        // Restore original Campfire Stories panel (org-wide summaries) text
         ['payments', 'platform', 'growth', 'infra'].forEach((id) => {
           const span = document.getElementById(`summary-text-${id}`);
           if (span && originalSummaryHTML[id]) {
@@ -2422,7 +2422,7 @@
             mockSummaryData[event.teamId].milestone = event.milestone;
         }
 
-        // Update FIRESIDE panel text with fade
+        // Update CAMPFIRE STORIES panel text with fade
         if (event.oneLiner) {
           const span = document.getElementById(`summary-text-${event.teamId}`);
           if (span) {
@@ -2527,14 +2527,14 @@
         sparkBadges.set(event.fromTeam, lastRenderTime);
         sparkBadges.set(event.toTeam, lastRenderTime);
 
-        // Fireside entry in #map-summary-bar (the ai-summary-bar panel)
+        // Stories entry in #map-summary-bar (the ai-summary-bar panel)
         const summaryBar = document.querySelector('.ai-summary-bar');
         if (summaryBar) {
           const entry = document.createElement('div');
           entry.className = 'spark-summary-line';
           entry.innerHTML = `<span>⚡</span><span>${event.summary}</span>`;
           summaryBar.appendChild(entry);
-          sparkFiresideEntries.push(entry);
+          sparkStoriesEntries.push(entry);
 
           // Fade in
           requestAnimationFrame(() => {

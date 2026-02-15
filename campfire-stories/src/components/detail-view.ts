@@ -190,19 +190,19 @@ function narratize(
   }
 }
 
-function renderStories(events: ActivityEvent[], members: User[]): HTMLElement {
+function renderLogs(events: ActivityEvent[], members: User[]): HTMLElement {
   const section = document.createElement('div');
   section.className = 'detail-section';
 
   const heading = document.createElement('h3');
-  heading.className = 'stories-panel-title';
-  heading.textContent = '\u2726 CAMPFIRE STORIES';
+  heading.className = 'logs-panel-title';
+  heading.textContent = '\u2726 LOGS';
   section.appendChild(heading);
 
   if (events.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
-    empty.textContent = 'No stories yet.';
+    empty.textContent = 'No logs yet.';
     section.appendChild(empty);
     return section;
   }
@@ -213,19 +213,19 @@ function renderStories(events: ActivityEvent[], members: User[]): HTMLElement {
   }
 
   const list = document.createElement('div');
-  list.className = 'stories-list';
+  list.className = 'logs-list';
 
   for (const event of events) {
     const entry = document.createElement('div');
-    entry.className = 'story-entry';
+    entry.className = 'log-entry';
 
     const time = document.createElement('span');
-    time.className = 'story-time';
+    time.className = 'log-time';
     time.textContent = timeAgo(event.timestamp);
     entry.appendChild(time);
 
     const text = document.createElement('span');
-    text.className = 'story-text';
+    text.className = 'log-text';
     text.innerHTML = narratize(event, nameMap);
     entry.appendChild(text);
 
@@ -388,7 +388,7 @@ export async function renderDetailView(container: HTMLElement, ctx: DetailContex
     }
     view.appendChild(renderMembers(members));
     view.appendChild(renderSummaryContent(teamSummaries));
-    view.appendChild(renderStories(activity, members));
+    view.appendChild(renderLogs(activity, members));
   } catch (err) {
     loading.remove();
     const error = document.createElement('div');
