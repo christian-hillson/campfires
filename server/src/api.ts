@@ -14,6 +14,12 @@ import {
   verifyToken,
   createWsToken,
 } from './auth.js';
+import {
+  auditAuthFailure,
+  auditAuthSuccess,
+  auditAuthorizationDenied,
+  auditRateLimitHit,
+} from './audit-log.js';
 
 // ============================================
 // Zod Schemas
@@ -115,6 +121,10 @@ export function createRouter(): Router {
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: 'Too many attempts, please try again later' },
+    handler: (req, res) => {
+      auditRateLimitHit(req);
+      res.status(429).json({ error: 'Too many attempts, please try again later' });
+    },
   });
 
   // Tiered rate limiter: authenticated users get higher limits
@@ -131,6 +141,10 @@ export function createRouter(): Router {
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: 'Too many requests, please try again later' },
+    handler: (req, res) => {
+      auditRateLimitHit(req);
+      res.status(429).json({ error: 'Too many requests, please try again later' });
+    },
     keyGenerator: (req: Request) => {
       // Use userId for authenticated, IP for anonymous
       const authHeader = req.headers.authorization;
@@ -198,10 +212,12 @@ export function createRouter(): Router {
       const result = await login(email, password);
 
       if ('error' in result) {
+        auditAuthFailure(req, 'Invalid credentials');
         res.status(401).json({ error: result.error });
         return;
       }
 
+      auditAuthSuccess(req, result.user.userId);
       res.json(result);
     } catch {
       res.status(500).json({ error: 'Internal server error' });
@@ -274,6 +290,7 @@ export function createRouter(): Router {
 
     // Only members of this org can update it
     if (req.user!.orgId !== id) {
+      auditAuthorizationDenied(req, req.user!.userId, 'Org update denied — wrong org');
       res.status(403).json({ error: 'You do not belong to this organization' });
       return;
     }
@@ -317,6 +334,7 @@ export function createRouter(): Router {
 
     // Only members of this org (or users with no org yet) can create teams in it
     if (req.user!.orgId && req.user!.orgId !== orgId) {
+      auditAuthorizationDenied(req, req.user!.userId, 'Team create denied — wrong org');
       res.status(403).json({ error: 'You do not belong to this organization' });
       return;
     }
@@ -476,6 +494,7 @@ export function createRouter(): Router {
 
     // Only human users on a team can register agents
     if (caller.type !== 'human') {
+      auditAuthorizationDenied(req, caller.userId, 'Agent register denied — not human');
       res.status(403).json({ error: 'Only human users can register agents' });
       return;
     }
@@ -615,6 +634,7 @@ export function createRouter(): Router {
       return;
     }
     if (session.userId !== caller.userId) {
+      auditAuthorizationDenied(req, caller.userId, 'Session heartbeat denied — not owner');
       res.status(403).json({ error: 'Not your session' });
       return;
     }
@@ -641,6 +661,7 @@ export function createRouter(): Router {
       return;
     }
     if (session.userId !== caller.userId) {
+      auditAuthorizationDenied(req, caller.userId, 'Session end denied — not owner');
       res.status(403).json({ error: 'Not your session' });
       return;
     }
@@ -684,6 +705,7 @@ export function createRouter(): Router {
       return;
     }
     if (session.userId !== caller.userId) {
+      auditAuthorizationDenied(req, caller.userId, 'Transcript delta denied — not owner');
       res.status(403).json({ error: 'Not your session' });
       return;
     }

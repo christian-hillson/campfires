@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import type { Request, Response, NextFunction } from 'express';
 import type { JwtPayload, User } from '@campfires/shared';
 import { getPersistence } from './persistence.js';
+import { auditAuthFailure } from './audit-log.js';
 
 // ============================================
 // WebSocket Upgrade Tokens (single-use, 30s TTL)
@@ -200,6 +201,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    auditAuthFailure(req, 'No token provided');
     res.status(401).json({ error: 'No token provided' });
     return;
   }
@@ -208,6 +210,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
   const payload = verifyToken(token);
 
   if (!payload) {
+    auditAuthFailure(req, 'Invalid or expired token');
     res.status(401).json({ error: 'Invalid or expired token' });
     return;
   }
