@@ -261,6 +261,7 @@ Full campfire lifecycle: firepits persist on the map even when nobody's around. 
 | Map: cold firepit rendering                           | Done   | —     | `renderer.ts` — drawColdFirepit with stone ring, charred logs, smoke wisp, night ember glow              |
 | Map: kindle animation (spark→catch→grow)              | Done   | —     | `renderer.ts` — drawKindleAnimation, stagger queue in index.ts                                           |
 | Map: founder pig ceremony                             | Done   | —     | `sprites.ts` — drawFounderPig with hard hat, 4-phase ceremony (entrance/building/lighting/exit)          |
+| Map: offline decay with grace period                  | Done   | —     | `index.ts` — 5min grace keeps kindled minimum, 60s decay interpolates multipliers to cold, spawns tools  |
 | Campfire Stories: team_registered SSE handling        | Done   | —     | `main.ts` — adds team to state, triggers founder ceremony on map                                         |
 
 ## Not Yet Planned
