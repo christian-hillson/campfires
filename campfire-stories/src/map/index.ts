@@ -30,6 +30,9 @@ import {
   drawTossSprite,
   drawFloatingText,
   cleanupFloatingTexts,
+  drawGolemSpawn,
+  drawDespawnParticles,
+  drawCastingSprite,
   type FloatingText,
 } from './sprites.js';
 import {
@@ -73,6 +76,12 @@ import {
   BRANCH_WALK_DURATION,
   COMMIT_FLARE_MULT,
   FIRE_LEVEL_WINDOW,
+  SESSION_ENTER_DURATION,
+  SESSION_EXIT_DURATION,
+  SPAWN_TOTAL,
+  DESPAWN_WALK_DURATION,
+  DESPAWN_DISSOLVE_DURATION,
+  GOLEM_SPEED_MULT,
 } from './animation-constants.js';
 import { ActivityFeed } from './activity-feed.js';
 
@@ -116,6 +125,7 @@ export class MapView {
   private activityFeed = new ActivityFeed();
   private lastRenderTime = 0;
   private recentEvents: { teamId: string; timestamp: number }[] = [];
+  private castingSprites = new Set<string>(); // userId of humans currently casting for golem spawn
 
   // Map dimensions in pixel-art units
   private mapWidth = 500;
@@ -156,7 +166,7 @@ export class MapView {
 
     // Debug helper for manual event injection
     (window as unknown as Record<string, unknown>).__simulateEvent = (
-      type: 'file_save' | 'commit' | 'branch_switch',
+      type: 'file_save' | 'commit' | 'branch_switch' | 'session_start' | 'session_end',
       userId?: string,
       message?: string,
     ) => {
@@ -618,6 +628,7 @@ export class MapView {
 
   private handleActivityEvents(events: ActivityEvent[]): void {
     const now = Date.now();
+    const time = performance.now() / 1000;
 
     for (const event of events) {
       // Track for fire level computation
@@ -630,13 +641,19 @@ export class MapView {
 
       switch (event.type) {
         case 'file_save':
-          this.handleFileSave(sprite);
+          this.handleFileSave(sprite, time);
           break;
         case 'commit':
           this.handleCommit(sprite, cfIndex, event.message || 'commit');
           break;
         case 'branch_switch':
           this.handleBranchSwitch(sprite, cfIndex);
+          break;
+        case 'session_start':
+          this.handleSessionStart(event.userId, cfIndex, event.userType);
+          break;
+        case 'session_end':
+          this.handleSessionEnd(event.userId, cfIndex, event.userType);
           break;
       }
     }
@@ -646,13 +663,14 @@ export class MapView {
     this.updateFireLevels();
   }
 
-  private handleFileSave(sprite: AnimatedSprite | undefined): void {
+  private handleFileSave(sprite: AnimatedSprite | undefined, _time: number): void {
     if (!sprite) return;
 
-    // Queue strike micro-animation
+    // Golem-specific: faster strike
+    const speedMult = sprite.type === 'agent' ? GOLEM_SPEED_MULT : 1;
     sprite.animQueue.push({
       type: 'file_save_strike',
-      duration: FILE_SAVE_DURATION,
+      duration: FILE_SAVE_DURATION / speedMult,
       elapsed: 0,
     });
   }
@@ -668,6 +686,8 @@ export class MapView {
     if (!cf) return;
 
     const time = performance.now() / 1000;
+    const speedMult = sprite.type === 'agent' ? GOLEM_SPEED_MULT : 1;
+    const walkDuration = COMMIT_WALK_DURATION / speedMult;
 
     // Walk to campfire → toss → walk back
     const startX = sprite.homeX;
@@ -675,12 +695,12 @@ export class MapView {
 
     sprite.animQueue.push({
       type: 'walk',
-      duration: COMMIT_WALK_DURATION,
+      duration: walkDuration,
       elapsed: 0,
       startX,
       startY,
       endX: cf.x,
-      endY: cf.y + 5, // slightly below campfire center
+      endY: cf.y + 5,
     });
 
     sprite.animQueue.push({
@@ -692,7 +712,7 @@ export class MapView {
 
     sprite.animQueue.push({
       type: 'walk',
-      duration: COMMIT_WALK_DURATION,
+      duration: walkDuration,
       elapsed: 0,
       startX: cf.x,
       startY: cf.y + 5,
@@ -706,7 +726,7 @@ export class MapView {
       text: shortMsg,
       x: cf.x,
       y: cf.y - 15,
-      startTime: time + COMMIT_WALK_DURATION, // appears when toss starts
+      startTime: time + walkDuration,
       color: '#f0e8c0',
     });
 
@@ -752,6 +772,142 @@ export class MapView {
     }
   }
 
+  // ── PR2: Session enter/exit ──
+
+  private getMapEdgePoint(homeX: number, homeY: number): { x: number; y: number } {
+    // Find nearest edge perpendicular to home position
+    const distTop = homeY;
+    const distBottom = this.mapHeight - homeY;
+    const distLeft = homeX;
+    const distRight = this.mapWidth - homeX;
+    const minDist = Math.min(distTop, distBottom, distLeft, distRight);
+
+    if (minDist === distTop) return { x: homeX, y: -10 };
+    if (minDist === distBottom) return { x: homeX, y: this.mapHeight + 10 };
+    if (minDist === distLeft) return { x: -10, y: homeY };
+    return { x: this.mapWidth + 10, y: homeY };
+  }
+
+  private handleSessionStart(
+    userId: string,
+    campfireIndex: number,
+    userType: 'human' | 'agent',
+  ): void {
+    const sprite = this.animatedSprites.get(userId);
+    if (!sprite) return;
+
+    const cf = this.campfires[campfireIndex];
+    if (!cf) return;
+
+    if (userType === 'agent') {
+      // Golem spawn: 5-phase spark animation
+      this.handleGolemSpawn(sprite, campfireIndex);
+    } else {
+      // Human: walk in from map edge with fade-in
+      const edge = this.getMapEdgePoint(sprite.homeX, sprite.homeY);
+      sprite.animQueue.push({
+        type: 'walk',
+        duration: SESSION_ENTER_DURATION,
+        elapsed: 0,
+        startX: edge.x,
+        startY: edge.y,
+        endX: sprite.homeX,
+        endY: sprite.homeY,
+        fadeIn: true,
+      });
+    }
+  }
+
+  private handleSessionEnd(
+    userId: string,
+    campfireIndex: number,
+    userType: 'human' | 'agent',
+  ): void {
+    const sprite = this.animatedSprites.get(userId);
+    if (!sprite) return;
+
+    const cf = this.campfires[campfireIndex];
+    if (!cf) return;
+
+    if (userType === 'agent') {
+      // Golem despawn: walk to edge fast, then dissolve
+      this.handleGolemDespawn(sprite, campfireIndex);
+    } else {
+      // Human: walk to map edge with fade-out
+      const edge = this.getMapEdgePoint(sprite.homeX, sprite.homeY);
+      sprite.animQueue.push({
+        type: 'walk',
+        duration: SESSION_EXIT_DURATION,
+        elapsed: 0,
+        startX: sprite.homeX,
+        startY: sprite.homeY,
+        endX: edge.x,
+        endY: edge.y,
+        fadeOut: true,
+      });
+    }
+  }
+
+  private handleGolemSpawn(sprite: AnimatedSprite, campfireIndex: number): void {
+    const cf = this.campfires[campfireIndex];
+    if (!cf) return;
+
+    // Find the owner human for casting pose
+    const owner = sprite.parentName
+      ? [...this.animatedSprites.values()].find((s) => s.name === sprite.parentName)
+      : undefined;
+
+    sprite.isSpawning = true;
+    sprite.animQueue.push({
+      type: 'golem_spawn',
+      duration: SPAWN_TOTAL,
+      elapsed: 0,
+      fireX: cf.x,
+      fireY: cf.y,
+      targetX: sprite.homeX,
+      targetY: sprite.homeY,
+      ownerX: owner?.homeX ?? cf.x + 15,
+      ownerY: owner?.homeY ?? cf.y,
+    });
+
+    // Set owner to casting pose during spawn
+    if (owner) {
+      this.castingSprites.add(owner.userId);
+      setTimeout(() => {
+        this.castingSprites.delete(owner.userId);
+      }, SPAWN_TOTAL * 1000);
+    }
+  }
+
+  private handleGolemDespawn(sprite: AnimatedSprite, campfireIndex: number): void {
+    const cf = this.campfires[campfireIndex];
+    if (!cf) return;
+
+    // Walk to edge fast, then dissolve
+    const edge = this.getMapEdgePoint(sprite.homeX, sprite.homeY);
+    sprite.animQueue.push({
+      type: 'walk',
+      duration: DESPAWN_WALK_DURATION,
+      elapsed: 0,
+      startX: sprite.homeX,
+      startY: sprite.homeY,
+      endX: edge.x,
+      endY: edge.y,
+    });
+
+    sprite.animQueue.push({
+      type: 'golem_despawn',
+      duration: DESPAWN_DISSOLVE_DURATION,
+      elapsed: 0,
+      fireX: cf.x,
+      fireY: cf.y,
+    });
+
+    // Fire flare on despawn
+    const time = performance.now() / 1000;
+    triggerFireFlare(this.fireFlares, campfireIndex, 1.0, time);
+  }
+
   private hideOverlay(): void {
     if (this.overlayPollInterval) {
       clearInterval(this.overlayPollInterval);
@@ -774,6 +930,10 @@ export class MapView {
     tickPulses(this.pulseStates, this.fireStates, this.campfires, time);
     for (const sprite of this.animatedSprites.values()) {
       tickSprite(sprite, dt);
+      // Clear spawning flag when spawn animation finishes
+      if (sprite.isSpawning && !sprite.currentAnim && sprite.animQueue.length === 0) {
+        sprite.isSpawning = false;
+      }
     }
     cleanupFloatingTexts(this.floatingTexts, time);
 
@@ -968,10 +1128,36 @@ export class MapView {
           campfireIndex: sprite.campfireIndex,
         };
 
+        // Golem spawn sequence — draw spawn effects instead of sprite
+        if (sprite.currentAnim?.type === 'golem_spawn') {
+          drawGolemSpawn(
+            ctx, sprite.currentAnim.elapsed,
+            state.spawnFireX, state.spawnFireY,
+            sprite.homeX, sprite.homeY,
+            state.spawnOwnerX, state.spawnOwnerY,
+            sprite.color, time,
+          );
+          ctx.restore();
+          continue;
+        }
+
+        // Golem despawn — draw dissolve particles
+        if (sprite.currentAnim?.type === 'golem_despawn') {
+          drawDespawnParticles(
+            ctx, state.x, state.y,
+            state.despawnFireX, state.despawnFireY,
+            sprite.color, state.animProgress, time,
+          );
+          ctx.restore();
+          continue;
+        }
+
         if (state.task === 'strike') {
           drawStrikeSprite(ctx, state.x, state.y, sprite.color, state.animProgress, time);
         } else if (state.task === 'toss') {
           drawTossSprite(ctx, state.x, state.y, sprite.color, state.animProgress, time);
+        } else if (this.castingSprites.has(sprite.userId)) {
+          drawCastingSprite(ctx, renderSprite, time);
         } else if (sprite.type === 'agent') {
           drawGolemSprite(ctx, renderSprite, time);
         } else {

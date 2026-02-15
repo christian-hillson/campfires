@@ -1,6 +1,13 @@
 import { px, darken, PIXEL_SCALE } from './renderer.js';
 import type { SpriteData } from './layout.js';
-import { FLOATING_TEXT_DURATION } from './animation-constants.js';
+import {
+  FLOATING_TEXT_DURATION,
+  SPAWN_SPARK_DETACH,
+  SPAWN_CASTING,
+  SPAWN_DESCENT,
+  SPAWN_FORMATION,
+  SPAWN_TOTAL,
+} from './animation-constants.js';
 
 export interface FloatingText {
   text: string;
@@ -248,3 +255,207 @@ export function cleanupFloatingTexts(texts: FloatingText[], time: number): void 
     }
   }
 }
+
+// ── PR2: Golem Spawn Drawing ──
+
+/** Draw the golem spawn sequence (5 phases) */
+export function drawGolemSpawn(
+  ctx: CanvasRenderingContext2D,
+  elapsed: number,
+  fireX: number,
+  fireY: number,
+  targetX: number,
+  targetY: number,
+  ownerX: number,
+  ownerY: number,
+  color: string,
+  time: number,
+): void {
+  if (elapsed < SPAWN_SPARK_DETACH) {
+    // Phase 1: Spark rises from fire
+    const p = elapsed / SPAWN_SPARK_DETACH;
+    const sparkY = fireY - p * 14;
+    const sparkSize = 1 + p * 2 + Math.sin(p * Math.PI * 3) * 0.5;
+
+    // Radial glow
+    ctx.save();
+    const grad = ctx.createRadialGradient(
+      fireX * PIXEL_SCALE, sparkY * PIXEL_SCALE, 0,
+      fireX * PIXEL_SCALE, sparkY * PIXEL_SCALE, sparkSize * 2 * PIXEL_SCALE,
+    );
+    grad.addColorStop(0, 'rgba(255,240,180,0.3)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(
+      (fireX - sparkSize * 2) * PIXEL_SCALE,
+      (sparkY - sparkSize * 2) * PIXEL_SCALE,
+      sparkSize * 4 * PIXEL_SCALE,
+      sparkSize * 4 * PIXEL_SCALE,
+    );
+    ctx.restore();
+
+    // Spark
+    const brightness = 0.6 + p * 0.4;
+    ctx.save();
+    ctx.globalAlpha = brightness;
+    px(ctx, fireX - sparkSize / 2, sparkY - sparkSize / 2, Math.ceil(sparkSize), Math.ceil(sparkSize), '#f0e8a0');
+    ctx.restore();
+  } else if (elapsed < SPAWN_SPARK_DETACH + SPAWN_CASTING) {
+    // Phase 2: Human casting, particles flow to spark
+    const sparkX = fireX;
+    const sparkY = fireY - 14;
+
+    // Spark holds
+    px(ctx, sparkX - 1, sparkY - 1, 3, 3, '#f0e8a0');
+
+    // Particle lines from owner to spark
+    for (let i = 0; i < 6; i++) {
+      const pt = ((time * 2 + i * 0.15) % 1);
+      const pxPos = ownerX + (sparkX - ownerX) * pt;
+      const pyPos = ownerY + (sparkY - ownerY) * pt;
+      ctx.save();
+      ctx.globalAlpha = 0.3 + pt * 0.5;
+      px(ctx, pxPos, pyPos, 1, 1, '#f0c040');
+      ctx.restore();
+    }
+  } else if (elapsed < SPAWN_SPARK_DETACH + SPAWN_CASTING + SPAWN_DESCENT) {
+    // Phase 3: Spark descends in arc to target
+    const p = (elapsed - SPAWN_SPARK_DETACH - SPAWN_CASTING) / SPAWN_DESCENT;
+    const startY = fireY - 14;
+    const arcX = fireX + (targetX - fireX) * p;
+    const arcY = startY + (targetY - startY) * p - Math.sin(p * Math.PI) * 10;
+
+    px(ctx, arcX - 1, arcY - 1, 3, 3, '#f0e8a0');
+
+    // Impact flash at end
+    if (p > 0.9) {
+      ctx.save();
+      const flashR = 5;
+      const grad = ctx.createRadialGradient(
+        targetX * PIXEL_SCALE, targetY * PIXEL_SCALE, 0,
+        targetX * PIXEL_SCALE, targetY * PIXEL_SCALE, flashR * PIXEL_SCALE,
+      );
+      grad.addColorStop(0, 'rgba(255,255,220,0.9)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect(
+        (targetX - flashR) * PIXEL_SCALE,
+        (targetY - flashR) * PIXEL_SCALE,
+        flashR * 2 * PIXEL_SCALE,
+        flashR * 2 * PIXEL_SCALE,
+      );
+      ctx.restore();
+    }
+  } else if (elapsed < SPAWN_SPARK_DETACH + SPAWN_CASTING + SPAWN_DESCENT + SPAWN_FORMATION) {
+    // Phase 4: Formation — spark expands, takes golem shape
+    const p = (elapsed - SPAWN_SPARK_DETACH - SPAWN_CASTING - SPAWN_DESCENT) / SPAWN_FORMATION;
+
+    if (p < 0.25) {
+      // Expanding spark
+      const size = 2 + p * 8;
+      px(ctx, targetX - size / 2, targetY - size / 2, Math.ceil(size), Math.ceil(size), '#f0e8a0');
+    } else {
+      // Taking golem shape — draw bright then transition to color
+      const formColor = p < 0.4 ? '#f0e8a0' : color;
+      px(ctx, targetX - 1, targetY, 4, 2, formColor);
+      px(ctx, targetX, targetY, 2, 1, formColor);
+      px(ctx, targetX, targetY - 1, 2, 1, '#6a6a70');
+
+      // Bright overlay fading out
+      if (p < 1) {
+        const colorLerp = p >= 0.5 ? (p - 0.5) / 0.5 : 1;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, 1 - colorLerp * 2);
+        px(ctx, targetX - 1, targetY, 4, 2, '#f0e8a0');
+        ctx.restore();
+      }
+    }
+
+    // Cooling sparks
+    if (p > 0.2) {
+      const sparkCount = Math.floor((1 - p) * 6);
+      for (let i = 0; i < sparkCount; i++) {
+        const dist = 3 + p * 8;
+        const angle = (i / sparkCount) * Math.PI * 2 + time * 2;
+        const sx = targetX + Math.cos(angle) * dist;
+        const sy = targetY + Math.sin(angle) * dist * 0.5;
+        ctx.save();
+        ctx.globalAlpha = (1 - p) * 0.8;
+        px(ctx, sx, sy, 1, 1, i % 2 === 0 ? '#f0c040' : '#f0e8a0');
+        ctx.restore();
+      }
+    }
+  } else {
+    // Phase 5: Activation — full golem, eyes glow up
+    const p = (elapsed - SPAWN_SPARK_DETACH - SPAWN_CASTING - SPAWN_DESCENT - SPAWN_FORMATION) /
+      (SPAWN_TOTAL - SPAWN_SPARK_DETACH - SPAWN_CASTING - SPAWN_DESCENT - SPAWN_FORMATION);
+
+    // Draw golem body
+    px(ctx, targetX, targetY + 3, 1, 1, '#3a3a40');
+    px(ctx, targetX + 2, targetY + 3, 1, 1, '#3a3a40');
+    px(ctx, targetX - 1, targetY, 4, 2, darken(color, 0.7));
+    px(ctx, targetX, targetY, 2, 1, color);
+    px(ctx, targetX, targetY - 1, 2, 1, '#6a6a70');
+
+    // Eyes glow ramp
+    const eyeColor = p < 0.5 ? '#806020' : '#d0a040';
+    px(ctx, targetX, targetY - 1, 1, 1, eyeColor);
+    px(ctx, targetX + 1, targetY - 1, 1, 1, eyeColor);
+  }
+}
+
+/** Draw despawn dissolve particles */
+export function drawDespawnParticles(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  fireX: number,
+  fireY: number,
+  color: string,
+  progress: number,
+  time: number,
+): void {
+  const count = 12;
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2 + time;
+    const scatter = (1 - progress) * 3;
+    const pxPos = x + (fireX - x) * progress + Math.cos(angle) * scatter;
+    const pyPos = y + (fireY - y) * progress + Math.sin(angle) * scatter - progress * 10;
+    const alpha = 1 - progress;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    px(ctx, pxPos, pyPos, 1, 1, i % 2 === 0 ? color : '#f0c040');
+    ctx.restore();
+  }
+}
+
+// ── PR2: Human casting pose ──
+
+/** Draw human in casting pose (arm raised toward spark during golem spawn) */
+export function drawCastingSprite(
+  ctx: CanvasRenderingContext2D,
+  sprite: SpriteData,
+  time: number,
+): void {
+  const { px: x, py: y, color } = sprite;
+  const bobY = y + Math.sin(time * 4) * 0.5;
+
+  // Base body
+  px(ctx, x, bobY + 2, 1, 1, '#2a2020');
+  px(ctx, x + 1, bobY + 2, 1, 1, '#2a2020');
+  px(ctx, x, bobY, 2, 2, color);
+  px(ctx, x, bobY - 1, 2, 1, '#e0d8c8');
+
+  // Raised arm toward spark
+  px(ctx, x + 2, bobY - 2, 1, 1, color);
+  px(ctx, x + 2, bobY - 3, 1, 1, '#e0d8c8');
+
+  // Glow at fingertip
+  const glowAlpha = 0.5 + Math.sin(time * 8) * 0.3;
+  ctx.save();
+  ctx.globalAlpha = glowAlpha;
+  px(ctx, x + 2, bobY - 4, 1, 1, '#f0e8a0');
+  ctx.restore();
+}
+

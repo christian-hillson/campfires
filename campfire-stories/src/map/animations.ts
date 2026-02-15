@@ -29,7 +29,32 @@ export interface CommitTossAnim {
   message: string;
 }
 
-export type SpriteAnimation = WalkAnim | FileSaveStrikeAnim | CommitTossAnim;
+export interface GolemSpawnAnim {
+  type: 'golem_spawn';
+  duration: number;
+  elapsed: number;
+  fireX: number;
+  fireY: number;
+  targetX: number;
+  targetY: number;
+  ownerX: number;
+  ownerY: number;
+}
+
+export interface GolemDespawnAnim {
+  type: 'golem_despawn';
+  duration: number;
+  elapsed: number;
+  fireX: number;
+  fireY: number;
+}
+
+export type SpriteAnimation =
+  | WalkAnim
+  | FileSaveStrikeAnim
+  | CommitTossAnim
+  | GolemSpawnAnim
+  | GolemDespawnAnim;
 
 export interface AnimatedSprite {
   // Static identity (from SpriteData)
@@ -52,6 +77,8 @@ export interface AnimatedSprite {
   currentAnim: SpriteAnimation | null;
   // Campfire reference
   campfireIndex: number;
+  // Spawn state (PR2)
+  isSpawning: boolean;
 }
 
 export interface SpriteRenderState {
@@ -61,6 +88,15 @@ export interface SpriteRenderState {
   opacity: number;
   animProgress: number; // 0..1 progress of current animation (for drawing functions)
   animMessage: string; // commit message for toss animation
+  // Golem spawn render data
+  spawnPhase: string; // '' | 'spark_detach' | 'casting' | 'descent' | 'formation' | 'activation'
+  spawnFireX: number;
+  spawnFireY: number;
+  spawnOwnerX: number;
+  spawnOwnerY: number;
+  // Despawn render data
+  despawnFireX: number;
+  despawnFireY: number;
 }
 
 // ── Tick / advance ──
@@ -103,6 +139,13 @@ export function getSpriteRenderState(sprite: AnimatedSprite): SpriteRenderState 
     opacity: sprite.opacity,
     animProgress: 0,
     animMessage: '',
+    spawnPhase: '',
+    spawnFireX: 0,
+    spawnFireY: 0,
+    spawnOwnerX: 0,
+    spawnOwnerY: 0,
+    despawnFireX: 0,
+    despawnFireY: 0,
   };
 
   const anim = sprite.currentAnim;
@@ -129,9 +172,70 @@ export function getSpriteRenderState(sprite: AnimatedSprite): SpriteRenderState 
     base.task = 'toss';
     base.animProgress = progress;
     base.animMessage = anim.message;
+  } else if (anim.type === 'golem_spawn') {
+    base.animProgress = progress;
+    base.spawnFireX = anim.fireX;
+    base.spawnFireY = anim.fireY;
+    base.spawnOwnerX = anim.ownerX;
+    base.spawnOwnerY = anim.ownerY;
+
+    // Determine phase from elapsed time using imported constants
+    const elapsed = anim.elapsed;
+    const { SPAWN_SPARK_DETACH, SPAWN_CASTING, SPAWN_DESCENT, SPAWN_FORMATION } = getSpawnDurations();
+    if (elapsed < SPAWN_SPARK_DETACH) {
+      base.spawnPhase = 'spark_detach';
+      base.x = anim.fireX;
+      base.y = anim.fireY;
+      base.opacity = 0; // golem not visible yet
+    } else if (elapsed < SPAWN_SPARK_DETACH + SPAWN_CASTING) {
+      base.spawnPhase = 'casting';
+      base.x = anim.fireX;
+      base.y = anim.fireY - 14; // spark at top
+      base.opacity = 0;
+    } else if (elapsed < SPAWN_SPARK_DETACH + SPAWN_CASTING + SPAWN_DESCENT) {
+      base.spawnPhase = 'descent';
+      const dp = (elapsed - SPAWN_SPARK_DETACH - SPAWN_CASTING) / SPAWN_DESCENT;
+      // Arc from spark position to target
+      const arcX = anim.fireX + (anim.targetX - anim.fireX) * dp;
+      const arcY = (anim.fireY - 14) + (anim.targetY - (anim.fireY - 14)) * dp - Math.sin(dp * Math.PI) * 10;
+      base.x = arcX;
+      base.y = arcY;
+      base.opacity = 0;
+    } else if (elapsed < SPAWN_SPARK_DETACH + SPAWN_CASTING + SPAWN_DESCENT + SPAWN_FORMATION) {
+      base.spawnPhase = 'formation';
+      const fp = (elapsed - SPAWN_SPARK_DETACH - SPAWN_CASTING - SPAWN_DESCENT) / SPAWN_FORMATION;
+      base.x = anim.targetX;
+      base.y = anim.targetY;
+      base.opacity = fp > 0.5 ? (fp - 0.5) / 0.5 : 0;
+      base.animProgress = fp;
+    } else {
+      base.spawnPhase = 'activation';
+      const ap = (elapsed - SPAWN_SPARK_DETACH - SPAWN_CASTING - SPAWN_DESCENT - SPAWN_FORMATION) /
+        (anim.duration - SPAWN_SPARK_DETACH - SPAWN_CASTING - SPAWN_DESCENT - SPAWN_FORMATION);
+      base.x = anim.targetX;
+      base.y = anim.targetY;
+      base.opacity = 1;
+      base.animProgress = ap;
+    }
+  } else if (anim.type === 'golem_despawn') {
+    base.animProgress = progress;
+    base.task = 'toss'; // reuse toss visual for dissolve
+    base.despawnFireX = anim.fireX;
+    base.despawnFireY = anim.fireY;
+    base.opacity = 1 - progress;
   }
 
   return base;
+}
+
+// Lazy import helper to avoid circular dependency
+function getSpawnDurations() {
+  return {
+    SPAWN_SPARK_DETACH: 0.5,
+    SPAWN_CASTING: 0.3,
+    SPAWN_DESCENT: 0.3,
+    SPAWN_FORMATION: 1.0,
+  };
 }
 
 // ── Reconcile sprites from layout data ──
@@ -187,6 +291,7 @@ export function reconcileSprites(
         animQueue: [],
         currentAnim: null,
         campfireIndex: sd.campfireIndex,
+        isSpawning: false,
       });
     }
   }

@@ -49,3 +49,24 @@ export const PULSE_RADIUS_MULT: Record<FireLevel, number> = {
 
 // Fire flare multiplier on commit
 export const COMMIT_FLARE_MULT = 1.2;
+
+// PR2: Session enter/exit
+export const SESSION_ENTER_DURATION = 2.0;
+export const SESSION_EXIT_DURATION = 2.0;
+
+// PR2: Golem spawn phases (total = 2.4s)
+export const SPAWN_SPARK_DETACH = 0.5;
+export const SPAWN_CASTING = 0.3;
+export const SPAWN_DESCENT = 0.3;
+export const SPAWN_FORMATION = 1.0;
+export const SPAWN_ACTIVATION = 0.3;
+export const SPAWN_TOTAL =
+  SPAWN_SPARK_DETACH + SPAWN_CASTING + SPAWN_DESCENT + SPAWN_FORMATION + SPAWN_ACTIVATION;
+
+// PR2: Golem despawn
+export const DESPAWN_WALK_DURATION = 0.6;
+export const DESPAWN_DISSOLVE_DURATION = 0.5;
+export const DESPAWN_FLARE_DURATION = 0.5;
+
+// PR2: Golem speed multiplier
+export const GOLEM_SPEED_MULT = 2;
