@@ -84,16 +84,122 @@ Campfires uses fire-themed naming throughout the app:
 
 ---
 
-> **Note:** The following sections are development references. They will evolve as Campfires continues to take shape.
+## Getting Started
+
+### Prerequisites
+
+- **Node.js** v18+ (ES2022 target)
+- **npm** v9+ (workspaces used for monorepo)
+- **Claude Code** (optional, for the plugin)
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/christian-hillson/campfires.git
+cd campfires
+npm install
+```
+
+### 2. Configure the server environment
+
+Copy the example env file:
+
+```bash
+cp server/.env.example server/.env
+```
+
+The defaults work out of the box for local development:
+
+| Variable | Default | Notes |
+|----------|---------|-------|
+| `PORT` | `3000` | Server port |
+| `DB_PATH` | `./campfires.db` | SQLite database (auto-created on first run) |
+| `JWT_SECRET` | `change-me-in-production` | Auth token signing key |
+| `ALLOWED_ORIGINS` | `http://localhost:5173,http://localhost:3000` | CORS whitelist (comma-separated) |
+| `ANTHROPIC_API_KEY` | *(empty)* | Optional — enables AI summaries. Falls back to stubs if unset |
+| `ANTHROPIC_MODEL` | `claude-haiku-4-5-20250514` | Model used for summarization |
+
+### 3. Build
+
+Shared types must be built first — other packages depend on them:
+
+```bash
+npm run build:shared
+```
+
+Or build everything in the correct order:
+
+```bash
+npm run build:all
+```
+
+### 4. Launch
+
+You need two terminals:
+
+**Terminal 1 — Server** (port 3000):
+```bash
+npm run dev:server
+```
+
+You should see:
+```
+🔥 Campfires Server running on http://localhost:3000
+```
+
+**Terminal 2 — Web app** (port 5173):
+```bash
+npm run dev:stories
+```
+
+Open **http://localhost:5173** in your browser. The Vite dev server proxies `/api` requests to the server automatically.
+
+> **Production:** `npm run build:all` builds the web app into `campfire-stories/dist/`, and the server serves it as a SPA at port 3000 — no separate Vite process needed. Run with `npm start`.
+
+---
+
+## Plugin Setup (Optional)
+
+The Claude Code plugin captures developer activity and sends it to a running Campfires server.
+
+### Install the plugin
+
+From the campfires repo root:
+
+```bash
+claude mcp add-skill campfires ./campfires-plugin
+```
+
+### Log in
+
+In any Claude Code session, run:
+
+```
+/campfires:login
+```
+
+This prompts for your server URL, email, and password, then writes your auth token and settings to `~/.campfires/config.json`.
+
+### Share modes
+
+| Mode | What it sends |
+|------|--------------|
+| `full` | Session transcripts + heartbeats (default after login) |
+| `heartbeat` | Presence only — teammates see you're online, no activity details |
+| `off` | Plugin disabled — nothing sent |
+
+Toggle with `/campfires:share` or check status with `/campfires`.
+
+---
 
 ## Project Structure
 
 ```
 campfires/
-├── shared/            # Types and protocol (build first)
-├── server/            # Node.js + Express + SQLite
-├── campfire-stories/  # Web app (Vite + vanilla TS)
-├── campfires-plugin/  # Claude Code plugin (hooks, commands, skills)
+├── shared/              # Types and protocol (build first)
+├── server/              # Node.js + Express + SQLite
+├── campfire-stories/    # Web app (Vite + vanilla TS)
+├── campfires-plugin/    # Claude Code plugin (hooks, commands, skills)
 └── active-product-development-context/  # Specs and reference docs
 ```
 
@@ -101,17 +207,27 @@ For the full technical specification — architecture, data model, API surface, 
 
 ---
 
-## Contributing
+## Troubleshooting
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, commands, branch conventions, and code rules.
+| Issue | Fix |
+|-------|-----|
+| Build fails with missing types | Run `npm run build:shared` first — other packages depend on it |
+| Server won't start | Check that `server/.env` exists (copy from `.env.example`) |
+| CORS errors in browser | Make sure `ALLOWED_ORIGINS` in `.env` includes your web app URL |
+| No AI summaries appearing | Set `ANTHROPIC_API_KEY` in `.env` — without it, the server uses stub summaries |
+| WebSocket connection fails | Verify the server is running on the expected port |
+| Plugin not capturing activity | Run `/campfires` to check status — if no config, run `/campfires:login` first |
+| Database locked errors | Only one server instance can access the SQLite file at a time |
 
 ---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for dev commands, branch conventions, and code rules.
 
 ## Current Status
 
 See [ROADMAP.md](ROADMAP.md) for sprint status, feature ownership, and what's planned next.
-
---
 
 ## License
 
