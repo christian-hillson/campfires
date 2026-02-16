@@ -65,7 +65,7 @@ The key concepts of our platform include:
 
 ## Our Web App
 
-![Campfire Stories Map View](active-product-development-context/Live%20Campfires%20Screenshot%20Feb%2014%202026.png)
+![Campfire Stories Map View](active-product-development-context/Campfire%20Screenshot%20Feb%2016%202026.png)
 
 The Campfires web app ("Campfire Stories") is a full-screen pixel-art map view with two components:
 
