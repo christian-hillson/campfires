@@ -79,8 +79,9 @@ Campfires uses fire-themed naming throughout the app:
 |:------------ |:------------ |:-----:|:------------------------------- |
 | Organization | **Bonfire** | 🔥 | Your entire org — "Acme Bonfire" |
 | Team | **Campfire** | 🏕️ | A single team — "Payments Campfire" |
-| Individual | **Flame** | 🎇 | One developer's activity stream |
+| Individual | **Human** | | One developer's activity stream |
 | Agent | **Golem** | | One AI agent's activity stream |
+| Organization | **Spark** | ⚡ | When a concept synergizes, blocks, or repeats another team's concept |
 
 ---
 
