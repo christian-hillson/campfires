@@ -2,11 +2,11 @@
 
 ## Context
 
-The Campfires map (`active-product-development-context/campfires-map-mockup.html`) is a 2D pixel-art HTML5 canvas showing teams as campfires with human sprites and golem (agent) sprites. It's an alternative rendering mode for the Campfires Reel — same data pipeline, same REST endpoints. Currently sprites just shuffle back and forth and the campfires burn at a static intensity. We want to make the graphics **reactive to AI activity summaries and real events** so the map becomes a visual dashboard you can read at a glance.
+The Campfires map (`product/campfires-map-mockup.html`) is a 2D pixel-art HTML5 canvas showing teams as campfires with human sprites and golem (agent) sprites. It's an alternative rendering mode for the Campfires Reel — same data pipeline, same REST endpoints. Currently sprites just shuffle back and forth and the campfires burn at a static intensity. We want to make the graphics **reactive to AI activity summaries and real events** so the map becomes a visual dashboard you can read at a glance.
 
 The aesthetic is pixel-art RPG — think RollerCoaster Tycoon, Suikoden, Stardew Valley. The campfire is the central metaphor: it's the team's hearth, forge, and gathering place. Everything visual should reinforce that fire = team energy.
 
-**This is Pass 1 of 2.** This pass establishes the mock data/event system, fire reactivity, sprite animation queue, event-driven micro-animations, milestone celebrations, and ambient pulses. Pass 2 (in `active-product-development-context/map-enhancement-pass2.md`) builds golem enhancements and the spark-to-golem spawn/despawn sequence on top of this foundation.
+**This is Pass 1 of 2.** This pass establishes the mock data/event system, fire reactivity, sprite animation queue, event-driven micro-animations, milestone celebrations, and ambient pulses. Pass 2 (in `specs/map-enhancements/pass2.md`) builds golem enhancements and the spark-to-golem spawn/despawn sequence on top of this foundation.
 
 ## 1. Structured Summary Metadata + Mock Event Stream
 
