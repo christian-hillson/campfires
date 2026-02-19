@@ -20,17 +20,17 @@ No documents are deleted. Everything is relocated. Binary assets (`.mov`, `.pdf`
 
 This single folder contains fundamentally different types of content with no way to distinguish them:
 
-| What's in there | Type |
-|---|---|
-| `campfires-build-spec-v3.md` | Technical architecture spec |
-| `sprint-12-sparks.md`, `sprint-13-campfire-lifecycle-prompt.md` | Sprint-scoped task context |
-| `app-future-state-sketch-2026-02-08.md` | Product vision |
-| `campfire-watch-vision.html` | Deprecated product vision (CLI era) |
-| `infrastructure-diagrams-2026-02-08.md` | Architecture reference |
-| `map-enhancement-pass1.md`, `map-enhancement-pass2.md` | Active feature specs |
-| `campfires-map-mockup.html` | UI prototype/mockup |
-| `.png`, `.mov` files | Demo screenshots and video |
-| `.pdf` | Saved external article |
+| What's in there                                                 | Type                                |
+| --------------------------------------------------------------- | ----------------------------------- |
+| `campfires-build-spec-v3.md`                                    | Technical architecture spec         |
+| `sprint-12-sparks.md`, `sprint-13-campfire-lifecycle-prompt.md` | Sprint-scoped task context          |
+| `app-future-state-sketch-2026-02-08.md`                         | Product vision                      |
+| `campfire-watch-vision.html`                                    | Deprecated product vision (CLI era) |
+| `infrastructure-diagrams-2026-02-08.md`                         | Architecture reference              |
+| `map-enhancement-pass1.md`, `map-enhancement-pass2.md`          | Active feature specs                |
+| `campfires-map-mockup.html`                                     | UI prototype/mockup                 |
+| `.png`, `.mov` files                                            | Demo screenshots and video          |
+| `.pdf`                                                          | Saved external article              |
 
 There's no way to tell what's current vs. stale, what's a spec vs. a brainstorm, or what's for devs vs. stakeholders.
 
@@ -136,37 +136,37 @@ campfires/
 
 ### From `active-product-development-context/`
 
-| Current file | Destination | Notes |
-|---|---|---|
-| `campfires-build-spec-v3.md` | `docs/architecture/build-spec-v3.md` | Core technical reference |
-| `infrastructure-diagrams-2026-02-08.md` | `docs/architecture/infrastructure.md` | Architecture reference |
-| `app-future-state-sketch-2026-02-08.md` | `product/vision.md` | Product direction |
-| `campfire-watch-vision.html` | `archive/campfire-watch-vision.html` | Deprecated (CLI-era vision) |
-| `campfires-map-mockup.html` | `archive/campfires-map-mockup.html` | Historical mockup (or `specs/map-enhancements/` if still referenced) |
-| `sprint-12-sparks.md` | `specs/sparks/design.md` | Active feature spec |
-| `sprint-13-campfire-lifecycle-prompt.md` | `specs/campfire-lifecycle/design.md` | Active feature spec |
-| `map-enhancement-pass1.md` | `specs/map-enhancements/pass1.md` | Active feature spec |
-| `map-enhancement-pass2.md` | `specs/map-enhancements/pass2.md` | Active feature spec |
-| `Campfire Screenshot Feb 16 2026.png` | `docs/images/campfire-screenshot-2026-02-16.png` | Rename to kebab-case |
-| `Live Campfires Screenshot Feb 14 2026.png` | `docs/images/live-campfires-screenshot-2026-02-14.png` | Rename to kebab-case |
-| `Campfires Map view demo feb 14 2026.mov` | **Externalize** — upload to cloud storage, link from `docs/images/README.md` | Too large for git |
-| `The Anthropic Hive Mind...Medium.pdf` | **Remove from git** — add URL link to `product/references/README.md` | Publicly available article |
+| Current file                                | Destination                                                                  | Notes                                                                |
+| ------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `campfires-build-spec-v3.md`                | `docs/architecture/build-spec-v3.md`                                         | Core technical reference                                             |
+| `infrastructure-diagrams-2026-02-08.md`     | `docs/architecture/infrastructure.md`                                        | Architecture reference                                               |
+| `app-future-state-sketch-2026-02-08.md`     | `product/vision.md`                                                          | Product direction                                                    |
+| `campfire-watch-vision.html`                | `archive/campfire-watch-vision.html`                                         | Deprecated (CLI-era vision)                                          |
+| `campfires-map-mockup.html`                 | `archive/campfires-map-mockup.html`                                          | Historical mockup (or `specs/map-enhancements/` if still referenced) |
+| `sprint-12-sparks.md`                       | `specs/sparks/design.md`                                                     | Active feature spec                                                  |
+| `sprint-13-campfire-lifecycle-prompt.md`    | `specs/campfire-lifecycle/design.md`                                         | Active feature spec                                                  |
+| `map-enhancement-pass1.md`                  | `specs/map-enhancements/pass1.md`                                            | Active feature spec                                                  |
+| `map-enhancement-pass2.md`                  | `specs/map-enhancements/pass2.md`                                            | Active feature spec                                                  |
+| `Campfire Screenshot Feb 16 2026.png`       | `docs/images/campfire-screenshot-2026-02-16.png`                             | Rename to kebab-case                                                 |
+| `Live Campfires Screenshot Feb 14 2026.png` | `docs/images/live-campfires-screenshot-2026-02-14.png`                       | Rename to kebab-case                                                 |
+| `Campfires Map view demo feb 14 2026.mov`   | **Externalize** — upload to cloud storage, link from `docs/images/README.md` | Too large for git                                                    |
+| `The Anthropic Hive Mind...Medium.pdf`      | **Remove from git** — add URL link to `product/references/README.md`         | Publicly available article                                           |
 
 ### From root level
 
-| Current file | Destination | Notes |
-|---|---|---|
-| `pitchdeck.md` | `product/pitchdeck.md` | Business doc |
-| `extension/` (entire directory) | `archive/v1-extension/` | Dead code; remove from npm workspaces |
-| `cli/` (entire directory) | `archive/v1-cli/` | Dead code; remove from npm workspaces |
-| `inactive-archived-context/` | Delete (replaced by `archive/`) | Only contains a README |
+| Current file                    | Destination                     | Notes                                 |
+| ------------------------------- | ------------------------------- | ------------------------------------- |
+| `pitchdeck.md`                  | `product/pitchdeck.md`          | Business doc                          |
+| `extension/` (entire directory) | `archive/v1-extension/`         | Dead code; remove from npm workspaces |
+| `cli/` (entire directory)       | `archive/v1-cli/`               | Dead code; remove from npm workspaces |
+| `inactive-archived-context/`    | Delete (replaced by `archive/`) | Only contains a README                |
 
 ### `ROADMAP.md` changes
 
-| Content | Destination |
-|---|---|
-| Sprints 1-11 (completed) | `archive/completed-sprints/sprints-01-11.md` |
-| Current sprint + next sprint | Stays in `ROADMAP.md` |
+| Content                      | Destination                                  |
+| ---------------------------- | -------------------------------------------- |
+| Sprints 1-11 (completed)     | `archive/completed-sprints/sprints-01-11.md` |
+| Current sprint + next sprint | Stays in `ROADMAP.md`                        |
 
 ---
 
@@ -176,13 +176,13 @@ campfires/
 
 Retroactively capture key decisions that have already been made:
 
-| ADR | Topic | Rationale to capture |
-|---|---|---|
-| `0001-plugin-over-extension.md` | Why Campfires pivoted from VS Code extension to Claude Code plugin | Explains why `extension/` is archived |
-| `0002-sqlite-for-persistence.md` | Why SQLite instead of Postgres or another DB | Trade-offs for early-stage simplicity |
-| `0003-pixel-art-map-visualization.md` | Why an RPG-style pixel-art map is the primary UI | Product differentiation choice |
-| `0004-monorepo-with-npm-workspaces.md` | Why a single repo with npm workspaces | vs. separate repos or Nx/Turborepo |
-| `0005-append-only-activity-log.md` | Why activity logs are append-only, never updated or deleted | Data integrity choice |
+| ADR                                    | Topic                                                              | Rationale to capture                  |
+| -------------------------------------- | ------------------------------------------------------------------ | ------------------------------------- |
+| `0001-plugin-over-extension.md`        | Why Campfires pivoted from VS Code extension to Claude Code plugin | Explains why `extension/` is archived |
+| `0002-sqlite-for-persistence.md`       | Why SQLite instead of Postgres or another DB                       | Trade-offs for early-stage simplicity |
+| `0003-pixel-art-map-visualization.md`  | Why an RPG-style pixel-art map is the primary UI                   | Product differentiation choice        |
+| `0004-monorepo-with-npm-workspaces.md` | Why a single repo with npm workspaces                              | vs. separate repos or Nx/Turborepo    |
+| `0005-append-only-activity-log.md`     | Why activity logs are append-only, never updated or deleted        | Data integrity choice                 |
 
 Each ADR follows the standard format:
 
@@ -190,15 +190,19 @@ Each ADR follows the standard format:
 # ADR-NNNN: [Title]
 
 ## Status
+
 Accepted
 
 ## Context
+
 [What problem were you solving?]
 
 ## Decision
+
 [What did you decide?]
 
 ## Consequences
+
 [What becomes easier or more difficult?]
 ```
 
@@ -216,10 +220,10 @@ A `specs/_templates/` directory with starter files so that new features always g
 
 These files reference the current structure and would need path updates:
 
-| File | What changes |
-|---|---|
-| `README.md` | Project Structure section; spec reference link |
-| `CLAUDE.md` | Structure section; reference doc paths |
+| File              | What changes                                        |
+| ----------------- | --------------------------------------------------- |
+| `README.md`       | Project Structure section; spec reference link      |
+| `CLAUDE.md`       | Structure section; reference doc paths              |
 | `CONTRIBUTING.md` | Monorepo Structure section; "What Goes Where" table |
 
 ---
