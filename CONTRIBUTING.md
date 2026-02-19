@@ -78,7 +78,7 @@ These are non-negotiable across all packages:
 | Claude Code plugin hooks/cmds  | `campfires-plugin/`                |
 | New feature spec               | `specs/<feature-name>/`            |
 | Architecture decision          | `docs/adr/`                        |
-| Product/business docs           | `product/`                         |
+| Product/business docs          | `product/`                         |
 
 ## Spec Reference
 

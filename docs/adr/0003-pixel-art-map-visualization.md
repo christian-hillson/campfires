@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-The web app needs to show an organization's engineering activity at a glance. The question was how to visualize it: dashboard with charts, list/card view, or something more novel. The product thesis is that Campfires should feel like something you *want* to leave open, not another monitoring dashboard.
+The web app needs to show an organization's engineering activity at a glance. The question was how to visualize it: dashboard with charts, list/card view, or something more novel. The product thesis is that Campfires should feel like something you _want_ to leave open, not another monitoring dashboard.
 
 ## Decision
 
