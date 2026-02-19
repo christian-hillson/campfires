@@ -65,7 +65,7 @@ The key concepts of our platform include:
 
 ## Our Web App
 
-![Campfire Stories Map View](active-product-development-context/Campfire%20Screenshot%20Feb%2016%202026.png)
+![Campfire Stories Map View](docs/images/campfire-screenshot-2026-02-16.png)
 
 The Campfires web app ("Campfire Stories") is a full-screen pixel-art map view with two components:
 
@@ -204,10 +204,13 @@ campfires/
 ├── server/              # Node.js + Express + SQLite
 ├── campfire-stories/    # Web app (Vite + vanilla TS)
 ├── campfires-plugin/    # Claude Code plugin (hooks, commands, skills)
-└── active-product-development-context/  # Specs and reference docs
+├── docs/                # Architecture docs, ADRs, images, proposals
+├── specs/               # Active feature specs (sparks, lifecycle, map)
+├── product/             # Vision, pitchdeck, references
+└── archive/             # v1 extension, v1 CLI, historical mockups
 ```
 
-For the full technical specification — architecture, data model, API surface, and how the packages connect — see [`active-product-development-context/campfires-build-spec-v3.md`](active-product-development-context/campfires-build-spec-v3.md).
+For the full technical specification — architecture, data model, API surface, and how the packages connect — see [`docs/architecture/build-spec-v3.md`](docs/architecture/build-spec-v3.md).
 
 ---
 

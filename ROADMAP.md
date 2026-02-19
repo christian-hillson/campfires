@@ -71,7 +71,7 @@ AI-summarized org-wide view for non-dev stakeholders.
 
 ## Sprint 4b: Map Enhancement — Event-Driven Animations & Golem Spawning
 
-Two-pass enhancement to the map mockup (`active-product-development-context/campfires-map-mockup.html`), making the map reactive to events and adding the signature spark-to-golem spawn animation. Specs in `active-product-development-context/map-enhancement-pass1.md` and `active-product-development-context/map-enhancement-pass2.md`.
+Two-pass enhancement to the map mockup (`archive/campfires-map-mockup.html`), making the map reactive to events and adding the signature spark-to-golem spawn animation. Specs in `specs/map-enhancements/pass1.md` and `specs/map-enhancements/pass2.md`.
 
 **Pass 1 — Event System, Fire Reactivity, Sprite Animations:**
 
@@ -157,7 +157,7 @@ The plugin captures developer activity ambiently via Claude Code hooks and uploa
 
 ## Sprint 4c: Map Mockup — Logs Panel & UI Cleanup
 
-Iterative pass on the map mockup (`active-product-development-context/campfires-map-mockup.html`). Added the Logs panel (team detail) concept and cleaned up unused UI elements.
+Iterative pass on the map mockup (`archive/campfires-map-mockup.html`). Added the Logs panel (team detail) concept and cleaned up unused UI elements.
 
 | Feature                                                  | Status | Owner | Notes                                                                     |
 | -------------------------------------------------------- | ------ | ----- | ------------------------------------------------------------------------- |
@@ -226,7 +226,7 @@ Holistic security review and hardening pass across server, plugin, and client. N
 
 ## Sprint 12: Sparks — Cross-Team Intelligence Layer
 
-AI-powered cross-team connection detection. After each batch summarization cycle, a second Claude API call analyzes all team summaries together and surfaces "Sparks" — brief, high-signal connections between campfires. Full spec in `active-product-development-context/sprint-12-sparks.md`.
+AI-powered cross-team connection detection. After each batch summarization cycle, a second Claude API call analyzes all team summaries together and surfaces "Sparks" — brief, high-signal connections between campfires. Full spec in `specs/sparks/design.md`.
 
 **Core concept:** Sparks are precious, not noisy. Max 1 per campfire per 24h. They appear as an animated arc on the map, a momentary stories entry, and persistent badges on connected campfires. Dismissed sparks are preserved in a searchable log.
 

@@ -22,9 +22,10 @@ campfires/
   server/            @campfires/server             — Node.js + Express + SQLite
   campfire-stories/  @campfires/campfire-stories   — Vite web app (pixel-art map + Campfire Stories panel + Logs panel)
   campfires-plugin/                                — Claude Code plugin (hooks, commands, skills)
-  active-product-development-context/               — specs, research, reference docs (read-only)
-  extension/         (archived, not built)          — VS Code extension prototype
-  cli/               (archived, not built)          — campfire watch terminal client prototype
+  docs/                                            — architecture docs, ADRs, images, proposals
+  specs/                                           — active feature specs (sparks, lifecycle, map)
+  product/                                         — vision, pitchdeck, references
+  archive/                                         — v1 extension, v1 CLI, historical mockups
 ```
 
 All packages import types from `@campfires/shared`. If you change `shared/src/types.ts`, rebuild shared before building dependents.
@@ -75,10 +76,15 @@ These are non-negotiable across all packages:
 | Campfire Stories UI components | `campfire-stories/src/components/` |
 | Campfire Stories map view      | `campfire-stories/src/map/`        |
 | Claude Code plugin hooks/cmds  | `campfires-plugin/`                |
+| New feature spec               | `specs/<feature-name>/`            |
+| Architecture decision          | `docs/adr/`                        |
+| Product/business docs          | `product/`                         |
 
 ## Spec Reference
 
-The original v1 technical spec lives at `active-product-development-context/campfires-build-spec-v3.md`. It covers the prototype architecture (VS Code extension + CLI + web app). The README reflects the current vision: Claude Code Plugin as source, Campfires Server as system, Campfires Web App as surface.
+The original v1 technical spec lives at `docs/architecture/build-spec-v3.md`. It covers the prototype architecture (VS Code extension + CLI + web app). The README reflects the current vision: Claude Code Plugin as source, Campfires Server as system, Campfires Web App as surface.
+
+Active feature specs live in `specs/` (sparks, campfire-lifecycle, map-enhancements). Architecture Decision Records are in `docs/adr/`.
 
 `CLAUDE.md` contains the same rules in a format optimized for AI coding assistants (Claude Code, Copilot, etc.). Keep it in sync if you update conventions.
 

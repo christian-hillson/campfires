@@ -2,7 +2,7 @@
 
 Read CONTRIBUTING.md for repo conventions, branch prefixes, and development setup.
 Read ROADMAP.md for current sprint status, feature ownership, and what's in progress.
-Read campfires-build-spec-v3.md in the active-product-development-context folder for the original technical specification (v1 prototype).
+Read docs/architecture/build-spec-v3.md for the original technical specification (v1 prototype).
 
 ## Architecture
 
@@ -24,8 +24,10 @@ Campfires has three layers:
 
 Core packages: shared/, server/, campfire-stories/
 Plugin: campfires-plugin/ (Claude Code hooks, commands, skills)
-Reference docs: active-product-development-context/
-Archived (v1 prototype, not built): extension/, cli/
+Docs: docs/ (architecture, ADRs, images, proposals)
+Active specs: specs/ (sparks, campfire-lifecycle, map-enhancements)
+Product: product/ (vision, pitchdeck, references)
+Archived (v1 prototype, not built): archive/v1-extension/, archive/v1-cli/
 
 ## Naming
 
