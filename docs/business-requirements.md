@@ -66,7 +66,21 @@ Executives, VPs, CTOs, founders — people who need an org-wide view of engineer
 
 ---
 
-## 4. Business Requirements
+## 4. Design Principles
+
+The following principles shape how all requirements in this document should be read. They are not individual features — they are constraints and commitments that apply across the product.
+
+- **Privacy-first.** Campfires is for coordination, not surveillance. Activity data is never used for individual performance measurement. Developers can go dark with a single action, and when sharing is off, nothing is collected or transmitted. Non-developer stakeholders never see raw code or file paths.
+
+- **Zero-friction for developers.** The system captures activity automatically. Developers don't write status updates, fill out timesheets, or maintain tickets for Campfires to work. If it requires manual effort from developers, it's a bug in the design.
+
+- **Extensible by default.** Campfires exposes clean, documented interfaces for activity sources (how data gets in), context providers (how business context connects), and visualization (how data is displayed) — so that anyone (the Campfires team, customers, or community contributors) can build integrations without modifying core code. This applies regardless of licensing model. The interface is the product; specific integrations are instances of it.
+
+- **AI as a translation layer.** Raw technical activity is never exposed directly to non-technical stakeholders. Everything passes through an AI summarization layer that translates code-level events into business-legible language, using whatever organizational context is available.
+
+---
+
+## 5. Business Requirements
 
 Requirements are organized by the core capability they support. Each requirement has a priority and a current status.
 
@@ -85,7 +99,7 @@ Requirements are organized by the core capability they support. Each requirement
 
 ---
 
-### 4.1 Activity Capture
+### 5.1 Activity Capture
 
 The system must capture developer and AI agent activity without requiring manual input.
 
@@ -106,7 +120,7 @@ The system must capture developer and AI agent activity without requiring manual
 
 ---
 
-### 4.2 Real-Time Awareness (Developer Experience)
+### 5.2 Real-Time Awareness (Developer Experience)
 
 Developers must be able to see what their teammates are doing in real time.
 
@@ -123,7 +137,7 @@ Developers must be able to see what their teammates are doing in real time.
 
 ---
 
-### 4.3 Privacy and Trust
+### 5.3 Privacy and Trust
 
 Developer trust is foundational. The product will not be adopted without strong privacy controls.
 
@@ -142,7 +156,7 @@ Developer trust is foundational. The product will not be adopted without strong 
 
 ---
 
-### 4.4 AI Summarization
+### 5.4 AI Summarization
 
 The system must translate raw technical activity into business-legible summaries.
 
@@ -166,7 +180,7 @@ The system must translate raw technical activity into business-legible summaries
 
 ---
 
-### 4.5 Organization Map (Visualization)
+### 5.5 Organization Map (Visualization)
 
 Stakeholders must be able to see the entire organization's engineering activity at a glance.
 
@@ -189,7 +203,7 @@ Stakeholders must be able to see the entire organization's engineering activity 
 
 ---
 
-### 4.6 Cross-Team Visibility
+### 5.6 Cross-Team Visibility
 
 The system must help people discover what's happening beyond their own team.
 
@@ -209,7 +223,7 @@ The system must help people discover what's happening beyond their own team.
 
 ---
 
-### 4.7 Team & Organization Management
+### 5.7 Team & Organization Management
 
 The system must support multi-team organizations.
 
@@ -227,7 +241,7 @@ The system must support multi-team organizations.
 
 ---
 
-### 4.8 Campfire Lifecycle
+### 5.8 Campfire Lifecycle
 
 Campfires must have a visible lifecycle that reflects the real state of the team.
 
@@ -241,11 +255,11 @@ Campfires must have a visible lifecycle that reflects the real state of the team
 
 ---
 
-### 4.9 Business Context & Organization Intelligence
+### 5.9 Business Context & Organization Intelligence
 
 The quality of AI summaries, cross-team Spark detection, and stakeholder experience is directly proportional to how much the system understands about the organization's structure, projects, and goals. Today, context is limited to three free-text fields (org mission, org roadmap, team description). This section defines the requirements for a much richer context model and the multiple ways it can be ingested.
 
-#### 4.9.1 Organization Structure Context
+#### 5.9.1 Organization Structure Context
 
 The system must understand how the organization is structured beyond a flat list of teams.
 
@@ -262,7 +276,7 @@ The system must understand how the organization is structured beyond a flat list
 1. All of this section might be bad/stupid. Worth interrogating.
 2. **Context visibility**: Should all business context (goals, project descriptions) be visible to all org members, or should some context be restricted to leadership?
 
-#### 4.9.2 Project Context
+#### 5.9.2 Project Context
 
 The system must understand what projects and initiatives teams are working on, so that activity can be mapped to meaningful work streams rather than just team-level buckets.
 
@@ -280,7 +294,7 @@ The system must understand what projects and initiatives teams are working on, s
 **Open Questions:**
 1. All of this section might be bad/stupid. Worth interrogating.
 
-#### 4.9.3 Goal Context
+#### 5.9.3 Goal Context
 
 The system must understand the business goals and objectives that projects and teams are working toward, so that AI summaries can connect technical activity to strategic outcomes.
 
@@ -298,7 +312,7 @@ The system must understand the business goals and objectives that projects and t
 1. All of this section might be bad/stupid. Worth interrogating.
 2. **Context depth vs. maintenance burden**: How deep should the goal > project > team hierarchy go before the maintenance cost outweighs the summary quality improvement? Need to validate with real usage.
 
-#### 4.9.4 Context Ingestion — Manual Entry
+#### 5.9.4 Context Ingestion — Manual Entry
 
 The system must provide intuitive, low-friction ways for users to directly input and maintain business context.
 
@@ -311,25 +325,25 @@ The system must provide intuitive, low-friction ways for users to directly input
 | MI-5 | The system must support bulk context setup (e.g., paste a list of teams, import a CSV of projects) for initial onboarding of a new organization | P2 | Not started |
 | MI-6 | The plugin should support context entry from within Claude Code sessions (e.g., a `/campfires:context` command to update team description or link to a project without leaving the terminal) | P2 | Not started |
 
-#### 4.9.5 Context Ingestion — External Integrations
+#### 5.9.5 Context Ingestion — External Integrations
 
-The system must be able to pull business context from the tools organizations already use, reducing manual data entry and keeping context fresh.
+The system must expose a well-documented context provider interface that makes it straightforward for anyone — the Campfires team, customers, or third-party contributors — to connect external tools that hold business context (project management, documentation, goal tracking). The interface, not any specific integration, is the core requirement. Specific integrations (Jira, Linear, Notion) are instances built on top of that interface.
 
 | ID | Requirement | Priority | Status |
 |----|-------------|----------|--------|
-| EI-1 | The system must define a context provider interface — a standard way for external sources to supply organization structure, projects, and goals to Campfires | P1 | Not started |
+| EI-1 | The system must define a context provider interface — a standard way for external sources to supply organization structure, projects, and goals to Campfires | P0 | Not started |
 | EI-2 | The system must support integration with project management tools (e.g., Jira, Linear, Asana) to import projects, epics, and their team assignments | P1 | Not started |
 | EI-3 | The system must support integration with documentation/wiki tools (e.g., Notion, Confluence) to pull team descriptions, project briefs, and roadmap context | P1 | Not started |
 | EI-4 | The system must support integration with OKR/goal-tracking tools (e.g., Lattice, Ally.io, Notion databases, Google Sheets) to import goal hierarchies and progress | P2 | Not started |
 | EI-5 | Integrated context must auto-refresh on a configurable schedule so that Campfires always reflects the current state of external tools without manual syncing | P1 | Not started |
 | EI-6 | When the same concept exists in both Campfires and an external tool (e.g., a project in Linear and in Campfires), the system must support mapping them together rather than creating duplicates | P2 | Not started |
-| EI-7 | The system must support a generic webhook/API endpoint where any tool can push context updates to Campfires, enabling integrations beyond the ones Campfires builds natively | P2 | Not started |
+| EI-7 | The system must support a generic webhook/API endpoint where any tool can push context updates to Campfires, enabling integrations beyond the ones Campfires builds natively | P1 | Not started |
 
 **Open Questions:**
 - **Context source of truth**: When business context exists in both Campfires and an external tool, which one wins? Should Campfires be read-only from external sources, or allow edits that sync back?
 - **First integration target**: Which external tool integration should be built first? Likely candidates: Linear (project context), Notion (roadmap/docs context), or GitHub (repo-to-project mapping). Should be driven by what our early users actually use.
 
-#### 4.9.6 Context Ingestion — AI Inference
+#### 5.9.6 Context Ingestion — AI Inference
 
 The system must be able to infer business context from the activity it already captures, reducing the burden on humans to maintain context manually.
 
@@ -346,11 +360,13 @@ The system must be able to infer business context from the activity it already c
 
 ---
 
-### 4.10 Agent Extensibility
+### 5.10 Agent Extensibility
 
 Today, Campfires captures AI agent activity exclusively through the Claude Code plugin. As teams adopt multiple AI coding tools (Cursor, Copilot, Windsurf, Devin, custom agents), the system must evolve from "Claude Code awareness" to "agent-agnostic awareness." The P0 requirements in this section reflect what's needed to launch with Claude Code; P1 and P2 requirements define the path to supporting the broader agent ecosystem.
 
-#### 4.10.1 Agent Activity API
+The agent activity API is an instance of the "extensible by default" principle (see Section 4) — the same API the Claude Code plugin uses must be available to any tool that wants to report agent activity to Campfires. See also Section 5.11 (Platform Extensibility) for the general interface requirements.
+
+#### 5.10.1 Agent Activity API
 
 The system must provide a standard way for any agent — regardless of tool or framework — to report activity to Campfires.
 
@@ -367,7 +383,7 @@ The system must provide a standard way for any agent — regardless of tool or f
 **Open Questions:**
 - **Multi-agent per human**: Should the system support a developer having multiple concurrent agents from different tools (e.g., a Claude Code agent and a Cursor agent both active)? How do they appear on the map?
 
-#### 4.10.2 Git-Based Agent Detection
+#### 5.10.2 Git-Based Agent Detection
 
 For agents that don't have plugin/integration support, the system must be able to detect agent activity through git signals that any tool produces.
 
@@ -380,7 +396,7 @@ For agents that don't have plugin/integration support, the system must be able t
 **Open Questions:**
 - **Agent detection accuracy**: For git-based agent detection (no plugin), how do we handle false positives (human commits misidentified as agent) and false negatives (agent commits that look human)? What's the acceptable error rate?
 
-#### 4.10.3 Third-Party Tool Integrations
+#### 5.10.3 Third-Party Tool Integrations
 
 The system must provide clear integration paths for specific AI coding tools beyond Claude Code.
 
@@ -397,7 +413,25 @@ The system must provide clear integration paths for specific AI coding tools bey
 
 ---
 
-## 5. Out of Scope (Explicitly Not Required)
+### 5.11 Platform Extensibility
+
+Campfires must be architected so that anyone — the Campfires team, customers, or community contributors — can extend the system without modifying core code. This is a core design principle (see Section 4), not a feature contingent on licensing decisions. The same interfaces the Campfires team uses to build integrations must be available to anyone else building on top of the platform.
+
+| ID | Requirement | Priority | Status |
+|----|-------------|----------|--------|
+| PE-1 | The system must define a plugin interface for activity sources, allowing third parties to build integrations for any editor, agent, or development tool without modifying core code | P1 | Not started |
+| PE-2 | The system must define an extension interface for context providers, allowing third parties to build integrations with any project management, documentation, or goal-tracking tool | P1 | Not started |
+| PE-3 | The map visualization must support theming or visual customization so that organizations or contributors can modify the look and feel without forking the core | P2 | Not started |
+| PE-4 | The AI summarization layer must be swappable — the system must not be hardcoded to a single AI provider, so that deployers can bring their own API key or use a different model | P1 | Not started |
+| PE-5 | Configuration (org structure, privacy defaults, throttling values, summarization intervals) must be manageable via config files or environment variables, not only through a UI, so that automated deployments can configure the system programmatically | P1 | Not started |
+
+**Open Questions:**
+- **Customization appetite**: What's the customer's opinion on customizing Campfires — would they want to build their own integrations, change the visualization, or modify how summaries work?
+- **Contribution willingness**: If Campfires were open source, would customers contribute back (bug fixes, integrations, features), or would they primarily use it as-is?
+
+---
+
+## 6. Out of Scope (Explicitly Not Required)
 
 The following are deliberately excluded from current requirements:
 
@@ -406,13 +440,13 @@ The following are deliberately excluded from current requirements:
 
 | Individual performance metrics or time tracking | Fundamentally conflicts with the trust model. Campfires is for coordination, not measurement. |
 | Keystroke or screen capture | Privacy violation. Activity capture is file-level and git-level only. |
-| Self-hosted / enterprise deployment | Cloud-first for now. Self-hosting is being explored as part of a potential open-source strategy (see Section 8). Enterprise features are a future business decision. |
+| Self-hosted / enterprise deployment | Cloud-first for now. Self-hosting is being explored as part of a potential open-source strategy (see Section 9). Enterprise features are a future business decision. |
 | Mobile app | The map and summaries are designed for desktop/laptop screens. |
 | Notifications / push alerts | The product is designed as an ambient, pull-based experience — you look when you want to. Push notifications change the dynamic. |
 
 ---
 
-## 6. Success Criteria
+## 7. Success Criteria
 
 How we know the product is working:
 
@@ -431,9 +465,9 @@ Note:
 
 ---
 
-## 7. General Open Questions
+## 8. General Open Questions
 
-Questions that span multiple sections or are fundamentally business-model level. Section-specific open questions live within their respective subsections in Section 4.
+Questions that span multiple sections or are fundamentally business-model level. Section-specific open questions live within their respective subsections in Section 5.
 
 - **Pricing model implications**: Do any of these requirements have implications for how the product is packaged and priced (e.g., per-seat, per-team, per-org)?
 - **Small team vs. enterprise pricing**: If priorities map to customer segments, does the pricing model follow the same tiers? (e.g., free/cheap for P0 features, paid for P1, enterprise for P2)
@@ -442,17 +476,17 @@ Questions that span multiple sections or are fundamentally business-model level.
 
 ---
 
-## 8. Licensing & Extensibility Model
+## 9. Licensing & Extensibility Model
 
 **Status:** Under exploration. No decision has been made. This section captures the strategic considerations, constraints, and open questions around whether and how Campfires could be open-sourced. Customer interviews should probe these questions.
 
-### 8.1 Strategic Context
+### 9.1 Strategic Context
 
 Campfires asks developers to share real-time activity data from their working environments. This requires deep trust. Open source is one of the strongest trust signals available — users can verify that "when sharing is off, nothing is transmitted" by reading the code, not by taking our word for it.
 
 At the same time, Campfires includes proprietary AI summarization, a differentiated visual experience (the map), and a hosted service layer that represents potential revenue. The question is not "open source or not" but **what is open, what is closed, and where does the business model live.**
 
-### 8.2 Licensing Model Options
+### 9.2 Licensing Model Options
 
 | Model | What's open | What's closed/paid | Revenue source | Fit for Campfires |
 |-------|------------|-------------------|----------------|-------------------|
@@ -462,25 +496,11 @@ At the same time, Campfires includes proprietary AI summarization, a differentia
 | **Hosted open source** | Everything including server | Nothing — but you sell managed hosting | Managed cloud service (convenience + SLA) | Good fit if self-hosting is hard enough that most teams prefer paying |
 | **Open source + API** | Server, plugin, visualization | AI summarization API is metered/paid | Usage-based API pricing | Possible, but ties revenue to a single capability that could be replicated |
 
-### 8.3 Extensibility Requirements
+### 9.3 Licensing-Contingent Requirements
 
-If Campfires adopts any open-source model, the architecture must support community extension without compromising core guarantees. These requirements apply regardless of which licensing model is chosen.
+If Campfires adopts any open-source or self-hosted model, the following additional requirements apply. General platform extensibility requirements live in Section 5.11, as they apply regardless of licensing.
 
-#### 8.3.1 Plugin & Extension Architecture
-
-| ID | Requirement | Priority | Status |
-|----|-------------|----------|--------|
-| LE-1 | The system must define a plugin interface for activity sources, allowing third parties to build integrations for any editor, agent, or development tool without modifying core code | P1 | Not started |
-| LE-2 | The system must define an extension interface for context providers, allowing third parties to build integrations with any project management, documentation, or goal-tracking tool | P1 | Not started |
-| LE-3 | The map visualization must support theming or visual customization so that organizations or community contributors can modify the look and feel without forking the core | P2 | Not started |
-| LE-4 | The AI summarization layer must be swappable — the system must not be hardcoded to a single AI provider, so that self-hosters can bring their own API key or use a different model | P1 | Not started |
-| LE-5 | Configuration (org structure, privacy defaults, throttling values, summarization intervals) must be manageable via config files or environment variables, not only through a UI, so that self-hosters and automated deployments can configure the system programmatically | P1 | Not started |
-
-**Open Questions:**
-- **Customization appetite**: What's the customer's opinion on customizing Campfires — would they want to build their own integrations, change the visualization, or modify how summaries work?
-- **Contribution willingness**: If Campfires were open source, would customers contribute back (bug fixes, integrations, features), or would they primarily use it as-is?
-
-#### 8.3.2 Self-Hosting Support
+#### 9.3.1 Self-Hosting Support
 
 | ID | Requirement | Priority | Status |
 |----|-------------|----------|--------|
@@ -492,7 +512,7 @@ If Campfires adopts any open-source model, the architecture must support communi
 **Open Questions:**
 - **Self-hosting demand**: What's the customer's opinion on running Campfires on their own infrastructure vs. using a managed cloud service?
 
-#### 8.3.3 Privacy Architectural Constraints
+#### 9.3.2 Privacy Architectural Constraints
 
 If the codebase is open, privacy guarantees must be enforced architecturally, not just by policy.
 
