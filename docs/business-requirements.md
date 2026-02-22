@@ -20,7 +20,7 @@ Technical architecture, sprint plans, and implementation details live elsewhere.
 While AI coding tools have dramatically accelerated how fast individual developers and agents can write code, the coordination infrastructure for building products as a team has remained widely unchanged. We believe that bottlenecks in building will shift from writing code to sharing context, and that four main problems will worsen as teams are enabled by AI:  
 
 - **Coordination will lag behind development velocity.** Coding may be 10x faster, but teams still rely on manual, periodic updates to stay aligned. Context goes stale within hours — or minutes.
-- **Agents operate will invisibly.** AI assistants are doing real work, but they are often unsupervised, hidden from each other, and invisible to cross-functional stakeholders.
+- **Agents will operate invisibly.** AI assistants are doing real work, but they are often unsupervised, hidden from each other, and invisible to cross-functional stakeholders.
 - **Context will go stale instantly.** The information exists — in git logs, terminals, uncommitted branches — but there's no ambient layer connecting it in real time. Work happening in parallel can easily be done with critically outdated context.
 - **Teams will collide (or conflict) unknowingly.** At 10x velocity, the expense and inefficiency of two teams building the same thing (or contradicting things) is significant.
 
@@ -106,7 +106,7 @@ The system must capture developer and AI agent activity without requiring manual
 | ID | Requirement | Priority | Status |
 |----|-------------|----------|--------|
 | AC-1 | The system must capture developer activity (file edits, commits, branch changes) automatically from the developer's working environment | P0 | Done |
-| AC-2 | Activity capture must work terminal sessions without additional setup beyond initial login | P0 | Done |
+| AC-2 | Activity capture must work in terminal sessions without additional setup beyond initial login | P0 | Done |
 | AC-3 | AI agent activity must be captured and attributed separately from the human who invoked the agent | P0 | Done |
 | AC-4 | The system must support three sharing modes: full activity sharing, presence-only (online but no details), and fully off | P0 | Done |
 | AC-5 | Switching between sharing modes must be instant and require no more than one action | P0 | Done |
@@ -145,7 +145,7 @@ Developer trust is foundational. The product will not be adopted without strong 
 |----|-------------|----------|--------|
 | PT-1 | A developer must be able to enter "draft mode" (privacy mode) with a single action, immediately hiding all activity details from teammates | P0 | Done |
 | PT-2 | When in draft mode, teammates must see that the developer is online but must not see any file, branch, commit, or activity details | P0 | Done |
-| PT-3 | Non-developer stakeholders must never see raw developer activity (file paths, code, terminal output). They only see AI-summarized, project-level information  **Note: I'm not too sure about this phrasing**| P0 | Done |
+| PT-3 | Non-developer stakeholders must never see raw developer activity (file paths, code, terminal output). They only see AI-summarized, project-level information | P0 | Done |
 | PT-4 | The system must not capture or transmit keystrokes, screen content, or clipboard data. Activity capture is limited to file-level events and git events | P0 | Done |
 | PT-5 | Privacy mode must be opt-out (activity sharing is the default) but trivially easy to activate. Adoption requires trust, and trust requires knowing you can go dark | P0 | Done |
 | PT-6 | Activity data must not be used for individual performance measurement, time tracking, or productivity scoring. The system is for coordination, not surveillance | P0 | Policy |
@@ -170,9 +170,9 @@ The system must translate raw technical activity into business-legible summaries
 | AS-6 | When session transcripts are available, the summarizer must use them for richer, more accurate summaries than file-event-only summaries | P1 | Done |
 | AS-7 | Summaries must update via live streaming (e.g., server-sent events) so stakeholders see new information without refreshing | P1 | Done |
 | AS-8 | The system must be resilient to AI summarization failures — if the AI service is unavailable, the product must still function with degraded summaries (stubs or raw event counts) | P2 | Done |
-| AS-9 | The system must create summaries at a project and a team/organization level | P0 |  |
-| AS-10 | The system must allow the user to toggle between team/organization and project level summaries| P2 | |
-| AS-11 | Project and team summaries must reflect roadmap or goal context provided by users| P2 | |
+| AS-9 | The system must create summaries at a project and a team/organization level | P0 | Not started |
+| AS-10 | The system must allow the user to toggle between team/organization and project level summaries| P2 | Not started |
+| AS-11 | Project and team summaries must reflect roadmap or goal context provided by users| P2 | Not started |
 
 **Open Questions:**
 1. How do we want to think about
@@ -194,7 +194,7 @@ Stakeholders must be able to see the entire organization's engineering activity 
 | OM-6 | Clicking on a team must show detail: who's there, what they're building (AI summary), and recent activity | P1 | Done |
 | OM-7 | Clicking on a project must show detail: who's there, what they're building (AI summary), and recent activity | P1 | Done |
 | OM-8 | Team positions on the map must be stable and persistent — people build spatial memory of where teams are | P1 | Done |
-| OM-9 | Project positions on the map must be stable and persistent — people build spatial memory of where teams are | P1 | Done |
+| OM-9 | Project positions on the map must be stable and persistent — people build spatial memory of where projects are | P1 | Done |
 | OM-10 | The map must include a day/night cycle or ambient visual elements that make it feel alive and worth leaving open | P2 | Done |
 | OM-11 | New teams should have a visually memorable moment when they first appear on the map | P2 | Done |
 
@@ -211,11 +211,11 @@ The system must help people discover what's happening beyond their own team.
 |----|-------------|----------|--------|
 | CT-1 | Any authenticated user in an organization must be able to view any team's campfire as a read-only observer | P0 | Done |
 | CT-2 | The org-wide summary panel must show AI-generated one-liner summaries for every team, updated in real time | P0 | Done |
-| CT-2 | Users must be able to view either team or projects as campfires *Note: I think this is controversial - we should discuss* | P0 | |
-| CT-3 | The system must detect and surface meaningful cross-team connections — when two teams are working on related or conflicting things | P1 | Done |
-| CT-4 | Cross-team connections (Sparks) must include per-team perspective that may be asymmetric (what the connection means for each team specifically) | P1 | Done |
-| CT-5 | Cross-team connections must be rate-limited to avoid noise (no more than 1 per team per 24 hours) and dismissable by team members | P1 | Done |
-| CT-6 | A historical log of cross-team connections must be available for review | P2 | Done |
+| CT-3 | Users must be able to view either team or projects as campfires *Note: I think this is controversial - we should discuss* | P0 | |
+| CT-4 | The system must detect and surface meaningful cross-team connections — when two teams are working on related or conflicting things | P1 | Done |
+| CT-5 | Cross-team connections (Sparks) must include per-team perspective that may be asymmetric (what the connection means for each team specifically) | P1 | Done |
+| CT-6 | Cross-team connections must be rate-limited to avoid noise (no more than 1 per team per 24 hours) and dismissable by team members | P1 | Done |
+| CT-7 | A historical log of cross-team connections must be available for review | P2 | Done |
 
 **Open Questions:**
 1. Do we want different context to be exposed to people outside of a project/team (but still in the organization) based on the phase of development? Might be some danger in wide visibility (or even "sparks" between teams) if one is very early on in their development.
