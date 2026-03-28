@@ -674,8 +674,7 @@ export function createRouter(): Router {
     const { orgId } = req.params;
     const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
     const rawBefore = req.query.before as string | undefined;
-    const before =
-      rawBefore && !isNaN(new Date(rawBefore).getTime()) ? rawBefore : undefined;
+    const before = rawBefore && !isNaN(new Date(rawBefore).getTime()) ? rawBefore : undefined;
 
     const db = getPersistence();
     const org = db.getOrg(orgId);
