@@ -135,7 +135,7 @@ describe('Auth API', () => {
   describe('bcrypt migration', () => {
     it('logs in with a legacy SHA256 hash and upgrades it to bcrypt', async () => {
       const password = 'migrationtest';
-      const jwtSecret = 'campfires-dev-secret-change-in-production';
+      const jwtSecret = process.env.JWT_SECRET!;
       const legacyHash = createHash('sha256')
         .update(password + jwtSecret)
         .digest('hex');
