@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { z } from 'zod';
 import { CONFIG, type ActivityEventType } from '@campfires/shared';
 import { getPersistence } from './persistence.js';
@@ -162,6 +162,7 @@ export function createRouter(): Router {
     max: CONFIG.AUTH_RATE_LIMIT_MAX_ATTEMPTS,
     standardHeaders: true,
     legacyHeaders: false,
+    keyGenerator: (req) => ipKeyGenerator(req.ip ?? '127.0.0.1'),
     message: { error: 'Too many attempts, please try again later' },
     handler: (req, res) => {
       auditRateLimitHit(req);
@@ -194,7 +195,7 @@ export function createRouter(): Router {
         const payload = verifyToken(authHeader.slice(7));
         if (payload) return `user:${payload.userId}`;
       }
-      return req.ip || 'unknown';
+      return ipKeyGenerator(req.ip ?? '127.0.0.1');
     },
   });
 
