@@ -293,8 +293,9 @@ async function init(): Promise<void> {
     app.innerHTML = '';
     renderCurrentView();
     startAwarenessPolling(teams);
-  } catch (err) {
-    app.innerHTML = `<div class="error">Failed to connect to server: ${err}</div>`;
+  } catch {
+    app.innerHTML =
+      '<div class="error">Failed to connect to server. Please check your connection and try again.</div>';
   }
 }
 

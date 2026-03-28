@@ -85,6 +85,11 @@ export function createWebSocketServer(server: http.Server): WebSocketServer {
     }
 
     const teamId = pathname.slice('/campfire:'.length);
+    if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(teamId)) {
+      socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
+      socket.destroy();
+      return;
+    }
     let isVisitor = false;
 
     // Verify user belongs to this team or same org
