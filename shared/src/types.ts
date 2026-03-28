@@ -325,4 +325,7 @@ export const CONFIG = {
   // Campfire lifecycle
   GRACE_PERIOD_MS: 5 * 60 * 1000, // 5 minutes before fire decay
   DECAY_DURATION_MS: 60 * 1000, // 60s visual decay to cold
+
+  // AI summarization
+  DEFAULT_ANTHROPIC_MODEL: 'claude-haiku-4-5-20250514',
 } as const;

@@ -46,10 +46,10 @@ export function consumeWsToken(token: string): JwtPayload | null {
   return entry.payload;
 }
 
-if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required in production');
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required. Set it in your .env file.');
 }
-const JWT_SECRET = process.env.JWT_SECRET || 'campfires-dev-secret-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '7d';
 const BCRYPT_ROUNDS = 12;
 

@@ -92,7 +92,12 @@ const AgentActivitySchema = z.object({
   file: z.string().max(500).optional(),
   branch: z.string().max(200).optional(),
   message: z.string().max(1000).optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  metadata: z
+    .record(z.string().max(100), z.union([z.string(), z.number(), z.boolean(), z.null()]))
+    .optional()
+    .refine((val) => !val || Object.keys(val).length <= 20, {
+      message: 'metadata must have at most 20 keys',
+    }),
 });
 
 // Session schemas
@@ -124,7 +129,12 @@ const ActivitySchema = z.object({
   file: z.string().max(500).optional(),
   branch: z.string().max(200).optional(),
   message: z.string().max(1000).optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  metadata: z
+    .record(z.string().max(100), z.union([z.string(), z.number(), z.boolean(), z.null()]))
+    .optional()
+    .refine((val) => !val || Object.keys(val).length <= 20, {
+      message: 'metadata must have at most 20 keys',
+    }),
   session_id: z.string().max(200).optional(),
 });
 
@@ -291,11 +301,15 @@ export function createRouter(): Router {
       return;
     }
 
-    const { name, mission, roadmap } = parsed.data;
-    const db = getPersistence();
-    const org = db.createOrg(name, mission || '', roadmap || '');
+    try {
+      const { name, mission, roadmap } = parsed.data;
+      const db = getPersistence();
+      const org = db.createOrg(name, mission || '', roadmap || '');
 
-    res.status(201).json(org);
+      res.status(201).json(org);
+    } catch {
+      res.status(500).json({ error: 'Failed to create organization' });
+    }
   });
 
   router.get('/orgs/:id', optionalAuthMiddleware, (req: Request, res: Response) => {
@@ -327,15 +341,19 @@ export function createRouter(): Router {
       return;
     }
 
-    const db = getPersistence();
-    const org = db.updateOrg(id, updates);
+    try {
+      const db = getPersistence();
+      const org = db.updateOrg(id, updates);
 
-    if (!org) {
-      res.status(404).json({ error: 'Org not found' });
-      return;
+      if (!org) {
+        res.status(404).json({ error: 'Org not found' });
+        return;
+      }
+
+      res.json(org);
+    } catch {
+      res.status(500).json({ error: 'Failed to update organization' });
     }
-
-    res.json(org);
   });
 
   router.get('/orgs/:id/teams', optionalAuthMiddleware, (req: Request, res: Response) => {
@@ -484,7 +502,14 @@ export function createRouter(): Router {
       return;
     }
 
-    const userId = getUser(req).userId;
+    // Enforce org boundary: users already in an org can only join teams in the same org
+    const caller = getUser(req);
+    if (caller.orgId && caller.orgId !== team.orgId) {
+      res.status(403).json({ error: 'You cannot join a team in a different organization' });
+      return;
+    }
+
+    const userId = caller.userId;
     db.updateUserTeam(userId, team.teamId, team.orgId);
 
     // Get updated user
@@ -622,7 +647,11 @@ export function createRouter(): Router {
 
   router.get('/orgs/:orgId/sparks', optionalAuthMiddleware, (req: Request, res: Response) => {
     const { orgId } = req.params;
-    const status = (req.query.status as string) || 'active';
+    const VALID_SPARK_STATUSES = ['active', 'dismissed', 'expired'] as const;
+    const rawStatus = (req.query.status as string) || 'active';
+    const status = VALID_SPARK_STATUSES.includes(rawStatus as (typeof VALID_SPARK_STATUSES)[number])
+      ? (rawStatus as (typeof VALID_SPARK_STATUSES)[number])
+      : 'active';
     const teamId = req.query.teamId as string | undefined;
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
 
@@ -634,7 +663,7 @@ export function createRouter(): Router {
     }
 
     const sparks = db.getSparks(orgId, {
-      status: status as 'active' | 'dismissed' | 'expired',
+      status,
       teamId,
       limit,
     });
@@ -644,7 +673,9 @@ export function createRouter(): Router {
   router.get('/orgs/:orgId/sparks/log', optionalAuthMiddleware, (req: Request, res: Response) => {
     const { orgId } = req.params;
     const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
-    const before = req.query.before as string | undefined;
+    const rawBefore = req.query.before as string | undefined;
+    const before =
+      rawBefore && !isNaN(new Date(rawBefore).getTime()) ? rawBefore : undefined;
 
     const db = getPersistence();
     const org = db.getOrg(orgId);
@@ -661,9 +692,13 @@ export function createRouter(): Router {
     const { sparkId } = req.params;
     const caller = getUser(req);
 
-    const db = getPersistence();
-    db.dismissSpark(sparkId, caller.userId);
-    res.json({ status: 'ok' });
+    try {
+      const db = getPersistence();
+      db.dismissSpark(sparkId, caller.userId);
+      res.json({ status: 'ok' });
+    } catch {
+      res.status(500).json({ error: 'Failed to dismiss spark' });
+    }
   });
 
   router.post('/sparks/:sparkId/view', authMiddleware, (req: Request, res: Response) => {
@@ -676,9 +711,13 @@ export function createRouter(): Router {
       return;
     }
 
-    const db = getPersistence();
-    db.markViewedSpark(sparkId, teamId, caller.userId);
-    res.json({ status: 'ok' });
+    try {
+      const db = getPersistence();
+      db.markViewedSpark(sparkId, teamId, caller.userId);
+      res.json({ status: 'ok' });
+    } catch {
+      res.status(500).json({ error: 'Failed to mark spark as viewed' });
+    }
   });
 
   // ============================================
@@ -707,22 +746,26 @@ export function createRouter(): Router {
     }
     const { displayName } = parsed.data;
 
-    const db = getPersistence();
-    const parentUser = db.getUser(caller.userId);
-    const agentName = displayName || `${parentUser?.displayName || caller.email}'s Claude`;
+    try {
+      const db = getPersistence();
+      const parentUser = db.getUser(caller.userId);
+      const agentName = displayName || `${parentUser?.displayName || caller.email}'s Claude`;
 
-    const agent = db.createAgentUser(caller.userId, agentName, caller.teamId, caller.orgId);
+      const agent = db.createAgentUser(caller.userId, agentName, caller.teamId, caller.orgId);
 
-    // Generate a JWT for the agent
-    const agentToken = generateToken({
-      userId: agent.userId,
-      email: agent.email,
-      teamId: agent.teamId || null,
-      orgId: agent.orgId || null,
-      type: 'agent',
-    });
+      // Generate a JWT for the agent
+      const agentToken = generateToken({
+        userId: agent.userId,
+        email: agent.email,
+        teamId: agent.teamId || null,
+        orgId: agent.orgId || null,
+        type: 'agent',
+      });
 
-    res.status(201).json({ agent, token: agentToken });
+      res.status(201).json({ agent, token: agentToken });
+    } catch {
+      res.status(500).json({ error: 'Failed to register agent' });
+    }
   });
 
   router.post('/agents/activity', authMiddleware, (req: Request, res: Response) => {
@@ -739,26 +782,30 @@ export function createRouter(): Router {
       return;
     }
 
-    const db = getPersistence();
+    try {
+      const db = getPersistence();
 
-    // Look up the agent user to get parentUserId
-    const agentUser = db.getUser(caller.userId);
-    const parentUserId = agentUser?.parentUserId || null;
+      // Look up the agent user to get parentUserId
+      const agentUser = db.getUser(caller.userId);
+      const parentUserId = agentUser?.parentUserId || null;
 
-    const event = db.appendActivityEvent({
-      userId: caller.userId,
-      userType: caller.type,
-      parentUserId,
-      teamId: caller.teamId,
-      type: body.type,
-      file: body.file || null,
-      branch: body.branch || null,
-      message: body.message || null,
-      metadata: body.metadata || null,
-      sessionId: null,
-    });
+      const event = db.appendActivityEvent({
+        userId: caller.userId,
+        userType: caller.type,
+        parentUserId,
+        teamId: caller.teamId,
+        type: body.type,
+        file: body.file || null,
+        branch: body.branch || null,
+        message: body.message || null,
+        metadata: body.metadata || null,
+        sessionId: null,
+      });
 
-    res.status(201).json(event);
+      res.status(201).json(event);
+    } catch {
+      res.status(500).json({ error: 'Failed to record agent activity' });
+    }
   });
 
   // ============================================

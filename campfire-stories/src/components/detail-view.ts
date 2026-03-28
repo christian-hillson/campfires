@@ -162,29 +162,29 @@ function narratize(
 ): string {
   const user = nameMap.get(event.userId);
   const rawName = user?.displayName || 'Someone';
-  const name = event.userType === 'agent' ? `${rawName} (golem)` : rawName;
+  const name = esc2(event.userType === 'agent' ? `${rawName} (golem)` : rawName);
 
   switch (event.type) {
     case 'session_start': {
       let text = `${name} started a new session`;
-      if (event.file) text += ` on <code>${event.file}</code>`;
-      if (event.branch) text += ` [${event.branch}]`;
+      if (event.file) text += ` on <code>${esc2(event.file)}</code>`;
+      if (event.branch) text += ` [${esc2(event.branch)}]`;
       return text;
     }
     case 'session_end':
       return `${name}'s session ended`;
     case 'commit': {
       let text = `${name} committed`;
-      if (event.message) text += `: ${event.message}`;
-      if (event.branch) text += ` [${event.branch}]`;
+      if (event.message) text += `: ${esc2(event.message)}`;
+      if (event.branch) text += ` [${esc2(event.branch)}]`;
       return text;
     }
     case 'branch_switch':
-      return `${name} switched to <code>${event.branch || 'unknown'}</code>`;
+      return `${name} switched to <code>${esc2(event.branch || 'unknown')}</code>`;
     case 'file_save':
-      return `${name} saved <code>${event.file || 'a file'}</code>`;
+      return `${name} saved <code>${esc2(event.file || 'a file')}</code>`;
     case 'file_open':
-      return `${name} opened <code>${event.file || 'a file'}</code>`;
+      return `${name} opened <code>${esc2(event.file || 'a file')}</code>`;
     default:
       return `${name} did something`;
   }

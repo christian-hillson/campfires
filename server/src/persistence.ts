@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import Database from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 import type {
@@ -371,9 +372,10 @@ export class Persistence {
 
   private generateInviteCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const bytes = crypto.randomBytes(8);
     let code = '';
     for (let i = 0; i < 8; i++) {
-      code += chars[Math.floor(Math.random() * chars.length)];
+      code += chars[bytes[i] % chars.length];
     }
     return code;
   }
