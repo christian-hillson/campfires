@@ -8,7 +8,7 @@
 > - Less: "makes work visible", More: "reduces coordination lag from hours to seconds"
 > - Less: "AI-summarized for PMs/execs", More: : "enables hive operation where everyone sculpts the living prototype together"
 
-Campfires is real-time coordination infrastructure for teams building at AI speed. Our Claude Code plugin ambiently captures what you're working on — files, branches, commits — and aggregates activity across your team (humans and agents). The Campfires web app transforms that data into a live map of what everyone is building (visualized as flames in a campfire), with real-time activity logs and AI-generated project summaries that open the door for collaboration and keep cross-functional stakeholders in the loop without interrupting builders.
+Campfires is real-time coordination infrastructure for teams building at AI speed. Our Claude Code plugin ambiently captures what you're working on (files, branches, commits) and aggregates activity across your team (humans and agents). The Campfires web app transforms that data into a live map of what everyone is building (visualized as flames in a campfire), with real-time activity logs and AI-generated project summaries that open the door for collaboration and keep cross-functional stakeholders in the loop without interrupting builders.
 
 ```
 Source                   System                    Surface
